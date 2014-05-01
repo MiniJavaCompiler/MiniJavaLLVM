@@ -1,0 +1,66 @@
+\documentclass[11pt]{article}
+\usepackage{acronym}
+\usepackage{titling}
+\usepackage[small,compact]{titlesec}
+\usepackage{enumitem}
+\usepackage[margin=1.25in]{geometry}
+
+\pagenumbering{gobble}
+
+\setlist{nolistsep}
+
+\title{MiniJava LLVM Front-end Proposal}
+\author{Mitch Souders}
+\date{April 25, 2014}
+\begin{document}
+
+\makeatletter
+\def\maketitle{\par{\centerline{\huge\bfseries\@title}}\par\@author -- \@date}
+\makeatother
+
+\maketitle
+
+\section*{Project Topic}
+The primary goal of this project is to gain familiarity with \texttt{LLVM} by creating a front-end for \texttt{MiniJava} for \texttt{LLVM}. 
+
+\section*{Approach}
+This will require writing an application in Java using the \texttt{jllvm} Java bindings to \texttt{LLVM} to produce the IR that is suitable for execution/compilation by \texttt{LLVM}. 
+
+Note: The website for MiniJava does provide skeletons for many of the classes for MiniJava implementation with the logic left unimplemented.
+
+The proposed flow is:
+\begin{enumerate}
+\item Lexing/Parsing of MiniJava with \texttt{jcup} creating an Abstract Syntax Tree.
+\item Semantic Verification such as variable checks and type checking
+\item Traversing AST using \texttt{jllvm} bindings to produce \texttt{LLVM} IR.
+\end{enumerate}
+
+\section*{Possible Extensions}
+If this project does not meet the scope or is completed quickly, it may be necessary to add additional requirements. 
+
+\begin{itemize}
+\item Extensions to MiniJava (e.g. Interfaces)
+\item Garbage Collection
+\end{itemize}
+
+\section*{Deliverables}
+A working, demonstrable implementation of \texttt{MiniJava} using the \texttt{LLVM} front-end, along with all source code. A project progress report will be produced midway through the project. Additionally a project summary will also be provided, which will include implementation details, overcome issues, limitations of the \texttt{MiniJava} front-end and \texttt{LLVM}.
+
+\section*{Materials}
+The following tools will be used to implement this project. Note: Some of these tools have alternates that could be used if the specified tool prove unsuitable (e.g. using \texttt{ANTLR} or \texttt{java\_cc} instead of \texttt{jcup}).
+
+\begin{description}
+\item[MiniJava]\footnote{http://www.cambridge.org/us/features/052182060X/}
+	The desired front-end language to convert into \texttt{LLVM} IR. The grammar listed on the website will be assumed to be the canonical version of the language to be implemented.
+
+\item[LLVM]\footnote{http://llvm.org/} The target compiler for the generated IR for MiniJava.
+
+\item[jllvm]\footnote{https://code.google.com/p/jllvm}
+Java bindings to \texttt{LLVM}, which allow direct interaction with \texttt{LLVM}.
+
+\item[jcup]\footnote{http://www2.cs.tum.edu/projects/cup/}
+Java parser generator necessary to build AST for MiniJava.
+
+\end{description}
+
+\end{document}
