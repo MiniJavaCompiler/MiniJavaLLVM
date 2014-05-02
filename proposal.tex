@@ -1,4 +1,4 @@
-\documentclass[11pt]{article}
+\documentclass[12pt]{article}
 \usepackage{acronym}
 \usepackage{titling}
 \usepackage[small,compact]{titlesec}
@@ -23,38 +23,33 @@
 \section*{Project Topic}
 The primary goal of this project is to gain familiarity with \texttt{LLVM}. The proposal is to create an implementation for compiling MiniJava to the \texttt{LLVM} runtime IR.  The basis for the starting framework will be the MiniJava application used in CS321/322.  The compiler starter framework was provided by Professor Mark Jones.  The MiniJava project currently includes options for running as an interpreter or compiling to x86 code.
 
-The project proposal is to extend the back-end for these existing constructs to emit \texttt{LLVM} IR:
+Proposed project flow:
+\begin{enumerate}
+\item Convert base MiniJava to \texttt{LLVM} IR.
 
-\begin{itemize} 
-\item classes
-\item class fields
-\item class methods
-\item variable declarations
-\item this invocation
-\item object access
-\item statements and blocks
-\item do-while loops
-\item if-then constructs.  
-\end{itemize}
-
-\section*{Extensions}
-The project proposal is to also extend the existing functionality by adding additional features to the MiniJava Compiler (MJC).  These would be added in the the following order:
-
-\begin{itemize}
-\item Garbage Collection
-\item Dynamic Dispatch
-%\item Static Methods/Fields   % This appears to already exist in the MJC.
-%\item Object Fields           % Already Exists
-\item Extensions to MiniJava (e.g. Interfaces)
-\end{itemize}
-
+    MiniJava already requires (among other things):
+    \begin{itemize}
+    \item Classes, Variables, Statements, Loops, Branches, etc.
+    \item Arrays
+    \item Object Methods/Fields
+    \item Static Methods/Fields
+    \item Dynamic Dispatch (polymorphic methods)
+    \end{itemize}
+\item Extend MiniJava to a larger subset of Java
+    \begin{itemize}
+    \item Interfaces
+    % I feel like there should be more here
+    % but MiniJava already seems to have a lot
+    % of base requirements.
+    \end{itemize}
+\item \texttt{LLVM} Garbage Collection
+\end{enumerate}
 
 \section*{Deliverables}
-The project deliverables will be a summary of the work, any learning during implementation, the completed compiler as Java source code and unit tests indicating correct operations for language construct snippets.
-
+The project deliverables will be a summary of the work, highlights of knowledge gained from implementation, the completed compiler as Java source code and unit tests indicating correct operations for language construct snippets.
 
 \section*{Materials}
-The following tools will be used to implement this project. Note: Some of these tools have alternates that could be used if the specified tool prove unsuitable (e.g. using \texttt{llvm-j} or \texttt{java\_cc} instead of \texttt{jllvm}).
+The following tools will be used to implement this project. Note: Some of these tools have alternates that could be used if the specified tool prove unsuitable (e.g. using \texttt{llvm-j} instead of \texttt{jllvm}).
 
 \begin{description}
 \item[MiniJava Compiler]
