@@ -1,0 +1,7 @@
+# list of files to ignore for MiniJavaLLVM
+
+#no backup edits
+*.*~
+
+#no java class files
+*.class
