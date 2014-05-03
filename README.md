@@ -3,10 +3,9 @@ MiniJavaLLVM
 
 MiniJava frontend for LLVM
 
-
-
-Mark Smith
+Mark Smith and Mitch Souders
 CS510 - Advanced Programming Language Implementations
+
 Project Notes
 
 This directory contains the top-level project for the cross-language system built on the initial miniJava program created by Professor Mark Jones of PSU with adaptations by Mark Smith and Mitch Souders for outputting code compatible with LLVM.
