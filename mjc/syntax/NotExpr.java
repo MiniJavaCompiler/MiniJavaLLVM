@@ -30,14 +30,14 @@ public final class NotExpr extends UnaryOp {
 
     /** Generate code to evaluate this expression and
      *  leave the result in the specified free variable.
-     */ 
+     */
     public void compileExpr(Assembly a, int free) {
         expr.compileExpr(a, free);
         a.emit("xorl", a.immed(1), a.reg(free));
     }
 
-    /** Evaluate this expression. 
-     */ 
+    /** Evaluate this expression.
+     */
     public Value eval(State st) {
         return BoolValue.make(!expr.eval(st).getBool());
     }

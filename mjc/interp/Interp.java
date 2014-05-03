@@ -19,7 +19,7 @@ public class Interp {
     /** A command line entry point to the mini Java interpreter.
      */
     public static void main(String[] args) {
-        if (args.length!=1) {
+        if (args.length != 1) {
             System.err.println("usage: java mjc.Interp inputFile");
             return;
         }
@@ -44,7 +44,7 @@ public class Interp {
         Parser      parser  = new Parser(handler, lexer);
         ClassType[] classes = parser.getClasses();
         MethEnv     main    = new Context(handler, classes).check();
-        if (main!=null) {
+        if (main != null) {
             new State().call(main);
         }
     }

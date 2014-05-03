@@ -21,7 +21,7 @@ public final class BitXorExpr extends BitOpExpr {
     boolean commutes() {
         return true;
     }
-        
+
     /** Generate code to evaluate this expression and
      *  leave the result in the specified free variable.
      */

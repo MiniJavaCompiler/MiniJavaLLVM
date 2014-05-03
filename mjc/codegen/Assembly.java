@@ -76,8 +76,8 @@ public class Assembly {
     //- Items related to registers -------------------------------------------
 
     private String[] regs
-      //= LINUX ? new String[] { "%eax",         "%ecx", "%esi", "%edi" }
-      //        : new String[] { "%eax", "%ebx", "%ecx", "%esi", "%edi" };
+    //= LINUX ? new String[] { "%eax",         "%ecx", "%esi", "%edi" }
+    //        : new String[] { "%eax", "%ebx", "%ecx", "%esi", "%edi" };
         =         new String[] { "%eax",         "%ecx", "%esi", "%edi" };
 
     private int numRegs   = regs.length;
@@ -87,7 +87,7 @@ public class Assembly {
     }
 
     public boolean spillFor(int n) {
-        return (n>=numRegs);
+        return (n >= numRegs);
     }
 
     public void spill(int free) {
@@ -103,25 +103,25 @@ public class Assembly {
     }
 
     public void spillAll(int free) {
-        int toSpill = Math.min(free, numRegs-1);
-        for (int i=1; i<=toSpill; i++) {
-            emit("pushl", reg(free-i));
+        int toSpill = Math.min(free, numRegs - 1);
+        for (int i = 1; i <= toSpill; i++) {
+            emit("pushl", reg(free - i));
         }
     }
 
     public void unspillAll(int free) {
-        int toSpill = Math.min(free, numRegs-1);
-        for (int i=toSpill; i>=1; i--) {
-            emit("popl", reg(free-i));
+        int toSpill = Math.min(free, numRegs - 1);
+        for (int i = toSpill; i >= 1; i--) {
+            emit("popl", reg(free - i));
         }
     }
 
     public void call(String lab, int free, int size) {
         emit("call", lab);
-        if ((free%numRegs)!=0) {
+        if ((free % numRegs) != 0) {
             emit("movl", reg(0), reg(free));
         }
-        if (size>0) {
+        if (size > 0) {
             emit("addl", immed(size), "%esp");
         }
     }
@@ -133,8 +133,8 @@ public class Assembly {
     public void emitVTable(ClassType cls, int width, MethEnv[] vtab) {
         emitLabel(vtName(cls));
         emit(".long", number(width));
-        if (vtab!=null) {
-            for (int i=0; i<vtab.length; i++) {
+        if (vtab != null) {
+            for (int i = 0; i < vtab.length; i++) {
                 emit(".long", vtab[i].methName(this));
             }
         }
@@ -170,7 +170,7 @@ public class Assembly {
         return "$" + v;
     }
     public String indirect(int n, String s) {
-        if (n==0) {
+        if (n == 0) {
             return "(" + s + ")";
         } else {
             return n + "(" + s + ")";
@@ -188,7 +188,7 @@ public class Assembly {
 
     //- Items related to data layout -----------------------------------------
 
-    public static final int FRAMEHEAD = 2*WORDSIZE;
+    public static final int FRAMEHEAD = 2 * WORDSIZE;
 
     public int thisOffset(int sizeParams) {
         return (FRAMEHEAD + sizeParams) - WORDSIZE;
@@ -203,7 +203,7 @@ public class Assembly {
         emitLabel(fname);
         emit("pushl", "%ebp");
         emit("movl",  "%esp", "%ebp");
-        if (localBytes>0) {
+        if (localBytes > 0) {
             emit("subl", immed(localBytes), "%esp");
         }
     }

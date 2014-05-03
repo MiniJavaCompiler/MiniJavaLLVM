@@ -17,7 +17,7 @@ public class ObjValue extends Value {
      */
     public ObjValue(ClassType cls, int bytes) {
         this.cls    = cls;
-        this.fields = (cls==null) ? null : new Value[b2f(bytes)];
+        this.fields = (cls == null) ? null : new Value[b2f(bytes)];
     }
 
     /** Convert this value into an ObjValue, or fail with an error message
@@ -30,13 +30,15 @@ public class ObjValue extends Value {
     /** Describes the mapping from bytes in compiled object positions
      *  to field numbers in ObjValues.
      */
-    private int b2f(int bytes) { return (bytes/4)-1; }
+    private int b2f(int bytes) {
+        return (bytes / 4) - 1;
+    }
 
     /** Test to see if this is a null object, in which case we report
      *  an error and abort.
      */
     public void checkNull() {
-        if (this.cls==null || this.fields==null) {
+        if (this.cls == null || this.fields == null) {
             Interp.abort("Null pointer error!");
         }
     }
@@ -46,9 +48,9 @@ public class ObjValue extends Value {
     public Value getField(int offset) {
         checkNull();
         Value val = fields[b2f(offset)];
-         if (val==null) {
-           Interp.abort("Attempt to use uninitialized field!");
-         }
+        if (val == null) {
+            Interp.abort("Attempt to use uninitialized field!");
+        }
         return val;
     }
 
@@ -62,6 +64,6 @@ public class ObjValue extends Value {
     /** Call a method with a particular object and set of arguments.
      */
     public Value call(State st, int slot) {
-       return cls.call(st, slot);
+        return cls.call(st, slot);
     }
 }

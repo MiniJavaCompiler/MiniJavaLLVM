@@ -1,0 +1,11 @@
+--style=java --indent=spaces=4
+--indent-col1-comments
+--min-conditional-indent=0
+--unpad-paren
+--convert-tabs
+--max-code-length=80
+--lineend=linux
+--pad-oper
+--suffix=none
+--pad-header
+--add-brackets

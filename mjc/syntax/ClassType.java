@@ -80,23 +80,23 @@ public final class ClassType extends Type {
      *  check) any definitions that it contains.
      */
     public void checkClass(Context ctxt) {
-        if (level==CHECKING) {
+        if (level == CHECKING) {
             ctxt.report(new Failure(id.getPos(),
-                        "Cyclic class hierarchy for class " + id));
-        } else if (level==UNCHECKED) {
+                                    "Cyclic class hierarchy for class " + id));
+        } else if (level == UNCHECKED) {
             ClassType extendsClass = null;
-            if (extendsType!=null) {
+            if (extendsType != null) {
                 extendsType = extendsType.check(ctxt);
             }
-            if (extendsType!=null) {
+            if (extendsType != null) {
                 if (this.equal(extendsType)) {
                     ctxt.report(new Failure(id.getPos(),
-                                "Class " + id + " extends itself!"));
+                                            "Class " + id + " extends itself!"));
                 }
                 extendsClass = extendsType.isClass();
-                if (extendsClass==null) {
+                if (extendsClass == null) {
                     ctxt.report(new Failure(id.getPos(),
-                                "Illegal superclass"));
+                                            "Illegal superclass"));
                     extendsType = null;
                 } else {
                     level = CHECKING;
@@ -113,15 +113,15 @@ public final class ClassType extends Type {
 
             // Now go on to check the members of the class, secure in the
             // knowledge that the superclass has already been done ...
-            for (; decls!=null; decls=decls.getNext()) {
+            for (; decls != null; decls = decls.getNext()) {
                 decls.addToClass(ctxt, this);
             }
 
             // Finally, build vtable
-            if (vfuns>0) {
+            if (vfuns > 0) {
                 vtable = new MethEnv[vfuns];
-                if (extendsClass!=null) {
-                    for (int i=0; i<extendsClass.vfuns; i++) {
+                if (extendsClass != null) {
+                    for (int i = 0; i < extendsClass.vfuns; i++) {
                         vtable[i] = extendsClass.vtable[i];
                     }
                 }
@@ -143,16 +143,16 @@ public final class ClassType extends Type {
             return true;
         }
         ClassType that = t.isClass();
-        while (that!=null && that.level>level) {
+        while (that != null && that.level > level) {
             that = that.extendsType.isClass();
         }
-        return (that!=null && that.id.sameId(this.id));
+        return (that != null && that.id.sameId(this.id));
     }
 
     /** Add a new field to this class.
      */
     public void addField(Context ctxt, Modifiers mods, Id id, Type type) {
-        if (FieldEnv.find(id.getName(), fields)!=null) {
+        if (FieldEnv.find(id.getName(), fields) != null) {
             ctxt.report(new Failure(id.getPos(),
                                     "Multiple definitions for field " + id));
         } else if (mods.isStatic()) {
@@ -167,18 +167,18 @@ public final class ClassType extends Type {
      */
     public void addMethod(Context ctxt, Modifiers mods, Id id, Type type,
                           VarEnv params, Statement body) {
-        if (MethEnv.find(id.getName(), methods)!=null) {
+        if (MethEnv.find(id.getName(), methods) != null) {
             ctxt.report(new Failure(id.getPos(),
                                     "Multiple definitions for method " + id));
         } else {
             int size = VarEnv.fitToFrame(params);
-            int slot =(-1);
+            int slot = (-1);
             if (!mods.isStatic()) {
                 size += Assembly.WORDSIZE;      // add `this' pointer
-                if (extendsType!=null) {
+                if (extendsType != null) {
                     // TODO: Need to check for modifiers in override
                     MethEnv env = getSuper().findMethod(id.getName());
-                    if (env!=null && env.eqSig(type, params)) {
+                    if (env != null && env.eqSig(type, params)) {
                         slot = env.getSlot();
                     } else {
                         slot = vfuns++;
@@ -196,7 +196,7 @@ public final class ClassType extends Type {
      */
     public FieldEnv findField(String name) {
         FieldEnv env = FieldEnv.find(name, fields);
-        if (env==null && extendsType!=null) {
+        if (env == null && extendsType != null) {
             env = extendsType.isClass().findField(name);
         }
         return env;
@@ -206,7 +206,7 @@ public final class ClassType extends Type {
      */
     public MethEnv findMethod(String name) {
         MethEnv env = MethEnv.find(name, methods);
-        if (env==null && extendsType!=null) {
+        if (env == null && extendsType != null) {
             env = extendsType.isClass().findMethod(name);
         }
         return env;

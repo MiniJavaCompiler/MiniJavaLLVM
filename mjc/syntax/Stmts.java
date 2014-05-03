@@ -20,7 +20,7 @@ public abstract class Stmts {
      */
     public static Stmts reverse(Stmts stmts) {
         Stmts result = null;
-        while (stmts!=null) {
+        while (stmts != null) {
             Stmts tmp  = stmts.next;
             stmts.next = result;
             result     = stmts;
@@ -35,14 +35,14 @@ public abstract class Stmts {
     public abstract boolean check(Context ctxt, VarEnv env, int frameOffset);
 
     /** Emit code to execute this statement.
-     */ 
+     */
     abstract void compile(Assembly a);
-     
+
     /** Emit code that executes these statements and then branches
      *  to a specified label.
      */
     abstract void compileThen(Assembly a, String lab);
-    
+
     /** Emit code that executes these statements and then returns from the
      *  current method.
      */

@@ -5,7 +5,7 @@
 package compiler;
 
 /** A position within a source Source object.
- * 
+ *
  *  [We might also like to have a mechanism for starting an editor at a
  *  particular position so that users can view and potentially change the
  *  corresponding sections of source code.]
@@ -54,29 +54,29 @@ public class SourcePosition extends Position {
      */
     public String describe() {
         StringBuffer buf = new StringBuffer();
-        if (source!=null) {
+        if (source != null) {
             buf.append('"');
             buf.append(source.describe());
             buf.append('"');
-            if (row>0) {
+            if (row > 0) {
                 buf.append(", ");
             }
-         }
-         if (row>0) {
+        }
+        if (row > 0) {
             buf.append("line ");
             buf.append(row);
         }
         String line = source.getLine(row);
-        if (line!=null) {
+        if (line != null) {
             buf.append('\n');
             buf.append(line);
             buf.append('\n');
-            for (int i=0; i<column; i++) {
+            for (int i = 0; i < column; i++) {
                 buf.append(' ');
             }
             buf.append('^');
         }
-        return (buf.length()==0) ? "input" : buf.toString();
+        return (buf.length() == 0) ? "input" : buf.toString();
     }
 
     /** Copy a source position.

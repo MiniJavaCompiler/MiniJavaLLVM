@@ -32,7 +32,7 @@ public final class ExprStmt extends Statement {
     }
 
     /** Emit code to execute this statement.
-     */ 
+     */
     void compile(Assembly a) {
         expr.compileExpr(a);
     }

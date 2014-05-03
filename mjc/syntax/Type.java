@@ -32,7 +32,7 @@ public abstract class Type {
      */
     public ClassType isClass() {
         return null;
-      }
+    }
 
     /** Check to ensure that this is a valid type.  This is part of the
      *  mechanism used to deal with types that are specified by name,

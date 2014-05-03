@@ -22,11 +22,11 @@ public final class Modifiers extends Syntax {
     public static final int STATIC    = 0x10;
 
     public boolean includes(int mask) {
-      return (flags&mask)!=0;
+        return (flags & mask) != 0;
     }
 
     public void set(int mask) {
-      flags |= mask;
+        flags |= mask;
     }
 
     public boolean isStatic() {
@@ -38,14 +38,14 @@ public final class Modifiers extends Syntax {
      *  appears in code in the given fromClass.
      */
     public boolean accessible(ClassType homeClass, ClassType fromClass) {
-      if (includes(PRIVATE)) {
-        return homeClass == fromClass;
-      } else if (includes(PROTECTED)) {
-        return homeClass.isSuperOf(fromClass);
-      } else {
-        // By putting this case last, we make PUBLIC the default if no
-        // explicit access modifier has been specified.
-        return true; // You will need to modify this as part of Homework 6!
-      }
+        if (includes(PRIVATE)) {
+            return homeClass == fromClass;
+        } else if (includes(PROTECTED)) {
+            return homeClass.isSuperOf(fromClass);
+        } else {
+            // By putting this case last, we make PUBLIC the default if no
+            // explicit access modifier has been specified.
+            return true; // You will need to modify this as part of Homework 6!
+        }
     }
 }

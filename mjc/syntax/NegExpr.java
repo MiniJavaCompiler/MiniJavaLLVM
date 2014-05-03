@@ -30,7 +30,7 @@ public final class NegExpr extends UnaryOp {
 
     /** Generate code to evaluate this expression and
      *  leave the result in the specified free variable.
-     */ 
+     */
     public void compileExpr(Assembly a, int free) {
         expr.compileExpr(a, free);
         a.emit("negl", a.reg(free));

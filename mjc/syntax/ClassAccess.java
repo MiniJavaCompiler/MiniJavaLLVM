@@ -23,10 +23,10 @@ public final class ClassAccess extends FieldAccess {
      *  type (or throw an exception if an unrecoverable error occurs).
      */
     public Type typeOf(Context ctxt, VarEnv env) throws Diagnostic {
-        if (!this.env.isStatic()) { 
+        if (!this.env.isStatic()) {
             throw new Failure(pos,
-                      "Cannot access field " + this.env.getName() +
-                      " without an object of class " + this.env.getOwner());
+            "Cannot access field " + this.env.getName() +
+            " without an object of class " + this.env.getOwner());
         }
         this.env.accessCheck(ctxt, pos);
         return this.env.getType();
@@ -35,17 +35,17 @@ public final class ClassAccess extends FieldAccess {
     /** Generate code to evaluate this expression and
      *  leave the result in the specified free variable.
      */
-    public void compileExpr(Assembly a, int free) { 
+    public void compileExpr(Assembly a, int free) {
         env.loadField(a, free);
-    }       
-        
+    }
+
     /** Save the value in the free register in the variable specified by
      *  this expression.
-     */ 
+     */
     void saveVar(Assembly a, int free) {
         env.saveField(a, free);
     }
- 
+
     /** Evaluate this expression.
      */
     public Value eval(State st) {

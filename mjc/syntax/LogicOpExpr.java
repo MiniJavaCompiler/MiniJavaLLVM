@@ -18,12 +18,12 @@ public abstract class LogicOpExpr extends BinaryOp {
      *  type (or throw an exception if an unrecoverable error occurs).
      */
     public Type typeOf(Context ctxt, VarEnv env)
-      throws Diagnostic {
+    throws Diagnostic {
         try {
             required(ctxt, "Left operand",
-                              left.typeOf(ctxt, env),  Type.BOOLEAN);
+            left.typeOf(ctxt, env),  Type.BOOLEAN);
             required(ctxt, "Right operand",
-                              right.typeOf(ctxt, env), Type.BOOLEAN);
+            right.typeOf(ctxt, env), Type.BOOLEAN);
         } catch (Diagnostic d) {
             ctxt.report(d);
         }

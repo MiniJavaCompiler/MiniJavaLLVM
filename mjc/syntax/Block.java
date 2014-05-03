@@ -22,22 +22,22 @@ public final class Block extends Statement {
      *  indicating whether execution can continue at the next statement.
      */
     public boolean check(Context ctxt, VarEnv env, int frameOffset) {
-        return (stmts==null) || stmts.check(ctxt, env, frameOffset);
+        return (stmts == null) || stmts.check(ctxt, env, frameOffset);
     }
 
     /** Emit code to execute this statement.
-     */ 
+     */
     void compile(Assembly a) {
-        if (stmts!=null) {
+        if (stmts != null) {
             stmts.compile(a);
         }
     }
-    
+
     /** Emit code that executes this statement and then branches
      *  to a specified label.
      */
     void compileThen(Assembly a, String lab) {
-        if (stmts!=null) {
+        if (stmts != null) {
             stmts.compileThen(a, lab);
         } else {
             a.emit("jmp", lab);
@@ -48,7 +48,7 @@ public final class Block extends Statement {
      *  the current method.
      */
     public void compileRet(Assembly a) {
-        if (stmts!=null) {
+        if (stmts != null) {
             stmts.compileRet(a);
         } else {
             a.emitEpilogue();
@@ -61,7 +61,7 @@ public final class Block extends Statement {
      */
     public Value exec(State st) {
         Value v = null;
-        for (Stmts ss=stmts; v==null && ss!=null; ss=ss.next) {
+        for (Stmts ss = stmts; v == null && ss != null; ss = ss.next) {
             v = ss.exec(st);
         }
         return v;

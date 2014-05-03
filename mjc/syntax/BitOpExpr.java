@@ -22,12 +22,12 @@ public abstract class BitOpExpr extends BinaryOp {
         Type lt = left.typeOf(ctxt, env);
         Type rt = right.typeOf(ctxt, env);
         if (lt.equal(Type.BOOLEAN) && rt.equal(Type.BOOLEAN)) {
-          return Type.BOOLEAN;
+            return Type.BOOLEAN;
         } else if (lt.equal(Type.INT) && rt.equal(Type.INT)) {
-          return Type.INT;
+            return Type.INT;
         } else {
-          ctxt.report(new Failure(pos, "Incompatible operand types"));
-          return Type.BOOLEAN; // a guess, trying to minimize further errors
+            ctxt.report(new Failure(pos, "Incompatible operand types"));
+            return Type.BOOLEAN; // a guess, trying to minimize further errors
         }
     }
 

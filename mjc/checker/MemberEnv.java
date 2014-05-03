@@ -33,7 +33,7 @@ public abstract class MemberEnv extends Env {
     /** Indicates whether this is a class or instance entity.
      */
     public boolean isStatic() {
-      return mods.isStatic();
+        return mods.isStatic();
     }
 
     /** Returns the owner for this entry.
@@ -46,10 +46,10 @@ public abstract class MemberEnv extends Env {
      *  can be accessed from code that appears in the given fromClass.
      */
     public void accessCheck(Context ctxt, Position pos) {
-      ClassType cls = ctxt.getCurrClass();
-      if (!mods.accessible(owner, cls)) {
-        ctxt.report(new Failure(pos, "Cannot access " + describe()
-                                   + " from the class " + cls));
-      }
+        ClassType cls = ctxt.getCurrClass();
+        if (!mods.accessible(owner, cls)) {
+            ctxt.report(new Failure(pos, "Cannot access " + describe()
+                                    + " from the class " + cls));
+        }
     }
 }

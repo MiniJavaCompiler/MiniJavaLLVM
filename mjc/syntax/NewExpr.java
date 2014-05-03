@@ -14,13 +14,13 @@ import interp.*;
  */
 public final class NewExpr extends StatementExpr {
     private Name      name;
-  //private Args      args;
+    //private Args      args;
     private ClassType cls;
 
     public NewExpr(Position pos, Name name /*, Args args */) {
         super(pos);
         this.name = name;
-      //this.args = args;
+        //this.args = args;
         this.cls  = null;
     }
 
@@ -29,9 +29,9 @@ public final class NewExpr extends StatementExpr {
      */
     public Type typeOf(Context ctxt, VarEnv env) throws Diagnostic {
         cls = name.asClass(ctxt);
-        if (cls==null) {
+        if (cls == null) {
             throw new Failure(pos, "Undefined name " + name);
-        } 
+        }
         return cls;
     }
 

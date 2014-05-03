@@ -20,7 +20,7 @@ public abstract class Expression extends Syntax {
      *  type (or throw an exception if an unrecoverable error occurs).
      */
     public abstract Type typeOf(Context ctxt, VarEnv env)
-      throws Diagnostic;
+    throws Diagnostic;
 
     /** A simple utility function to check that a type has the required value
      *  and report an error if that test fails.
@@ -28,9 +28,9 @@ public abstract class Expression extends Syntax {
     protected void required(Context ctxt, String where, Type got, Type wanted) {
         if (!got.equal(wanted)) {
             ctxt.report(new Failure(pos, where  + " has type " +
-                                         got    + "; a value of type " +
-                                         wanted + " is required"));
-        }           
+                                    got    + "; a value of type " +
+                                    wanted + " is required"));
+        }
     }
 
     /** This value is used as the depth for an expression that can have
@@ -60,10 +60,10 @@ public abstract class Expression extends Syntax {
     }
 
     void compileExprOp(Assembly a, String op, int free) {
-        a.spill(free+1);
-        compileExpr(a, free+1);
-        a.emit(op, a.reg(free+1), a.reg(free));
-        a.unspill(free+1);
+        a.spill(free + 1);
+        compileExpr(a, free + 1);
+        a.emit(op, a.reg(free + 1), a.reg(free));
+        a.unspill(free + 1);
     }
     void compileExprOp(Assembly a, String op) {
         compileExprOp(a, op, 0);

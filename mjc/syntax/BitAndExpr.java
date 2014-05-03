@@ -16,14 +16,14 @@ public final class BitAndExpr extends BitOpExpr {
     }
 
     /** Return a true value to indicate that bitwise and is commutative.
-     */ 
+     */
     boolean commutes() {
-        return true; 
-    }   
-    
+        return true;
+    }
+
     /** Generate code to evaluate this expression and
      *  leave the result in the specified free variable.
-     */ 
+     */
     public void compileExpr(Assembly a, int free) {
         compileOp(a, "andl", free);
     }

@@ -28,13 +28,13 @@ public final class ObjectAccess extends FieldAccess {
     public Type typeOf(Context ctxt, VarEnv env) throws Diagnostic {
         Type receiver = object.typeOf(ctxt, env);
         ClassType cls = receiver.isClass();
-        if (cls==null) {
+        if (cls == null) {
             throw new Failure(pos,
-                      "Cannot access field " + name +
-                      " in a value of type " + receiver);
-        } else if ((this.env=cls.findField(name))==null) {
+            "Cannot access field " + name +
+            " in a value of type " + receiver);
+        } else if ((this.env = cls.findField(name)) == null) {
             throw new Failure(pos,
-                      "Cannot find field " + name + " in class " + cls);
+            "Cannot find field " + name + " in class " + cls);
         }
         this.env.accessCheck(ctxt, pos);
         return this.env.getType();
@@ -52,10 +52,10 @@ public final class ObjectAccess extends FieldAccess {
      *  this expression.
      */
     void saveVar(Assembly a, int free) {
-        a.spill(free+1);
-        object.compileExpr(a, free+1);
+        a.spill(free + 1);
+        object.compileExpr(a, free + 1);
         env.saveField(a, free);
-        a.unspill(free+1);
+        a.unspill(free + 1);
     }
 
     /** Evaluate this expression.

@@ -39,7 +39,7 @@ public abstract class BinaryOp extends Expression {
     }
 
     void compileOp(Assembly a, String op, int free) {
-        if (left.getDepth()>right.getDepth() || right.getDepth()>=DEEP) {
+        if (left.getDepth() > right.getDepth() || right.getDepth() >= DEEP) {
             left.compileExpr(a, free);
             right.compileExprOp(a, op, free);
         } else if (commutes()) {
@@ -47,11 +47,11 @@ public abstract class BinaryOp extends Expression {
             left.compileExprOp(a, op, free);
         } else {
             right.compileExpr(a, free);
-            a.spill(free+1);
-            left.compileExpr(a, free+1);
-            a.emit("xchgl", a.reg(free+1), a.reg(free));
-            a.emit(op,      a.reg(free+1), a.reg(free));
-            a.unspill(free+1);
+            a.spill(free + 1);
+            left.compileExpr(a, free + 1);
+            a.emit("xchgl", a.reg(free + 1), a.reg(free));
+            a.emit(op,      a.reg(free + 1), a.reg(free));
+            a.unspill(free + 1);
         }
     }
 

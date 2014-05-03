@@ -28,14 +28,14 @@ public final class FrameAccess extends FieldAccess {
 
     /** Generate code to evaluate this expression and
      *  leave the result in the specified free variable.
-     */             
+     */
     public void compileExpr(Assembly a, int free) {
         env.loadVar(a, free);
-    }                       
-            
+    }
+
     /** Save the value in the free register in the variable specified by
      *  this expression.
-     */ 
+     */
     void saveVar(Assembly a, int free) {
         env.saveVar(a, free);
     }

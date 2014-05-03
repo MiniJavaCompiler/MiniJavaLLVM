@@ -15,6 +15,6 @@ public class IntValue extends Value {
      *  if this value does not represent an integer.
      */
     public int getInt() {
-       return value;
+        return value;
     }
 }

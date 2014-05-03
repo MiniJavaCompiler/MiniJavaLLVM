@@ -23,7 +23,7 @@ public final class Context extends Phase {
     /** Look for the definition of a class by its name.
      */
     public ClassType findClass(String name) {
-        for (int i=0; i<classes.length; i++) {
+        for (int i = 0; i < classes.length; i++) {
             if (name.equals(classes[i].getId().getName())) {
                 return classes[i];
             }
@@ -52,7 +52,7 @@ public final class Context extends Phase {
 
     /** Get the current method for this context.
      */
-    public MethEnv getCurrMethod () {
+    public MethEnv getCurrMethod() {
         return currMethod;
     }
 
@@ -60,7 +60,7 @@ public final class Context extends Phase {
      *  instance context (in which case, a this object will be present).
      */
     public boolean isStatic() {
-        return currMethod==null || currMethod.isStatic();
+        return currMethod == null || currMethod.isStatic();
     }
 
     /** Indicate whether any failures have been reported to this context.
@@ -73,9 +73,9 @@ public final class Context extends Phase {
      *  to the entry point if all of the checks pass.
      */
     public MethEnv check() {
-        return classes!=null
-            && checkClasses()
-            && checkMembers() ? checkMain() : null;
+        return classes != null
+               && checkClasses()
+               && checkMembers() ? checkMain() : null;
     }
 
     /** Top-level checking of the class declarations that are included
@@ -83,12 +83,12 @@ public final class Context extends Phase {
      */
     private boolean checkClasses() {
         ClassType[] classes = this.classes;
-        for (int i=classes.length-1; i>=0; i--) {
-            for (int j=0; j<i; j++) {
+        for (int i = classes.length - 1; i >= 0; i--) {
+            for (int j = 0; j < i; j++) {
                 if (classes[i].getId().sameId(classes[j].getId())) {
                     report(new Failure(classes[i].getPos(),
-                             "Multiple definitions for class " +
-                             classes[i].getId()));
+                                       "Multiple definitions for class " +
+                                       classes[i].getId()));
                     break;
                 }
             }
@@ -102,7 +102,7 @@ public final class Context extends Phase {
      */
     private boolean checkMembers() {
         ClassType[] classes = this.classes;
-        for (int i=0; i<classes.length; i++) {
+        for (int i = 0; i < classes.length; i++) {
             setCurrClass(classes[i]);
             classes[i].checkMembers(this);
         }
@@ -116,19 +116,19 @@ public final class Context extends Phase {
      */
     private MethEnv checkMain() {
         ClassType mainClass = findClass("Main");
-        if (mainClass==null) {
+        if (mainClass == null) {
             report(new Failure(
-               "Program does not contain a definition for class Main"));
+                       "Program does not contain a definition for class Main"));
         } else {
             MethEnv mainMeth = mainClass.findMethod("main");
-            if (mainMeth==null) {
+            if (mainMeth == null) {
                 report(new Failure("No method main in class Main"));
             } else if (!mainMeth.isStatic()) {
                 report(new Failure(mainMeth.getPos(),
-                         "Main.main is not static"));
+                                   "Main.main is not static"));
             } else if (!mainMeth.eqSig(null, null)) {
                 report(new Failure(mainMeth.getPos(),
-                         "Main.main does not have the right type"));
+                                   "Main.main does not have the right type"));
             } else {
                 return mainMeth;
             }
@@ -145,7 +145,7 @@ public final class Context extends Phase {
     /** Reserve space in the current frame for a local variable.
      */
     public void reserveSpace(int frameOffset) {
-        if (localBytes+frameOffset < 0) {
+        if (localBytes + frameOffset < 0) {
             localBytes = (-frameOffset);
         }
     }

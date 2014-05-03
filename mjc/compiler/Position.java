@@ -11,7 +11,7 @@ package compiler;
  *  case we need to be able to give a name to source code positions so
  *  that we can tell users where certain values are defined, or where
  *  errors have been detected.
- * 
+ *
  *  [We might also like to have a mechanism for starting an editor at a
  *  particular position so that users can view and potentially change the
  *  corresponding sections of source code.]

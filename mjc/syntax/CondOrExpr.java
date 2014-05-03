@@ -15,9 +15,9 @@ public final class CondOrExpr extends LogicOpExpr {
         super(pos, left, right);
     }
 
-    /** Generate code to evaluate this expression and 
+    /** Generate code to evaluate this expression and
      *  leave the result in the specified free variable.
-     */ 
+     */
     public void compileExpr(Assembly a, int free) {
         String l1 = a.newLabel();
         String l2 = a.newLabel();
@@ -25,13 +25,13 @@ public final class CondOrExpr extends LogicOpExpr {
         right.branchTrue(a, l1, free);
         a.emit("movl", a.immed(0), a.reg(free));
         a.emit("jmp", l2);
-        
+
         a.emitLabel(l1);
         a.emit("movl", a.immed(1), a.reg(free));
-        
+
         a.emitLabel(l2);
-    }                 
-                      
+    }
+
     /** Generate code to evaluate this expression and
      *  branch to a specified label if the result is false.
      */
@@ -41,10 +41,10 @@ public final class CondOrExpr extends LogicOpExpr {
         right.branchFalse(a, lab, free);
         a.emitLabel(l1);
     }
-     
+
     /** Generate code to evaluate this expression and
      *  branch to a specified label if the result is true.
-     */ 
+     */
     void branchTrue(Assembly a, String lab, int free) {
         left.branchTrue(a, lab, free);
         right.branchTrue(a, lab, free);

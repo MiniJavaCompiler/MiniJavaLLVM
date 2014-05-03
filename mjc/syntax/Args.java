@@ -40,7 +40,7 @@ public class Args {
      */
     public static Args reverse(Args args) {
         Args result = null;
-        while (args!=null) {
+        while (args != null) {
             Args temp = args.next;
             args.next = result;
             result    = args;
@@ -52,7 +52,7 @@ public class Args {
     /** Evaluate the arguments in this list and push them on to the stack.
      */
     public static void push(State st, Args args) {
-        for (; args!=null; args=args.next) {
+        for (; args != null; args = args.next) {
             st.push(args.arg.eval(st));
         }
     }

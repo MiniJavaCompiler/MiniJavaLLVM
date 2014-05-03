@@ -49,13 +49,13 @@ public abstract class Diagnostic extends Exception {
      */
     public Diagnostic(String text) {
         this.text = text;
-    } 
+    }
 
     /** Construct a diagnostic object for a particular source position.
      */
     public Diagnostic(Position position) {
         this.position = position;
-    } 
+    }
 
     /** Construct a simple diagnostic with a fixed description
      *  and a source position.
@@ -63,5 +63,5 @@ public abstract class Diagnostic extends Exception {
     public Diagnostic(Position position, String text) {
         this.position = position;
         this.text     = text;
-    } 
+    }
 }

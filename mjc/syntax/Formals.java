@@ -45,7 +45,7 @@ public class Formals {
      */
     public static Formals reverse(Formals formals) {
         Formals result = null;
-        while (formals!=null) {
+        while (formals != null) {
             Formals temp = formals.next;
             formals.next = result;
             result       = formals;

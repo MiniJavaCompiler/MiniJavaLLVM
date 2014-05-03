@@ -10,7 +10,7 @@ import lexer.MjcLexer;
 /** Provides public access to the MjcParser.
  */
 public class Parser extends MjcParser {
-  public Parser(Handler handler, MjcLexer lexer) {
-    super(handler, lexer);
-  }
+    public Parser(Handler handler, MjcLexer lexer) {
+        super(handler, lexer);
+    }
 }

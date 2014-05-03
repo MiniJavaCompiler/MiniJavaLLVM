@@ -22,8 +22,8 @@ public class FieldDecl extends Decls {
      */
     public void addToClass(Context ctxt, ClassType cls) {
         type = type.check(ctxt);
-        if (type!=null) {
-            for (VarDecls vs = vardecls; vs!=null; vs=vs.getNext()) {
+        if (type != null) {
+            for (VarDecls vs = vardecls; vs != null; vs = vs.getNext()) {
                 cls.addField(ctxt, mods, vs.getId(), type);
             }
         }

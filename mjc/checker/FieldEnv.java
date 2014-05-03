@@ -26,7 +26,7 @@ public final class FieldEnv extends MemberEnv {
      *  in a given environment.
      */
     public static FieldEnv find(String name, FieldEnv env) {
-        while (env!=null && !name.equals(env.id.getName())) {
+        while (env != null && !name.equals(env.id.getName())) {
             env = env.next;
         }
         return env;
@@ -42,17 +42,17 @@ public final class FieldEnv extends MemberEnv {
      *  use in error diagnostics.
      */
     public String describe() {
-      return "field " + id;
+        return "field " + id;
     }
 
     /** Compile a list of (global) variable definitions.
      */
     public static void compileFields(Assembly a, FieldEnv env) {
-        for (; env!=null; env=env.next) {
+        for (; env != null; env = env.next) {
             env.compileField(a);
         }
-    }   
-    
+    }
+
     /** Output the code to reserve space for a declared field.  Only the
      *  static fields need space reserved in this way; space for non-static
      *  fields is allocated dynamically as part of object creation.
@@ -65,7 +65,7 @@ public final class FieldEnv extends MemberEnv {
 
     /** Generate code to load the value of a field from an object whose
      *  address is passed in through the current free register.
-     */             
+     */
     public void loadField(Assembly a, int free) {
         if (isStatic()) {
             a.emit("movl", staticName(a), a.reg(free));
@@ -76,12 +76,12 @@ public final class FieldEnv extends MemberEnv {
 
     /** Save the value in the free register in a field of the object that
      *  is pointed to by register (free+1).
-     */ 
+     */
     public void saveField(Assembly a, int free) {
         if (isStatic()) {
             a.emit("movl", a.reg(free), staticName(a));
         } else {
-            a.emit("movl", a.reg(free), a.indirect(offset, a.reg(free+1)));
+            a.emit("movl", a.reg(free), a.indirect(offset, a.reg(free + 1)));
         }
     }
 
@@ -97,8 +97,8 @@ public final class FieldEnv extends MemberEnv {
 
     public Value getField(ObjValue obj) {
         if (isStatic()) {
-            if (val==null) {
-              Interp.abort("Attempt to use uninitialized static variable!");
+            if (val == null) {
+                Interp.abort("Attempt to use uninitialized static variable!");
             }
             return val;
         } else {

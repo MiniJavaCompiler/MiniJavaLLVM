@@ -22,7 +22,7 @@ public final class BooleanLiteral extends Literal {
      *  type (or throw an exception if an unrecoverable error occurs).
      */
     public Type typeOf(Context ctxt, VarEnv env)
-      throws Diagnostic {
+    throws Diagnostic {
         return Type.BOOLEAN;
     }
 

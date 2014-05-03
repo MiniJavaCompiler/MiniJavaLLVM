@@ -30,8 +30,8 @@ public class Name {
      */
     public Position getPos() {
         Name n = this;
-        while (n.prefix!=null) {
-            n= n.prefix;
+        while (n.prefix != null) {
+            n = n.prefix;
         }
         return n.id.getPos();
     }
@@ -39,7 +39,7 @@ public class Name {
     /** Generate a printable representation of a name.
      */
     public String toString() {
-        if (prefix==null) {
+        if (prefix == null) {
             return id.toString();
         } else {
             return prefix + "." + id;
@@ -49,7 +49,7 @@ public class Name {
     /** Lookup name as a class.
      */
     public ClassType asClass(Context ctxt) {
-        if (prefix==null) {
+        if (prefix == null) {
             return ctxt.findClass(id.getName());
         }
         return null;
@@ -58,28 +58,28 @@ public class Name {
     /** Lookup name as a value.
      */
     public FieldAccess asValue(Context ctxt, VarEnv env) {
-        if (prefix==null) {
-           VarEnv ve = VarEnv.find(id.getName(), env);
-           if (ve!=null) {
-               return new FrameAccess(ve);
-           }
-           ClassType cls = ctxt.getCurrClass();
-           FieldEnv fe;
-           if (cls!=null && (fe=cls.findField(id.getName()))!=null) {
-               return new SimpleAccess(id, fe);
-           }
+        if (prefix == null) {
+            VarEnv ve = VarEnv.find(id.getName(), env);
+            if (ve != null) {
+                return new FrameAccess(ve);
+            }
+            ClassType cls = ctxt.getCurrClass();
+            FieldEnv fe;
+            if (cls != null && (fe = cls.findField(id.getName())) != null) {
+                return new SimpleAccess(id, fe);
+            }
         } else {
-           Expression object = prefix.asValue(ctxt, env);
-           if (object!=null) {
-               return new ObjectAccess(object, id);
-           }
-           ClassType cls = prefix.asClass(ctxt);
-           FieldEnv  fe;
-           if (cls!=null && (fe=cls.findField(id.getName()))!=null) {
-               return new ClassAccess(fe);
-           } 
-//         throw new Failure(pos,
-//                    "Cannot find field " + name + " in class " + cls);
+            Expression object = prefix.asValue(ctxt, env);
+            if (object != null) {
+                return new ObjectAccess(object, id);
+            }
+            ClassType cls = prefix.asClass(ctxt);
+            FieldEnv  fe;
+            if (cls != null && (fe = cls.findField(id.getName())) != null) {
+                return new ClassAccess(fe);
+            }
+            //         throw new Failure(pos,
+            //                    "Cannot find field " + name + " in class " + cls);
         }
         return null;
     }
@@ -87,20 +87,20 @@ public class Name {
     /** Lookup name as a method.
      */
     public Invocation asMethod(Context ctxt, VarEnv env, Args args) {
-        if (prefix==null) {
+        if (prefix == null) {
             MethEnv menv = ctxt.getCurrClass().findMethod(id.getName());
-            if (menv!=null) {
+            if (menv != null) {
                 return new ThisInvocation(id, args, menv);
             }
         } else {
             Expression object = prefix.asValue(ctxt, env);
-            if (object!=null) {
+            if (object != null) {
                 return new ObjectInvocation(object, id, args);
             }
-           ClassType cls = prefix.asClass(ctxt);
-           if (cls!=null) {
-               return new ClassInvocation(cls, id, args);
-           }
+            ClassType cls = prefix.asClass(ctxt);
+            if (cls != null) {
+                return new ClassInvocation(cls, id, args);
+            }
         }
         return null;
     }

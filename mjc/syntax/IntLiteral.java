@@ -22,8 +22,8 @@ public final class IntLiteral extends Literal {
      *  type (or throw an exception if an unrecoverable error occurs).
      */
     public Type typeOf(Context ctxt, VarEnv env)
-      throws Diagnostic {
-        return Type.INT;                 
+    throws Diagnostic {
+        return Type.INT;
     }
 
     /** Generate code to evaluate this expression and
@@ -36,21 +36,21 @@ public final class IntLiteral extends Literal {
     void compileExprOp(Assembly a, String op, int free) {
         a.emit(op, a.immed(value), a.reg(free));
     }
-    
+
     /** Generate code to evaluate this expression and
      *  branch to a specified label if the result is false.
-     */ 
+     */
     void branchFalse(Assembly a, String lab, int free) {
-        if (value==0) {
+        if (value == 0) {
             a.emit("jmp", lab);
         }
     }
-    
+
     /** Generate code to evaluate this expression and
      *  branch to a specified label if the result is true.
-     */ 
+     */
     void branchTrue(Assembly a, String lab, int free) {
-        if (value!=0) {
+        if (value != 0) {
             a.emit("jmp", lab);
         }
     }

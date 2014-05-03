@@ -26,9 +26,9 @@ public final class While extends Statement {
      */
     public boolean check(Context ctxt, VarEnv env, int frameOffset) {
         try {
-            if (!test.typeOf(ctxt, env).equal(Type.BOOLEAN)) { 
+            if (!test.typeOf(ctxt, env).equal(Type.BOOLEAN)) {
                 ctxt.report(new Failure(pos,
-                            "Boolean valued expression required for test"));
+                                        "Boolean valued expression required for test"));
             }
         } catch (Diagnostic d) {
             ctxt.report(d);
@@ -46,8 +46,8 @@ public final class While extends Statement {
         test.branchFalse(a, l2);
         body.compileThen(a, l1);
         a.emitLabel(l2);
-    }   
-            
+    }
+
     /** Emit code that executes this statement and then branches
      *  to a specified label.
      */
@@ -64,7 +64,7 @@ public final class While extends Statement {
      */
     public Value exec(State st) {
         Value v = null;
-        while (v==null && test.eval(st).getBool()) {
+        while (v == null && test.eval(st).getBool()) {
             v = body.exec(st);
         }
         return v;

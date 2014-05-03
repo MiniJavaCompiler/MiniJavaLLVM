@@ -21,15 +21,15 @@ public final class EqualExpr extends EqOpExpr {
      */
     public void compileExpr(Assembly a, int free) {
         compileComp(a, "jz", free);
-    }       
-            
+    }
+
     /** Generate code to evaluate this expression and
      *  branch to a specified label if the result is false.
-     */             
-    void branchFalse(Assembly a, String lab, int free) { 
+     */
+    void branchFalse(Assembly a, String lab, int free) {
         branchCond(a, "jnz", lab, free);
-    }   
-            
+    }
+
     /** Generate code to evaluate this expression and
      *  branch to a specified label if the result is true.
      */

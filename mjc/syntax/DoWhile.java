@@ -25,13 +25,13 @@ public final class DoWhile extends Statement {
      */
     public boolean check(Context ctxt, VarEnv env, int frameOffset) {
         try {
-            if (!test.typeOf(ctxt, env).equal(Type.BOOLEAN)) { 
+            if (!test.typeOf(ctxt, env).equal(Type.BOOLEAN)) {
                 ctxt.report(new Failure(pos,
-                            "Boolean valued expression required for test"));
+                                        "Boolean valued expression required for test"));
             }
         } catch (Diagnostic d) {
-            ctxt.report(d); 
-        }           
+            ctxt.report(d);
+        }
         return body.check(ctxt, env, frameOffset);
     }
 
@@ -52,7 +52,7 @@ public final class DoWhile extends Statement {
         Value v = null;
         do {
             v = body.exec(st);
-        } while (v==null && test.eval(st).getBool());
+        } while (v == null && test.eval(st).getBool());
         return v;
     }
 }

@@ -52,10 +52,10 @@ public abstract class SourceLexer extends Lexer {
     }
 
     protected int nextChar() {
-        if (line==null) {
+        if (line == null) {
             c   = EOF;
             col = 0;  // EOF is always at column 0
-        } else if (++col>=line.length()) {
+        } else if (++col >= line.length()) {
             c   = EOL;
         } else {
             c   = line.charAt(col);

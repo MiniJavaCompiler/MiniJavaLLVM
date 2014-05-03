@@ -25,7 +25,7 @@ public abstract class Phase {
     /** Report a diagnostic detected in this phase.
      */
     public void report(Diagnostic d) {
-        if (handler!=null) {
+        if (handler != null) {
             handler.report(d);
         }
     }

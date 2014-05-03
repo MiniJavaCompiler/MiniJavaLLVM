@@ -5,17 +5,17 @@
 package interp;
 
 public abstract class Value {
-   public static final BoolValue TRUE  = new BoolValue(true);
-   public static final BoolValue FALSE = new BoolValue(false);
-   public static final ObjValue  NULL  = new ObjValue(null, 0);
+    public static final BoolValue TRUE  = new BoolValue(true);
+    public static final BoolValue FALSE = new BoolValue(false);
+    public static final ObjValue  NULL  = new ObjValue(null, 0);
 
-   /** Convert this value into an int, or fail with an error message
-    *  if this value does not represent an integer.
-    */
-   public int getInt() {
-       Interp.abort("Type error: value is not an integer");
-       return 0;
-   }   
+    /** Convert this value into an int, or fail with an error message
+     *  if this value does not represent an integer.
+     */
+    public int getInt() {
+        Interp.abort("Type error: value is not an integer");
+        return 0;
+    }
 
     /** Convert this value into a Boolean, or fail with an error message
      *  if this value does not represent a Boolean.
@@ -35,7 +35,7 @@ public abstract class Value {
 
     /** Convert this value into an ArrayValue, or fail with an error message
      *  if this value does not represent an array.
-     */  
+     */
     public ArrayValue getArray() {
         Interp.abort("Type error: value is not an array");
         return null;

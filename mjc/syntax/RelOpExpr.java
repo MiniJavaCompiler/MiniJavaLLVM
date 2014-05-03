@@ -18,15 +18,15 @@ public abstract class RelOpExpr extends BinaryOp {
      *  type (or throw an exception if an unrecoverable error occurs).
      */
     public Type typeOf(Context ctxt, VarEnv env)
-      throws Diagnostic {
+    throws Diagnostic {
         try {
             Type lt = left.typeOf(ctxt, env);
             Type rt = right.typeOf(ctxt, env);
             if (!lt.equal(rt)) {
                 ctxt.report(new Failure(pos,
-                    "Operands should have the same type, but the " +
-                    " left operand has type " + lt +
-                    " and the right operand has type " + rt));
+                "Operands should have the same type, but the " +
+                " left operand has type " + lt +
+                " and the right operand has type " + rt));
             }
         } catch (Diagnostic d) {
             ctxt.report(d);

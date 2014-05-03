@@ -22,7 +22,7 @@ public final class This extends Expression {
      *  type (or throw an exception if an unrecoverable error occurs).
      */
     public Type typeOf(Context ctxt, VarEnv env)
-      throws Diagnostic {
+    throws Diagnostic {
         if (ctxt.isStatic()) {
             throw new Failure(pos, "Cannot access this in a static context");
         }

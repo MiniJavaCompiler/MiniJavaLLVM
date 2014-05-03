@@ -5,3 +5,8 @@
 
 #no java class files
 *.class
+*.jar
+
+#no parser output
+mjc/syntax/MjcParser.java
+mjc/MANIFEST.MF

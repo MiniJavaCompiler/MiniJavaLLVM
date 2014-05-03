@@ -24,9 +24,9 @@ public final class NameInvocation extends Invocation {
     /** Calculate the type of this method invocation.
      */
     Type typeInvocation(Context ctxt, VarEnv env)
-      throws Diagnostic {
+    throws Diagnostic {
         resolved = name.asMethod(ctxt, env, args);
-        if (resolved==null) {
+        if (resolved == null) {
             throw new Failure(pos, "Undefined name " + name);
         }
         return resolved.typeInvocation(ctxt, env);

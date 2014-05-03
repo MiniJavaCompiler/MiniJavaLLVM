@@ -35,7 +35,7 @@ public final class MethEnv extends MemberEnv {
      *  in a given environment.
      */
     public static MethEnv find(String name, MethEnv env) {
-        while (env!=null && !name.equals(env.id.getName())) {
+        while (env != null && !name.equals(env.id.getName())) {
             env = env.next;
         }
         return env;
@@ -51,15 +51,15 @@ public final class MethEnv extends MemberEnv {
      *  method.
      */
     public boolean eqSig(Type type, VarEnv params) {
-        return ((this.type==null && type==null) ||
-                (this.type!=null && type!=null && this.type.equal(type))) &&
+        return ((this.type == null && type == null) ||
+                (this.type != null && type != null && this.type.equal(type))) &&
                VarEnv.eqTypes(this.params, params);
     }
 
     /** Static analysis on a list of method definitions.
      */
     public static void checkMethods(Context ctxt, MethEnv menv) {
-        for (; menv!=null; menv=menv.next) {
+        for (; menv != null; menv = menv.next) {
             menv.checkMethod(ctxt);
         }
     }
@@ -67,11 +67,11 @@ public final class MethEnv extends MemberEnv {
     /** Static analysis on a method body
      */
     void checkMethod(Context ctxt) {
-        if (body!=null) {
+        if (body != null) {
             ctxt.setCurrMethod(this);
-            if (body.check(ctxt, params, 0) && getType()!=null) {
+            if (body.check(ctxt, params, 0) && getType() != null) {
                 ctxt.report(new Failure(body.getPos(),
-                            "Method does not return a value"));
+                                        "Method does not return a value"));
             }
             localBytes = ctxt.getLocalBytes();
             ctxt.setCurrMethod(null);
@@ -82,12 +82,12 @@ public final class MethEnv extends MemberEnv {
      *  use in error diagnostics.
      */
     public String describe() {
-      return "method " + id + "(" + ")";
+        return "method " + id + "(" + ")";
     }
 
     /** Returns the slot number for this method in the vtable.
      */
-    public int getSlot() { 
+    public int getSlot() {
         // TODO: Eliminate this getter
         return slot;
     }
@@ -100,17 +100,17 @@ public final class MethEnv extends MemberEnv {
 
     /** Returns the number of bytes used for local variables in this method.
      */
-    public int getLocals() { 
+    public int getLocals() {
         // TODO: Eliminate this getter
         return localBytes;
     }
 
     /** Add entries from this method environment to the vtable for the
      *  enclosing class.
-     */            
+     */
     public static void addToVTable(MethEnv env, MethEnv[] vtable) {
-        for (; env!=null; env=env.next) {
-            if (env.slot>=0) {
+        for (; env != null; env = env.next) {
+            if (env.slot >= 0) {
                 vtable[env.slot] = env;
             }
         }
@@ -119,7 +119,7 @@ public final class MethEnv extends MemberEnv {
     /** Generate the code for a list of method bodies.
      */
     public static void compileMethods(Assembly a, MethEnv menv) {
-        for (; menv!=null; menv=menv.next) {
+        for (; menv != null; menv = menv.next) {
             menv.compileMethod(a);
         }
     }
@@ -127,7 +127,7 @@ public final class MethEnv extends MemberEnv {
     /** Generate the code for a method body.
      */
     public void compileMethod(Assembly a) {
-        if (body!=null) {
+        if (body != null) {
             a.emitPrologue(methName(a), localBytes);
             body.compileRet(a);
         }
@@ -143,11 +143,11 @@ public final class MethEnv extends MemberEnv {
         int argReg = 0;
         if (!isStatic()) {
             a.emit("pushl", a.reg(0));
-            a.emit("movl", a.indirect(0,a.reg(0)), a.reg(0));
+            a.emit("movl", a.indirect(0, a.reg(0)), a.reg(0));
             a.emit("movl", a.indirect(a.vtOffset(slot), a.reg(0)), a.reg(0));
             argReg = 1;
         }
-        for (; args!=null; args=args.getNext()) {
+        for (; args != null; args = args.getNext()) {
             args.getArg().compileExpr(a, argReg);
             a.emit("pushl", a.reg(argReg));
         }
@@ -185,19 +185,19 @@ public final class MethEnv extends MemberEnv {
      *  function and execute that instead.  For the time being, the
      *  only primitive is System.out.
      */
-     public Value run(State st) {
-         if (body!=null) {
-             return body.exec(st);
-         }
-         if (owner.toString().equals("System")
-             && getName().equals("out")
-             && isStatic()
-             && size==4) {
-             System.out.println("out: " + st.getFrame(8).getInt());
-             return Value.NULL;
-         }
-         Interp.abort("Cannot execute method " + getName()
-                                      + " in class " + owner);
-         return null;
+    public Value run(State st) {
+        if (body != null) {
+            return body.exec(st);
+        }
+        if (owner.toString().equals("System")
+            && getName().equals("out")
+            && isStatic()
+            && size == 4) {
+            System.out.println("out: " + st.getFrame(8).getInt());
+            return Value.NULL;
+        }
+        Interp.abort("Cannot execute method " + getName()
+                     + " in class " + owner);
+        return null;
     }
 }

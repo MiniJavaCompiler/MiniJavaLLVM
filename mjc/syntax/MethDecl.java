@@ -27,14 +27,14 @@ public class MethDecl extends Decls {
     /** Add a declared item to a specified class.
      */
     public void addToClass(Context ctxt, ClassType cls) {
-        if (type!=null) {
+        if (type != null) {
             type = type.check(ctxt);
         }
         VarEnv params = null;
-        for (; formals!=null; formals=formals.getNext()) {
+        for (; formals != null; formals = formals.getNext()) {
             Id   paramId   = formals.getId();
             Type paramType = formals.getType().check(ctxt);
-            if (VarEnv.find(paramId.getName(), params)!=null) {
+            if (VarEnv.find(paramId.getName(), params) != null) {
                 ctxt.report(new Failure(paramId.getPos(),
                                         "Multiple uses of parameter " +
                                         paramId));

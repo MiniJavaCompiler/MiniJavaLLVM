@@ -33,9 +33,9 @@ public final class SimpleAccess extends FieldAccess {
 
     /** Generate code to evaluate this expression and
      *  leave the result in the specified free variable.
-     */             
+     */
     public void compileExpr(Assembly a, int free) {
-	if (!env.isStatic()) {
+        if (!env.isStatic()) {
             a.loadThis(size, free);
         }
         env.loadField(a, free);
@@ -43,15 +43,15 @@ public final class SimpleAccess extends FieldAccess {
 
     /** Save the value in the free register in the variable specified by
      *  this expression.
-     */ 
+     */
     void saveVar(Assembly a, int free) {
         if (env.isStatic()) {
             env.saveField(a, free);    // No need to load this for static
         } else {
-            a.spill(free+1);
-            a.loadThis(size, free+1);
+            a.spill(free + 1);
+            a.loadThis(size, free + 1);
             env.saveField(a, free);
-            a.unspill(free+1);
+            a.unspill(free + 1);
         }
     }
 

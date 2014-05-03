@@ -25,17 +25,17 @@ public final class NameAccess extends FieldAccess {
      *  type (or throw an exception if an unrecoverable error occurs).
      */
     public Type typeOf(Context ctxt, VarEnv env)
-      throws Diagnostic {
+    throws Diagnostic {
         resolved = name.asValue(ctxt, env);
-        if (resolved==null) {
+        if (resolved == null) {
             throw new Failure(pos, "Undefined name " + name);
         }
-        return resolved.typeOf(ctxt,env);
+        return resolved.typeOf(ctxt, env);
     }
 
     /** Generate code to evaluate this expression and
      *  leave the result in the specified free variable.
-     */     
+     */
     public void compileExpr(Assembly a, int free) {
         resolved.compileExpr(a, free);
     }
@@ -45,7 +45,7 @@ public final class NameAccess extends FieldAccess {
      */
     void saveVar(Assembly a, int free) {
         resolved.saveVar(a, free);
-    } 
+    }
 
     /** Evaluate this expression.
      */

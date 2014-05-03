@@ -37,7 +37,7 @@ public class VarDecls {
      */
     public static VarDecls reverse(VarDecls vardecls) {
         VarDecls result = null;
-        while (vardecls!=null) {
+        while (vardecls != null) {
             VarDecls temp = vardecls.next;
             vardecls.next = result;
             result        = vardecls;

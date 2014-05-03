@@ -25,16 +25,16 @@ public final class SuperAccess extends FieldAccess {
      *  type (or throw an exception if an unrecoverable error occurs).
      */
     public Type typeOf(Context ctxt, VarEnv env)
-      throws Diagnostic {
+    throws Diagnostic {
         ClassType sup = ctxt.getCurrClass().getSuper();
-        if (sup==null) {
+        if (sup == null) {
             throw new Failure(pos, "Current class has no super class");
         } else if (ctxt.isStatic()) {
             throw new Failure(pos,
-                      "Cannot access a super class in a static context");
-        } else if ((this.env=sup.findField(name))==null) {
+            "Cannot access a super class in a static context");
+        } else if ((this.env = sup.findField(name)) == null) {
             throw new Failure(pos,
-                       "Cannot find field " + name + " in superclass");
+            "Cannot find field " + name + " in superclass");
         }
         this.env.accessCheck(ctxt, pos);
         size = ctxt.getCurrMethod().getSize();
@@ -53,10 +53,10 @@ public final class SuperAccess extends FieldAccess {
      *  this expression.
      */
     void saveVar(Assembly a, int free) {
-        a.spill(free+1);
-        a.loadThis(size, free+1);
+        a.spill(free + 1);
+        a.loadThis(size, free + 1);
         env.saveField(a, free);
-        a.unspill(free+1);
+        a.unspill(free + 1);
     }
 
     /** Evaluate this expression.

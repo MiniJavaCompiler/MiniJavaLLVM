@@ -19,7 +19,7 @@ public class Checker {
     /** A command line entry point to the mini Java checker.
      */
     public static void main(String[] args) {
-        if (args.length!=1) {
+        if (args.length != 1) {
             System.err.println("usage: java mjc.Compiler inputFile");
             return;
         }
@@ -42,9 +42,9 @@ public class Checker {
         MjcLexer    lexer   = new MjcLexer(handler, source);
         Parser      parser  = new Parser(handler, lexer);
         ClassType[] classes = parser.getClasses();
-        if (new Context(handler, classes).check()!=null) {
+        if (new Context(handler, classes).check() != null) {
             System.out.println(
-               "No static errors found in \"" + inputFile + "\"");
+                "No static errors found in \"" + inputFile + "\"");
         }
     }
 }

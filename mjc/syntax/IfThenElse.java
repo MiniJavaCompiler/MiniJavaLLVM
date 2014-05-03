@@ -33,21 +33,21 @@ public final class IfThenElse extends Statement {
         try {
             if (!test.typeOf(ctxt, env).equal(Type.BOOLEAN)) {
                 ctxt.report(new Failure(pos,
-                            "Boolean valued expression required for test"));
+                                        "Boolean valued expression required for test"));
             }
         } catch (Diagnostic d) {
             ctxt.report(d);
         }
         return (ifTrue.check(ctxt, env, frameOffset) &
-                (ifFalse==null || ifFalse.check(ctxt, env, frameOffset)));
+                (ifFalse == null || ifFalse.check(ctxt, env, frameOffset)));
     }
 
     /** Emit code to execute this statement.
-     */ 
+     */
     void compile(Assembly a) {
         String l1 = a.newLabel();
         test.branchFalse(a, l1);
-        if (ifFalse!=null) {
+        if (ifFalse != null) {
             String l2 = a.newLabel();
             ifTrue.compileThen(a, l2);
             a.emitLabel(l1);
@@ -63,7 +63,7 @@ public final class IfThenElse extends Statement {
      *  to a specified label.
      */
     void compileThen(Assembly a, String lab) {
-        if (ifFalse!=null) {
+        if (ifFalse != null) {
             String l1 = a.newLabel();
             test.branchFalse(a, l1);
             ifTrue.compileThen(a, lab);
@@ -81,9 +81,9 @@ public final class IfThenElse extends Statement {
      */
     public Value exec(State st) {
         if (test.eval(st).getBool()) {
-            return (ifTrue==null)  ? null : ifTrue.exec(st);
+            return (ifTrue == null)  ? null : ifTrue.exec(st);
         } else {
-            return (ifFalse==null) ? null : ifFalse.exec(st);
+            return (ifFalse == null) ? null : ifFalse.exec(st);
         }
     }
 }

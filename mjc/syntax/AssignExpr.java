@@ -25,19 +25,19 @@ public final class AssignExpr extends StatementExpr {
      *  type (or throw an exception if an unrecoverable error occurs).
      */
     public Type typeOf(Context ctxt, VarEnv env)
-      throws Diagnostic {
+    throws Diagnostic {
         Type lt = lhs.typeOf(ctxt, env);
         Type rt = rhs.typeOf(ctxt, env);
         if (!lt.isSuperOf(rt)) {
             throw new Failure(pos, "Cannot assign value of type " + rt +
-                                   " to variable of type " + lt);
+            " to variable of type " + lt);
         }
         return lt;
     }
 
     /** Generate code to evaluate this expression and
      *  leave the result in the specified free variable.
-     */ 
+     */
     public void compileExpr(Assembly a, int free) {
         rhs.compileExpr(a, free);
         lhs.saveVar(a, free);

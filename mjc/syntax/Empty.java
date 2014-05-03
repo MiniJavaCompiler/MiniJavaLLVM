@@ -24,7 +24,7 @@ public final class Empty extends Statement {
     }
 
     /** Emit code to execute this statement.
-     */     
+     */
     void compile(Assembly a) {
         // Nothing to do!
     }

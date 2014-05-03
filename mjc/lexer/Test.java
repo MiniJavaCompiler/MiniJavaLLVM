@@ -16,7 +16,7 @@ public class Test implements Tokens {
     /** A command line entry point.
      */
     public static void main(String[] args) {
-        if (args.length!=1) {
+        if (args.length != 1) {
             System.err.println("usage: java lexer.Test inputFile");
             return;
         }
@@ -24,16 +24,16 @@ public class Test implements Tokens {
         Handler handler    = new SimpleHandler();
         try {
             Reader   reader = new FileReader(inputFile);
-	    // Use these two lines for Handwritten Lexer:
+            // Use these two lines for Handwritten Lexer:
             Source      source = new JavaSource(handler, inputFile, reader);
             MjcLexer lexer  = new MjcLexer(handler, source);
-	    // Use this line for Generated Lexer:
+            // Use this line for Generated Lexer:
             //Generated lexer  = new Generated(reader);
 
-	    int tok = lexer.nextToken();
-	    while (tok!=ENDINPUT) {
+            int tok = lexer.nextToken();
+            while (tok != ENDINPUT) {
                 System.out.println(displayToken(tok, lexer.getSemantic()));
-		tok = lexer.nextToken();
+                tok = lexer.nextToken();
             }
             System.out.println("ENDINPUT");
 
@@ -45,47 +45,88 @@ public class Test implements Tokens {
 
     private static String displayToken(int tok, Object semantic) {
         switch (tok) {
-            case BOOLEAN : return "BOOLEAN";
-            case CAND    : return "CAND";
-            case CLASS   : return "CLASS";
-            case COR     : return "COR";
-            case ELSE    : return "ELSE";
-            case EQEQ    : return "EQEQ";
-            case EXTENDS : return "EXTENDS";
-            case FALSE   : return "FALSE";
-            case IDENT   : return "IDENT(" + semantic + ")";
-            case IF      : return "IF";
-            case INT     : return "INT";
-            case INTLIT  : return "INTLIT(" + semantic + ")";
-            case NEQ     : return "NEQ";
-            case NEW     : return "NEW";
-            case NULL    : return "NULL";
-            case RETURN  : return "RETURN";
-            case STATIC  : return "STATIC";
-            case SUPER   : return "SUPER";
-            case THIS    : return "THIS";
-            case TRUE    : return "TRUE";
-            case VOID    : return "VOID";
-            case WHILE   : return "WHILE";
-            case '!'     : return "\"!\"";
-            case '&'     : return "\"&\"";
-            case '('     : return "\"(\"";
-            case ')'     : return "\")\"";
-            case '*'     : return "\"*\"";
-            case '+'     : return "\"+\"";
-            case ','     : return "\",\"";
-            case '-'     : return "\"-\"";
-            case '.'     : return "\".\"";
-            case '/'     : return "\"/\"";
-            case ';'     : return "\";\"";
-            case '<'     : return "\"<\"";
-            case '='     : return "\"=\"";
-            case '>'     : return "\">\"";
-            case '^'     : return "\"^\"";
-            case '{'     : return "\"{\"";
-            case '|'     : return "\"|\"";
-            case '}'     : return "\"}\"";
-            default      : return "UNKNOWN TOKEN";
+        case BOOLEAN :
+            return "BOOLEAN";
+        case CAND    :
+            return "CAND";
+        case CLASS   :
+            return "CLASS";
+        case COR     :
+            return "COR";
+        case ELSE    :
+            return "ELSE";
+        case EQEQ    :
+            return "EQEQ";
+        case EXTENDS :
+            return "EXTENDS";
+        case FALSE   :
+            return "FALSE";
+        case IDENT   :
+            return "IDENT(" + semantic + ")";
+        case IF      :
+            return "IF";
+        case INT     :
+            return "INT";
+        case INTLIT  :
+            return "INTLIT(" + semantic + ")";
+        case NEQ     :
+            return "NEQ";
+        case NEW     :
+            return "NEW";
+        case NULL    :
+            return "NULL";
+        case RETURN  :
+            return "RETURN";
+        case STATIC  :
+            return "STATIC";
+        case SUPER   :
+            return "SUPER";
+        case THIS    :
+            return "THIS";
+        case TRUE    :
+            return "TRUE";
+        case VOID    :
+            return "VOID";
+        case WHILE   :
+            return "WHILE";
+        case '!'     :
+            return "\"!\"";
+        case '&'     :
+            return "\"&\"";
+        case '('     :
+            return "\"(\"";
+        case ')'     :
+            return "\")\"";
+        case '*'     :
+            return "\"*\"";
+        case '+'     :
+            return "\"+\"";
+        case ','     :
+            return "\",\"";
+        case '-'     :
+            return "\"-\"";
+        case '.'     :
+            return "\".\"";
+        case '/'     :
+            return "\"/\"";
+        case ';'     :
+            return "\";\"";
+        case '<'     :
+            return "\"<\"";
+        case '='     :
+            return "\"=\"";
+        case '>'     :
+            return "\">\"";
+        case '^'     :
+            return "\"^\"";
+        case '{'     :
+            return "\"{\"";
+        case '|'     :
+            return "\"|\"";
+        case '}'     :
+            return "\"}\"";
+        default      :
+            return "UNKNOWN TOKEN";
         }
     }
 }

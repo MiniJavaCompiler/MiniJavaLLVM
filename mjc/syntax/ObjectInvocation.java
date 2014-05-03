@@ -25,16 +25,16 @@ public final class ObjectInvocation extends Invocation {
     /** Calculate the type of this method invocation.
      */
     Type typeInvocation(Context ctxt, VarEnv env)
-      throws Diagnostic {
+    throws Diagnostic {
         Type receiver = object.typeOf(ctxt, env);
         ClassType cls = receiver.isClass();
-        if (cls==null) {
+        if (cls == null) {
             throw new Failure(pos,
-                      "Cannot access field " + name +
-                      " in a value of type " + receiver);
-        } else if ((this.menv=cls.findMethod(name))==null) {
+            "Cannot access field " + name +
+            " in a value of type " + receiver);
+        } else if ((this.menv = cls.findMethod(name)) == null) {
             throw new Failure(pos,
-                      "Cannot find method " + name + " in class " + cls);
+            "Cannot find method " + name + " in class " + cls);
         }
         return checkInvocation(ctxt, env, this.menv);
     }
@@ -45,8 +45,8 @@ public final class ObjectInvocation extends Invocation {
     void compileInvocation(Assembly a, int free) {
         object.compileExpr(a, 0);
         menv.compileInvocation(a, args, free);
-    }   
-            
+    }
+
     /** Evaluate this expression.
      */
     public Value eval(State st) {

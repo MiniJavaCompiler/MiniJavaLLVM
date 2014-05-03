@@ -25,15 +25,15 @@ public final class ClassInvocation extends Invocation {
     /** Calculate the type of this method invocation.
      */
     Type typeInvocation(Context ctxt, VarEnv env)
-      throws Diagnostic {
+    throws Diagnostic {
         this.menv = cls.findMethod(name);
-        if (this.menv==null) {
+        if (this.menv == null) {
             throw new Failure(pos,
-                      "Cannot find method " + name + " in class " + cls);
+            "Cannot find method " + name + " in class " + cls);
         } else if (!this.menv.isStatic()) {
             throw new Failure(pos,
-                      "Cannot access method " + name +
-                      " without an object of class " + cls);
+            "Cannot access method " + name +
+            " without an object of class " + cls);
         }
         return checkInvocation(ctxt, env, this.menv);
     }
@@ -41,7 +41,7 @@ public final class ClassInvocation extends Invocation {
     /** Generate code for this method invocation, leaving
      *  the result in the specified free variable.
      */
-    void compileInvocation(Assembly a, int free) { 
+    void compileInvocation(Assembly a, int free) {
         menv.compileInvocation(a, args, free);
     }
 

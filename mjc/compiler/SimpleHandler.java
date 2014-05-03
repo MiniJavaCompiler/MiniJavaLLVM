@@ -19,11 +19,11 @@ public class SimpleHandler extends Handler {
         } else {
             System.err.print("ERROR: ");
         }
-        if (pos!=null) {
+        if (pos != null) {
             System.err.println(pos.describe());
         }
         String txt = d.getText();
-        if (txt!=null) {
+        if (txt != null) {
             System.err.println(txt);
         }
         System.err.println();

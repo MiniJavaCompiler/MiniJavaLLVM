@@ -22,35 +22,35 @@ public class BlockStatement extends Stmts {
      */
     public boolean check(Context ctxt, VarEnv env, int frameOffset) {
         return stmt.check(ctxt, env, frameOffset) &
-               (next==null || next.check(ctxt, env, frameOffset));
+               (next == null || next.check(ctxt, env, frameOffset));
     }
 
     /** Emit code to execute this statement.
-     */ 
+     */
     void compile(Assembly a) {
         stmt.compile(a);
-        if (next!=null) {
+        if (next != null) {
             next.compile(a);
         }
     }
-    
+
     /** Emit code that executes this statement and then branches
      *  to a specified label.
      */
     void compileThen(Assembly a, String lab) {
-        if (next!=null) {
+        if (next != null) {
             stmt.compile(a);
             next.compileThen(a, lab);
         } else {
             stmt.compileThen(a, lab);
         }
     }
-     
+
     /** Emit code that executes this statement and then returns from the
      *  current method.
      */
     public void compileRet(Assembly a) {
-        if (next!=null) {
+        if (next != null) {
             stmt.compile(a);
             next.compileRet(a);
         } else {

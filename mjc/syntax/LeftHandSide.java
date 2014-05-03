@@ -17,7 +17,7 @@ public abstract class LeftHandSide extends Expression {
 
     /** Save the value in the free register in the variable specified by
      *  this expression.
-     */     
+     */
     abstract void saveVar(Assembly a, int free);
 
     /** Save a value in the location specified by this left hand side.

@@ -34,7 +34,7 @@ public abstract class Decls {
      */
     public static Decls reverse(Decls decls) {
         Decls result = null;
-        while (decls!=null) {
+        while (decls != null) {
             Decls temp = decls.next;
             decls.next = result;
             result     = decls;

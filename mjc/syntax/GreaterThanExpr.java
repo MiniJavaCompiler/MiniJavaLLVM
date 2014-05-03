@@ -17,11 +17,11 @@ public final class GreaterThanExpr extends RelOpExpr {
 
     /** Generate code to evaluate this expression and
      *  leave the result in the specified free variable.
-     */ 
+     */
     public void compileExpr(Assembly a, int free) {
         compileComp(a, "jg", free);
-    }   
-    
+    }
+
     /** Generate code to evaluate this expression and
      *  branch to a specified label if the result is false.
      */

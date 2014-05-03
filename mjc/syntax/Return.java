@@ -28,24 +28,24 @@ public final class Return extends Statement {
      */
     public boolean check(Context ctxt, VarEnv env, int frameOffset) {
         Type rt = ctxt.getCurrMethod().getType();
-        if (result!=null) {
-            if (rt!=null) {
+        if (result != null) {
+            if (rt != null) {
                 try {
                     Type it = result.typeOf(ctxt, env);
                     if (!rt.isSuperOf(it)) {
                         ctxt.report(new Failure(pos,
-                                    "Cannot return a value of type " + it +
-                                    " where a value of type " + rt +
-                                    " is required"));
-                    }       
+                                                "Cannot return a value of type " + it +
+                                                " where a value of type " + rt +
+                                                " is required"));
+                    }
                 } catch (Diagnostic d) {
                     ctxt.report(d);
                 }
             } else {
                 ctxt.report(new Failure(pos,
-                            "Method should not return value"));
+                                        "Method should not return value"));
             }
-        } else if (rt!=null) {
+        } else if (rt != null) {
             ctxt.report(new Failure(pos, "A return value is required"));
         }
         return false;
@@ -54,7 +54,7 @@ public final class Return extends Statement {
     /** Emit code to execute this statement.
      */
     void compile(Assembly a) {
-        if (result!=null) {
+        if (result != null) {
             result.compileExpr(a);
         }
         a.emitEpilogue();
@@ -79,6 +79,6 @@ public final class Return extends Statement {
      *  a null indicates that no result was returned.
      */
     public Value exec(State st) {
-        return (result==null) ? Value.NULL : result.eval(st);
+        return (result == null) ? Value.NULL : result.eval(st);
     }
 }

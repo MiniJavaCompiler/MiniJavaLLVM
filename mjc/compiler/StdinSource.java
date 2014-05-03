@@ -50,9 +50,9 @@ public class StdinSource extends Source {
             } catch (Exception e) {
                 report(new Failure("Error in input stream"));
             }
-            if (c=='\n') {
+            if (c == '\n') {
                 break;
-            } else if (c<0) {
+            } else if (c < 0) {
                 foundEOF = true;
                 break;
             }

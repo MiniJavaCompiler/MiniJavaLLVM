@@ -23,14 +23,14 @@ public abstract class Invocation extends StatementExpr {
      *  return void.
      */
     void checkExpr(Context ctxt, VarEnv env)
-      throws Diagnostic {
+    throws Diagnostic {
         typeInvocation(ctxt, env);
     }
 
     /** Calculate the type of this method invocation.
      */
     abstract Type typeInvocation(Context ctxt, VarEnv env)
-      throws Diagnostic;
+    throws Diagnostic;
 
     /** Check arguments of a method invocation.
      */
@@ -45,7 +45,7 @@ public abstract class Invocation extends StatementExpr {
      */
     public Type typeOf(Context ctxt, VarEnv env) throws Diagnostic {
         Type result = typeInvocation(ctxt, env);
-        if (result==null) {
+        if (result == null) {
             throw new Failure(pos, "Method does not return a value");
         }
         return result;
@@ -58,7 +58,7 @@ public abstract class Invocation extends StatementExpr {
 
     /** Generate code to evaluate this expression and
      *  leave the result in the specified free variable.
-     */     
+     */
     public void compileExpr(Assembly a, int free) {
         a.spillAll(free);
         compileInvocation(a, free);

@@ -16,8 +16,8 @@ public abstract class Literal extends Expression {
     /** Return the depth of this expression tree as a measure of its
      *  complexity.  Literals never require any evaluation so they
      *  always have zero depth.
-     */ 
+     */
     int getDepth() {
         return 0;
-    }  
+    }
 }

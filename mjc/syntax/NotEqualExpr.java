@@ -17,18 +17,18 @@ public final class NotEqualExpr extends EqOpExpr {
 
     /** Generate code to evaluate this expression and
      *  leave the result in the specified free variable.
-     */ 
+     */
     public void compileExpr(Assembly a, int free) {
         compileComp(a, "jnz", free);
-    }   
-    
+    }
+
     /** Generate code to evaluate this expression and
      *  branch to a specified label if the result is false.
      */
     void branchFalse(Assembly a, String lab, int free) {
         branchCond(a, "jz", lab, free);
-    }   
-            
+    }
+
     /** Generate code to evaluate this expression and
      *  branch to a specified label if the result is true.
      */
@@ -41,6 +41,6 @@ public final class NotEqualExpr extends EqOpExpr {
     public Value eval(State st) {
         // Should handle comparisons other than integers ...
         return BoolValue.make(left.eval(st).getInt()
-                                != right.eval(st).getInt());
+                              != right.eval(st).getInt());
     }
 }

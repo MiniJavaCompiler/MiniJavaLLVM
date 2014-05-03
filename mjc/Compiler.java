@@ -18,7 +18,7 @@ public class Compiler {
     /** A command line entry point to the mini Java compiler.
      */
     public static void main(String[] args) {
-        if (args.length!=2) {
+        if (args.length != 2) {
             System.err.println("usage: java -jar mjc.jar inputFile outputFile");
             return;
         }
@@ -43,14 +43,14 @@ public class Compiler {
         MjcLexer    lexer   = new MjcLexer(handler, source);
         Parser      parser  = new Parser(handler, lexer);
         ClassType[] classes = parser.getClasses();
-        if (new Context(handler, classes).check()!=null) {
+        if (new Context(handler, classes).check() != null) {
             Assembly assembly = Assembly.assembleToFile(assemblyFile);
-            if (assembly==null) {
+            if (assembly == null) {
                 handler.report(new Failure("Cannot open file " +
                                            assemblyFile + " for output"));
             } else {
                 assembly.emitStart(inputFile);
-                for (int i=0; i<classes.length; i++) {
+                for (int i = 0; i < classes.length; i++) {
                     classes[i].compile(assembly);
                 }
                 assembly.close();

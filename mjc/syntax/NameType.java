@@ -28,7 +28,7 @@ public final class NameType extends Type {
      */
     public Type check(Context ctxt) {
         ClassType cls = name.asClass(ctxt);
-        if (cls==null) {
+        if (cls == null) {
             ctxt.report(new Failure(name.getPos(), "Unknown type " + name));
         }
         return cls;

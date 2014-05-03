@@ -22,7 +22,7 @@ public abstract class Statement extends Syntax {
     public abstract boolean check(Context ctxt, VarEnv env, int frameOffset);
 
     /** Emit code to execute this statement.
-     */ 
+     */
     abstract void compile(Assembly a);
 
     /** Emit code that executes this statement and then branches
@@ -32,7 +32,7 @@ public abstract class Statement extends Syntax {
         compile(a);
         a.emit("jmp", lab);
     }
-        
+
     /** Emit code that executes this statement and then returns from the
      *  current method.
      */

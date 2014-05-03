@@ -83,7 +83,7 @@ public abstract class Lexer extends Phase {
     }
 
     /** Return a position describing where the current token was
-     *  found.  This method is abstract because different types 
+     *  found.  This method is abstract because different types
      *  of lexer will need to return different types of source
      *  position depending on how they get their input.
      */
@@ -92,7 +92,7 @@ public abstract class Lexer extends Phase {
     /** Test for a particular next token code.
      */
     public boolean match(int token) {
-        if (token==this.token) {
+        if (token == this.token) {
             nextToken();
             return true;
         }

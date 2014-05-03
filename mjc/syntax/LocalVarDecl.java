@@ -28,20 +28,20 @@ public class LocalVarDecl extends Stmts {
      */
     public boolean check(Context ctxt, VarEnv env, int frameOffset) {
         type = type.check(ctxt);
-        if (type!=null) { 
+        if (type != null) {
             int size = type.size();
-            for (VarDecls vs=varDecls; vs!=null; vs=vs.getNext()) {
-                if (VarEnv.find(vs.getId().getName(), env)!=null) {
+            for (VarDecls vs = varDecls; vs != null; vs = vs.getNext()) {
+                if (VarEnv.find(vs.getId().getName(), env) != null) {
                     ctxt.report(new Failure(pos,
-                      "Repeated definition for variable " + vs.getId()));
+                                            "Repeated definition for variable " + vs.getId()));
                 } else {
                     frameOffset -= size;
                     env = new VarEnv(vs.getId(), type, frameOffset, env);
                 }
             }
             ctxt.reserveSpace(frameOffset);
-        }   
-        if (next==null) {
+        }
+        if (next == null) {
             ctxt.report(new Failure(pos, "Declarations have no use"));
             return true;
         } else {

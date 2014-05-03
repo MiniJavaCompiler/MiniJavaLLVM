@@ -25,15 +25,15 @@ public final class SuperInvocation extends Invocation {
      */
     Type typeInvocation(Context ctxt, VarEnv env) throws Diagnostic {
         ClassType sup = ctxt.getCurrClass().getSuper();
-        if (sup==null) {
+        if (sup == null) {
             throw new Failure(pos, "Current class has no super class");
         } else if (ctxt.isStatic()) {
             throw new Failure(pos,
-                      "Cannot access a super class in a static context");
-        } else if ((this.menv=sup.findMethod(name))==null) {
+            "Cannot access a super class in a static context");
+        } else if ((this.menv = sup.findMethod(name)) == null) {
             throw new Failure(pos,
-                       "Cannot find method " + name + " in superclass");
-        }             
+            "Cannot find method " + name + " in superclass");
+        }
         size = ctxt.getCurrMethod().getSize();
         return checkInvocation(ctxt, env, this.menv);
     }
@@ -47,7 +47,7 @@ public final class SuperInvocation extends Invocation {
         }
         menv.compileInvocation(a, args, free);
     }
-        
+
     /** Evaluate this expression.
      */
     public Value eval(State st) {

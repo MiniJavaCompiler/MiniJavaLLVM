@@ -32,97 +32,117 @@ public class MjcLexer extends SourceLexer implements Tokens {
             lexemeText = null;
             semantic   = null;
             switch (c) {
-                case EOF  : return token=ENDINPUT;
+            case EOF  :
+                return token = ENDINPUT;
 
                 // Separators:
-                case '('  : nextChar();
-                            return token='(';
-                case ')'  : nextChar();
-                            return token=')';
-                case '{'  : nextChar();
-                            return token='{';
-                case '}'  : nextChar();
-                            return token='}';
-                case ';'  : nextChar();
-                            return token=';';
-                case ','  : nextChar();
-                            return token=',';
-                case '.'  : nextChar();
-                            if (Character.isDigit((char)c)) {
-                                backStep();
-                                return number();
-                            }
-                            return token='.';
+            case '('  :
+                nextChar();
+                return token = '(';
+            case ')'  :
+                nextChar();
+                return token = ')';
+            case '{'  :
+                nextChar();
+                return token = '{';
+            case '}'  :
+                nextChar();
+                return token = '}';
+            case ';'  :
+                nextChar();
+                return token = ';';
+            case ','  :
+                nextChar();
+                return token = ',';
+            case '.'  :
+                nextChar();
+                if (Character.isDigit((char)c)) {
+                    backStep();
+                    return number();
+                }
+                return token = '.';
 
                 // Operators:
-                case '='  : nextChar();
-                            if (c=='=') {
-                                nextChar();
-                                return token=EQEQ;
-                            } else {
-                                return token='=';
-                            }
+            case '='  :
+                nextChar();
+                if (c == '=') {
+                    nextChar();
+                    return token = EQEQ;
+                } else {
+                    return token = '=';
+                }
 
-                case '>'  : nextChar();
-                            return token='>';
+            case '>'  :
+                nextChar();
+                return token = '>';
 
-                case '<'  : nextChar();
-                            return token='<';
+            case '<'  :
+                nextChar();
+                return token = '<';
 
-                case '!'  : nextChar();
-                            if (c=='=') {
-                                nextChar();
-                                return token=NEQ;
-                            } else {
-                                return token='!';
-                            }
+            case '!'  :
+                nextChar();
+                if (c == '=') {
+                    nextChar();
+                    return token = NEQ;
+                } else {
+                    return token = '!';
+                }
 
-                case '&'  : nextChar();
-                            if (c=='&') {
-                                nextChar();
-                                return token=CAND;
-                            } else {
-                                return token='&';
-                            }
+            case '&'  :
+                nextChar();
+                if (c == '&') {
+                    nextChar();
+                    return token = CAND;
+                } else {
+                    return token = '&';
+                }
 
-                case '|'  : nextChar();
-                            if (c=='|') {
-                                nextChar();
-                                return token=COR;
-                            } else {
-                                return token='|';
-                            }
+            case '|'  :
+                nextChar();
+                if (c == '|') {
+                    nextChar();
+                    return token = COR;
+                } else {
+                    return token = '|';
+                }
 
-                case '^'  : nextChar();
-                            return token='^';
+            case '^'  :
+                nextChar();
+                return token = '^';
 
-                case '+'  : nextChar();
-                            return token='+';
+            case '+'  :
+                nextChar();
+                return token = '+';
 
-                case '-'  : nextChar();
-                            return token='-';
+            case '-'  :
+                nextChar();
+                return token = '-';
 
-                case '*'  : nextChar();
-                            return token='*';
+            case '*'  :
+                nextChar();
+                return token = '*';
 
-                case '/'  : nextChar();
-                            if (c=='/') {
-                                skipOneLineComment();
-                            } else if (c=='*') {
-                                skipBracketComment();
-                            } else {
-                                return token = '/';
-                            }
-                            break;
+            case '/'  :
+                nextChar();
+                if (c == '/') {
+                    skipOneLineComment();
+                } else if (c == '*') {
+                    skipBracketComment();
+                } else {
+                    return token = '/';
+                }
+                break;
 
-                default   : if (Character.isJavaIdentifierStart((char)c)) {
-                                return identifier();
-                            } else if (Character.digit((char)c, 10)>=0) {
-                                return number();
-                            } else {
-                                illegalCharacter();
-                                nextChar();
-                            }
+            default   :
+                if (Character.isJavaIdentifierStart((char)c)) {
+                    return identifier();
+                } else if (Character.digit((char)c, 10) >= 0) {
+                    return number();
+                } else {
+                    illegalCharacter();
+                    nextChar();
+                }
             }
         }
     }
@@ -130,14 +150,14 @@ public class MjcLexer extends SourceLexer implements Tokens {
     //- Whitespace and comments -----------------------------------------------
 
     private boolean isWhitespace(int c) {
-        return (c==' ') || (c=='\t') || (c=='\f');
+        return (c == ' ') || (c == '\t') || (c == '\f');
     }
 
     private void skipWhitespace() {
         while (isWhitespace(c)) {
             nextChar();
         }
-        while (c==EOL) {
+        while (c == EOL) {
             nextLine();
             while (isWhitespace(c)) {
                 nextChar();
@@ -152,20 +172,20 @@ public class MjcLexer extends SourceLexer implements Tokens {
     private void skipBracketComment() { // Assumes c=='*'
         nextChar();
         for (;;) {
-            if (c=='*') {
+            if (c == '*') {
                 do {
                     nextChar();
-                } while (c=='*');
-                if (c=='/') {
+                } while (c == '*');
+                if (c == '/') {
                     nextChar();
                     return;
                 }
             }
-            if (c==EOF) {
+            if (c == EOF) {
                 report(new Failure(getPos(), "Unterminated comment"));
                 return;
             }
-            if (c==EOL) {
+            if (c == EOL) {
                 nextLine();
             } else {
                 nextChar();
@@ -179,15 +199,15 @@ public class MjcLexer extends SourceLexer implements Tokens {
         int start = col;
         do {
             nextChar();
-        } while (c!=EOF && Character.isJavaIdentifierPart((char)c));
+        } while (c != EOF && Character.isJavaIdentifierPart((char)c));
         lexemeText = line.substring(start, col);
 
         Object kw  = reserved.get(lexemeText);
-        if (kw!=null) {
-            return token=((Integer)kw).intValue();
+        if (kw != null) {
+            return token = ((Integer)kw).intValue();
         }
         semantic = new Id(getPos(), lexemeText);
-        return token=IDENT;
+        return token = IDENT;
     }
 
     private static Hashtable reserved;
@@ -222,12 +242,12 @@ public class MjcLexer extends SourceLexer implements Tokens {
         int n = 0;
         int d = Character.digit((char)c, 10);
         do {
-            n = 10*n + d;
+            n = 10 * n + d;
             nextChar();
             d = Character.digit((char)c, 10);
-        } while (d>=0);
+        } while (d >= 0);
         semantic = new IntLiteral(getPos(), n);
-        return token=INTLIT;
+        return token = INTLIT;
     }
 
     //- Miscellaneous support functions ---------------------------------------
@@ -239,14 +259,14 @@ public class MjcLexer extends SourceLexer implements Tokens {
      *  position.
      */
     public Object getSemantic() {
-        if (semantic==null) {
+        if (semantic == null) {
             semantic = getPos();
         }
         return semantic;
     }
 
     private void backStep() {
-        if (col>0) {
+        if (col > 0) {
             c = line.charAt(--col);
         }
     }

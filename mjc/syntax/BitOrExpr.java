@@ -17,17 +17,17 @@ public final class BitOrExpr extends BitOpExpr {
     }
 
     /** Return a true value to indicate that bitwise or is commutative.
-     */ 
+     */
     boolean commutes() {
         return true;
-    }   
-        
+    }
+
     /** Generate code to evaluate this expression and
      *  leave the result in the specified free variable.
-     */     
+     */
     public void compileExpr(Assembly a, int free) {
         compileOp(a, "orl", free);
-    } 
+    }
 
     /** Evaluate this expression.
      */
