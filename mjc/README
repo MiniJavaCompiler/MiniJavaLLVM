@@ -1,0 +1,103 @@
+This directory contains source code for a version of the Mini Java
+Compiler, mjc.  A brief summary of the files that you'll find here:
+
+  README         That's this file!
+
+  compiler/      Contains source code for a simple but general library
+                 for writing compiler applications in Java.
+
+  lexer/         Contains source code for our mini Java lexer.
+
+  syntax/        Contains source code for a mini Java parser and for
+                 the classes that are used to represent mini Java's
+                 abstract syntax.  There are a lot of classes here;
+                 check these out for details of the compilation schemes
+                 that are used (as well the static analysis code from
+                 CS321).  The parser is written using jacc, and the
+                 input for jacc is included in the file Mjc.jacc.
+                 However, I've also included the jacc output files,
+                 MjcTokens.java and MjcParser.java, so you won't need
+                 to run jacc yourself unless you modify the grammar.
+
+  checker/       Contains source code for classes that are used to
+                 implement static analysis (Contexts and environments).
+                 Although the code in this directory deals primarily
+                 with topics from CS321, there are some small pieces
+                 related to code generation in the individual environment
+                 classes (because the method that is used to access a
+                 variable depends on information that is stored in the
+                 environment structures, such as the offset of a field
+                 in a stack frame or object).
+
+  codegen/       Contains source code for the Assembly class, which is
+                 used to support generation of assembly code output.
+
+  interp/        Contains source code for classes that are used to
+                 implement key functionality of a mini Java interpreter.
+
+  Compiler.java  Contains source code for a top-level driver for
+                 the compiler.
+
+  runtime.c      A very simple "runtime" library that you can use to
+                 build executable programs from the output of mjc
+
+  ts.j           The familiar mini Java example program
+
+  Makefile       A simple Makefile that can be used to build the
+                 mini Java compiler, to build the mjc.jar file, or
+                 to delete unwanted class files.
+
+To compile: from the top level directory, you can use the Makefile
+(just type "make" and hit return) or else compile using the following
+command line:
+
+  javac -classpath . Compiler.java
+
+To remove class files (sometimes useful if the Java compiler gets
+confused!), just type "make clean" and hit return.
+
+To run the mini Java compiler: from the top-level directory, you should
+use the following command:
+
+  java -classpath . Compiler inputFile.j outputFile.s
+
+Be careful that the specified outputFile.s does not contain information
+that you want to keep because the mini Java compiler will overwrite that
+file, and any information that was stored in it will be lost.
+
+All of the above should work on any machine that has a recent version
+of Java installed.  If you are using an x86 machine that has a version
+of gcc installed, then you can go a step further and actually run the
+output from mjc.
+
+First, as distributed, the source code has been configured for use
+on a standard Linux machine, such as the machines in the linuxlab.  If
+you want to do this work on a different machine, look for the line that
+sets LINUX = true in codegen/Assembly.java and change it to LINUX = false.
+If you make this change, then you will need to rebuild mjc, and then
+rebuild any .s files that you have produced.
+
+Let's take compilation of ts.j as an example, starting with generation
+of assembly code:
+
+  java -classpath . Compiler ts.j ts.s
+
+This puts the assembly language output in the file ts.s.  Now we can
+pass that to the assembler, using gcc to link it with a compiled version
+of the runtime system:
+
+  gcc -o ts ts.s runtime.c
+
+And now, at last, you can run the program:
+
+  ./ts
+
+The output from this particular program should be:
+
+  Starting:
+  out: 6
+  Finishing (10 words allocated).
+
+Exciting eh?
+
+------------------------------------------------------------------------
