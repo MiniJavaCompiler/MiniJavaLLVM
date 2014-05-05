@@ -56,4 +56,7 @@ public final class CondAndExpr extends LogicOpExpr {
         return BoolValue.make(left.eval(st).getBool()
                               && right.eval(st).getBool());
     }
+    public Object accept(ExprVisitor visitor, Object data) {
+        return visitor.visit(this, data);
+    }
 }

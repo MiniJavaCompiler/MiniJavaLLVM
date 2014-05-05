@@ -66,4 +66,7 @@ public final class Block extends Statement {
         }
         return v;
     }
+    public Object accept(StmtVisitor visitor, Object data) {
+        return visitor.visit(this, data);
+    }
 }

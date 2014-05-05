@@ -81,4 +81,7 @@ public final class Return extends Statement {
     public Value exec(State st) {
         return (result == null) ? Value.NULL : result.eval(st);
     }
+    public Object accept(StmtVisitor visitor, Object data) {
+        return visitor.visit(this, data);
+    }
 }

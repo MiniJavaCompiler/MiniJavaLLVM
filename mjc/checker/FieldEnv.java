@@ -22,6 +22,13 @@ public final class FieldEnv extends MemberEnv {
         this.next   = next;
     }
 
+    public int getOffset() {
+        return offset;
+    }
+
+    public FieldEnv getNext() {
+        return next;
+    }
     /** Look for the entry corresponding to a particular identifier
      *  in a given environment.
      */
@@ -112,5 +119,9 @@ public final class FieldEnv extends MemberEnv {
         } else {
             obj.setField(offset, val);
         }
+    }
+
+    public Object accept(EnvVisitor visitor, Object data) {
+        return visitor.visit(this, data);
     }
 }

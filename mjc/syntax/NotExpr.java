@@ -41,4 +41,7 @@ public final class NotExpr extends UnaryOp {
     public Value eval(State st) {
         return BoolValue.make(!expr.eval(st).getBool());
     }
+    public Object accept(ExprVisitor visitor, Object data) {
+        return visitor.visit(this, data);
+    }
 }

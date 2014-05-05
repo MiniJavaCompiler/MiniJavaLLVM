@@ -29,6 +29,21 @@ public final class ClassType extends Type {
         this.decls       = decls;
     }
 
+    public FieldEnv getFields() {
+        return fields;
+    }
+    public MethEnv getMethods() {
+        return methods;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public MethEnv[] getVtable() {
+        return vtable;
+    }
+
     /** Return a printable representation of this type.
      */
     public String toString() {
@@ -241,5 +256,9 @@ public final class ClassType extends Type {
      */
     public Value call(State st, int slot) {
         return st.call(vtable[slot]);
+    }
+
+    public Object accept(TypeVisitor visitor, Object data) {
+        return visitor.visit(this, data);
     }
 }

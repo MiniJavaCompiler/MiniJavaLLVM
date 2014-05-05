@@ -30,7 +30,12 @@ public final class MethEnv extends MemberEnv {
         this.body   = body;
         this.next   = next;
     }
-
+    public Statement getBody() {
+        return body;
+    }
+    public MethEnv getNext() {
+        return next;
+    }
     /** Look for the entry corresponding to a particular identifier
      *  in a given environment.
      */
@@ -101,7 +106,6 @@ public final class MethEnv extends MemberEnv {
     /** Returns the number of bytes used for local variables in this method.
      */
     public int getLocals() {
-        // TODO: Eliminate this getter
         return localBytes;
     }
 
@@ -199,5 +203,9 @@ public final class MethEnv extends MemberEnv {
         Interp.abort("Cannot execute method " + getName()
                      + " in class " + owner);
         return null;
+    }
+
+    public Object accept(EnvVisitor visitor, Object data) {
+        return visitor.visit(this, data);
     }
 }

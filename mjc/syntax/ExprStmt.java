@@ -45,4 +45,7 @@ public final class ExprStmt extends Statement {
         expr.eval(st);
         return null;
     }
+    public Object accept(StmtVisitor visitor, Object data) {
+        return visitor.visit(this, data);
+    }
 }

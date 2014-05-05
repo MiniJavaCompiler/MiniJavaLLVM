@@ -55,4 +55,7 @@ public final class DoWhile extends Statement {
         } while (v == null && test.eval(st).getBool());
         return v;
     }
+    public Object accept(StmtVisitor visitor, Object data) {
+        return visitor.visit(this, data);
+    }
 }

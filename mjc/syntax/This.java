@@ -42,4 +42,7 @@ public final class This extends Expression {
     public Value eval(State st) {
         return st.getThis(size);
     }
+    public Object accept(ExprVisitor visitor, Object data) {
+        return visitor.visit(this, data);
+    }
 }

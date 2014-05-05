@@ -86,4 +86,7 @@ public final class IfThenElse extends Statement {
             return (ifFalse == null) ? null : ifFalse.exec(st);
         }
     }
+    public Object accept(StmtVisitor visitor, Object data) {
+        return visitor.visit(this, data);
+    }
 }

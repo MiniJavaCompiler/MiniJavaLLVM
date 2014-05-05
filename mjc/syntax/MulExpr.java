@@ -34,4 +34,7 @@ public final class MulExpr extends NumericOpExpr {
     public Value eval(State st) {
         return new IntValue(left.eval(st).getInt() * right.eval(st).getInt());
     }
+    public Object accept(ExprVisitor visitor, Object data) {
+        return visitor.visit(this, data);
+    }
 }

@@ -36,4 +36,7 @@ public final class Empty extends Statement {
     public Value exec(State st) {
         return null;
     }
+    public Object accept(StmtVisitor visitor, Object data) {
+        return visitor.visit(this, data);
+    }
 }

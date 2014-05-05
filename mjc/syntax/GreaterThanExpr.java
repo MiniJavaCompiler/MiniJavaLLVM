@@ -42,4 +42,7 @@ public final class GreaterThanExpr extends RelOpExpr {
         // Should handle comparisons other than integers ...
         return BoolValue.make(left.eval(st).getInt() > right.eval(st).getInt());
     }
+    public Object accept(ExprVisitor visitor, Object data) {
+        return visitor.visit(this, data);
+    }
 }

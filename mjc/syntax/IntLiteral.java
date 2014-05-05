@@ -60,4 +60,7 @@ public final class IntLiteral extends Literal {
     public Value eval(State st) {
         return new IntValue(value);
     }
+    public Object accept(ExprVisitor visitor, Object data) {
+        return visitor.visit(this, data);
+    }
 }

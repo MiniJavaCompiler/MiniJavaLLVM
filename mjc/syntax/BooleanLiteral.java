@@ -56,4 +56,7 @@ public final class BooleanLiteral extends Literal {
     public Value eval(State st) {
         return BoolValue.make(value);
     }
+    public Object accept(ExprVisitor visitor, Object data) {
+        return visitor.visit(this, data);
+    }
 }

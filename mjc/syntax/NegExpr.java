@@ -41,4 +41,7 @@ public final class NegExpr extends UnaryOp {
     public Value eval(State st) {
         return new IntValue(-expr.eval(st).getInt());
     }
+    public Object accept(ExprVisitor visitor, Object data) {
+        return visitor.visit(this, data);
+    }
 }

@@ -69,4 +69,7 @@ public final class While extends Statement {
         }
         return v;
     }
+    public Object accept(StmtVisitor visitor, Object data) {
+        return visitor.visit(this, data);
+    }
 }

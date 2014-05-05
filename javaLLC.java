@@ -54,7 +54,8 @@ public class javaLLC {
             String assmName = inputFile + ".s";
 
             // compile source to assembly
-            commands.add("java -classpath mjc Compiler " + inputFile + " " + assmName);
+            commands.add("java -classpath mjc Compiler --x86 " + inputFile + " " +
+                         assmName);
             // link assembly with the runtime
             commands.add("gcc -m32 -o " + outputFile + " " + assmName + " mjc/runtime.c");
         } else if (option.equals("-compileLLVM")) {
