@@ -1,0 +1,3 @@
+[submodule "llvm-j"]
+	path = llvm-j
+	url = git@github.com:tindzk/llvm-j.git

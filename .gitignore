@@ -11,3 +11,4 @@
 mjc/syntax/MjcParser.java
 mjc/MANIFEST.MF
 mjc/syntax/MjcTokens.java
+lib
