@@ -8,7 +8,6 @@
 *.jar
 
 #no parser output
-mjc/syntax/MjcParser.java
-mjc/MANIFEST.MF
-mjc/syntax/MjcTokens.java
-lib
+src/syntax/MjcParser.java
+src/syntax/MjcTokens.java
+build

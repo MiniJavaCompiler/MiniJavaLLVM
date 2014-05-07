@@ -1,0 +1,112 @@
+<project name="MJC">
+  <property name="junit.jar" value="/usr/share/java/junit4.jar" />
+  <property name="bridj.jar" value="build/libs/bridj-0.6.2.jar" />
+  <property name="llvm-j.jar" value="build/libs/llvm-j.jar" />
+  <property name="dir.libs" value="build/libs" />
+  <property name="dir.classes" value="build/classes" />
+  <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+  <path id="llvm-j.build.classpath">
+    <pathelement location="${junit.jar}" />
+    <pathelement location="${bridj.jar}"/>
+  </path>
+  <path id="llvm-j.run.classpath">
+    <pathelement location="${junit.jar}" />
+    <pathelement location="${bridj.jar}"/>
+    <pathelement location="${llvm-j.jar}"/>
+  </path>
+  <path id="project.classpath">
+    <pathelement location="${bridj.jar}"/>
+    <pathelement location="${llvm-j.jar}"/>
+  </path>
+  <target name="ubuntu_depends">
+    <exec executable="sudo">
+      <arg value="apt-get" />
+      <arg value="install" />
+      <arg value="libjna-java" />
+      <arg value="llvm-3.4-dev" />
+      <arg value="gcc-4.7-multilib" />
+      <arg value="g++-4.7-multilib" />
+      <arg value="junit4" />
+      <arg value="ant-contrib" />
+    </exec>
+  </target>
+  <target name="clean">
+    <delete dir="build"/>
+    <exec executable="git" dir="llvm-j">
+      <arg value="reset" />
+      <arg value="--hard" />
+    </exec>
+  </target>
+  <target name="build_libs">
+    <mkdir dir="${dir.libs}" />
+    <if>
+      <available file="${bridj.jar}"/>
+      <else>
+        <exec executable="wget" dir="${dir.libs}">
+          <arg value="https://bridj.googlecode.com/files/bridj-0.6.2.jar" />
+        </exec>
+      </else>
+    </if>
+    <if>
+      <available file="${llvm-j.jar}"/>
+      <else>
+        <exec executable="git" dir="llvm-j">
+          <arg value="reset" />
+          <arg value="--hard" />
+        </exec>
+        <exec executable="make" dir="llvm-j">
+          <arg value="llvm" />
+          <arg value="LLVM_HOME=/usr/" />
+        </exec>
+        <mkdir dir="llvm-j/build/classes"/>
+        <javac includeantruntime="false" srcdir="llvm-j/src/" 
+               destdir="llvm-j/build/classes/" classpathref="llvm-j.build.classpath" />
+        <jar destfile="${llvm-j.jar}" basedir="llvm-j/build/classes" />
+        <exec executable="git" dir="llvm-j">
+          <arg value="reset" />
+          <arg value="--hard" />
+        </exec>
+      </else>
+    </if>
+  </target>
+  <target name="llvm_j_test" depends="build_libs">
+    <java classname="org.junit.runner.JUnitCore" fork="true" classpathref="llvm-j.run.classpath">
+      <arg value="org.llvm.test.TestJIT" />
+      <arg value="org.llvm.test.TestLLVM" />
+      <arg value="org.llvm.test.TestFactorial" />
+    </java>
+  </target>
+  <target name="compile" depends="build_libs">
+    <mkdir dir="${dir.classes}"/>
+    <outofdate>
+      <sourcefiles>
+        <pathelement path="src/syntax/Mjc.jacc"/>
+      </sourcefiles>
+      <targetfiles>
+        <pathelement path="src/syntax/MjcParser.java"/>
+        <pathelement path="src/syntax/MjcTokens.java"/>
+      </targetfiles>
+      <sequential>
+        <exec executable="jacc">
+          <arg value="src/syntax/Mjc.jacc" />
+        </exec>
+      </sequential>
+    </outofdate>
+    <javac includeantruntime="false" srcdir="src" destdir="${dir.classes}" classpathref="project.classpath" />
+  </target>
+  <target name="jar" depends="compile">    
+    <mkdir dir="build/jar"/>
+    <manifestclasspath property="jar.classpath" jarfile="build/jar/mjc.jar">
+      <classpath refid="project.classpath"/>
+    </manifestclasspath>
+    <jar destfile="build/jar/mjc.jar" basedir="${dir.classes}">
+      <manifest>
+        <attribute name="Main-Class" value="Compiler"/>
+        <attribute name="Class-Path" value="${jar.classpath}"/>
+      </manifest>
+    </jar>
+  </target>
+  <target name="run" depends="jar">
+    <java jar="build/jar/mjc.jar" fork="true"/>
+  </target>
+</project>
