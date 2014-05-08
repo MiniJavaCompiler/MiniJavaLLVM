@@ -8,6 +8,7 @@ import compiler.*;
 import checker.*;
 import codegen.*;
 import interp.*;
+import java.util.Iterator;
 
 /** Provides a representation for executable statements.
  */
@@ -16,11 +17,26 @@ public abstract class Statement extends Syntax {
         super(pos);
     }
 
+    /* this will be eventually made abstract*/
+    public void llvmGen(LLVM l) {
+        throw new RuntimeException("Syntax Type not supported (yet).");
+    }
+
     /** Check whether this statement is valid and return a boolean
      *  indicating whether execution can continue at the next statement.
      */
     public abstract boolean check(Context ctxt, VarEnv env, int frameOffset);
 
+    public boolean check(Context ctxt, VarEnv env, int frameOffset,
+                         Iterator<Statement> iter) {
+        boolean res = check(ctxt, env, frameOffset);
+        if (iter.hasNext()) {
+            Statement s = iter.next();
+            return res && s.check(ctxt, env, frameOffset, iter);
+        } else {
+            return res;
+        }
+    }
     /** Emit code to execute this statement.
      */
     abstract void compile(Assembly a);

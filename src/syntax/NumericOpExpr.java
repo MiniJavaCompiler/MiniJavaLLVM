@@ -6,6 +6,7 @@ package syntax;
 
 import compiler.*;
 import checker.*;
+import codegen.*;
 
 /** Provides a representation for binary expressions with numeric
  *  operands.
@@ -28,4 +29,13 @@ public abstract class NumericOpExpr extends BinaryOp {
         }
         return Type.INT;
     }
+    public org.llvm.Value llvmGen(LLVM l) {
+        org.llvm.Value llvm_left = left.llvmGen(l);
+        org.llvm.Value llvm_right = right.llvmGen(l);
+
+        return llvmBuildOp(l, llvm_left, llvm_right);
+    }
+
+    public abstract org.llvm.Value llvmBuildOp(LLVM l, org.llvm.Value left,
+            org.llvm.Value right);
 }

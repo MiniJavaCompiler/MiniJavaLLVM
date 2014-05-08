@@ -99,7 +99,7 @@
         </exec>
       </sequential>
     </outofdate>
-    <javac includeantruntime="false" srcdir="src" destdir="${dir.classes}" classpathref="project.classpath" />
+    <javac debug="on" includeantruntime="false" srcdir="src" destdir="${dir.classes}" classpathref="project.classpath" />
   </target>
   <target name="jar" depends="compile">    
     <mkdir dir="build/jar"/>

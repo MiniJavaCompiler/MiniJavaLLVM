@@ -36,4 +36,9 @@ public final class DivExpr extends NumericOpExpr {
     public Value eval(State st) {
         return new IntValue(left.eval(st).getInt() / right.eval(st).getInt());
     }
+
+    public org.llvm.Value llvmBuildOp(LLVM l, org.llvm.Value left,
+                                      org.llvm.Value right) {
+        return l.getBuilder().buildSDiv(left, right, "divtemp");
+    }
 }

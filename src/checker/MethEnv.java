@@ -8,10 +8,30 @@ import compiler.*;
 import syntax.*;
 import codegen.*;
 import interp.*;
+import util.*;
+import java.lang.Iterable;
+import java.util.Iterator;
+
+
+import org.llvm.BasicBlock;
+import org.llvm.Builder;
+import org.llvm.ExecutionEngine;
+import org.llvm.GenericValue;
+import org.llvm.LLVMException;
+import org.llvm.Module;
+import org.llvm.PassManager;
+import org.llvm.Target;
+import org.llvm.TypeRef;
+
+import org.llvm.binding.LLVMLibrary.LLVMCallConv;
+import org.llvm.binding.LLVMLibrary.LLVMIntPredicate;
+
+import java.util.ArrayList;
 
 /** Provides a representation for method environments.
  */
-public final class MethEnv extends MemberEnv {
+public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
+        ListIteratorIF<MethEnv>  {
     private VarEnv    params;
     private Statement body;
     private int       slot;        // virtual function table slot number
@@ -29,6 +49,10 @@ public final class MethEnv extends MemberEnv {
         this.size   = size;
         this.body   = body;
         this.next   = next;
+    }
+
+    public Iterator<MethEnv> iterator() {
+        return new ListIterator<MethEnv>(this);
     }
     public Statement getBody() {
         return body;
@@ -135,6 +159,30 @@ public final class MethEnv extends MemberEnv {
             a.emitPrologue(methName(a), localBytes);
             body.compileRet(a);
         }
+    }
+
+    public void llvmGen(LLVM l) {
+        Module mod = Module.createWithName(owner.toString());
+        if (body != null) {
+
+            ArrayList<TypeRef> llvm_formals = new ArrayList<TypeRef>();
+            for (VarEnv p = params; p != null; p = p.getNext()) {
+                llvm_formals.add(p.getType().llvmType());
+            }
+            TypeRef func_type = TypeRef.functionType(TypeRef.int32Type(), llvm_formals);
+            org.llvm.Value f = mod.addFunction(owner.toString() + "." + getName(),
+                                               func_type);
+            f.setFunctionCallConv(LLVMCallConv.LLVMCCallConv);
+
+            BasicBlock entry = f.appendBasicBlock("entry");
+            Builder builder = Builder.createBuilder();
+            builder.positionBuilderAtEnd(entry);
+            //builder.positionBuilderAtEnd(entry);
+            l.setBuilder(builder);
+            //a.emitPrologue(methName(a), localBytes);
+            body.llvmGen(l);
+        }
+        mod.dumpModule();
     }
 
     /** Generate code for a call to this method, assuming that the receiving

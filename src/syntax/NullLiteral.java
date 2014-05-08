@@ -50,4 +50,8 @@ public final class NullLiteral extends Literal {
     public Value eval(State st) {
         return Value.NULL;
     }
+
+    public org.llvm.Value llvmGen(LLVM l) {
+        return Type.NULL.llvmType().constNull();
+    }
 }

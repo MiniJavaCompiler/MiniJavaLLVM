@@ -63,4 +63,7 @@ public final class IntLiteral extends Literal {
     public Value eval(State st) {
         return new IntValue(value);
     }
+    public org.llvm.Value llvmGen(LLVM l) {
+        return Type.INT.llvmType().constInt(value, false);
+    }
 }

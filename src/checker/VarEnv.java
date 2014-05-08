@@ -26,6 +26,9 @@ public final class VarEnv extends Env {
         this(id, type, 0, next);
     }
 
+    public VarEnv getNext() {
+        return next;
+    }
     /** Look for the entry corresponding to a particular identifier
      *  in a given environment.
      */

@@ -81,4 +81,8 @@ public final class Return extends Statement {
     public Value exec(State st) {
         return (result == null) ? Value.NULL : result.eval(st);
     }
+
+    public void llvmGen(LLVM l) {
+        l.getBuilder().buildRet(result.llvmGen(l));
+    }
 }

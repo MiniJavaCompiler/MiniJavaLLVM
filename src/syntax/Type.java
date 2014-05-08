@@ -8,19 +8,23 @@ import compiler.*;
 import checker.*;
 import codegen.*;
 
+import org.llvm.TypeRef;
+
 /** Provides a representation for types.
  */
 public abstract class Type {
-    public static Type INT     = new PrimitiveType("int");
-    public static Type LONG    = new PrimitiveType("long");
-    public static Type FLOAT   = new PrimitiveType("float");
-    public static Type DOUBLE  = new PrimitiveType("double");
-    public static Type BOOLEAN = new PrimitiveType("boolean");
-    public static Type NULL    = new PrimitiveType("null");
+    public static final Type INT     = new PrimitiveType("int");
+    public static final Type LONG    = new PrimitiveType("long");
+    public static final Type FLOAT   = new PrimitiveType("float");
+    public static final Type DOUBLE  = new PrimitiveType("double");
+    public static final Type BOOLEAN = new PrimitiveType("boolean");
+    public static final Type NULL    = new PrimitiveType("null");
 
     /** Test for equality with another type.
      */
     public abstract boolean equal(Type type);
+
+    public abstract TypeRef llvmType();
 
     /** Test to see if this class is a supertype of another type.
      */

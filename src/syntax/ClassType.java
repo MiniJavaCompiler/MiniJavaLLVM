@@ -9,6 +9,8 @@ import compiler.*;
 import codegen.*;
 import interp.*;
 
+import org.llvm.TypeRef;
+
 /** Provides a representation for class types.
  */
 public final class ClassType extends Type {
@@ -29,6 +31,9 @@ public final class ClassType extends Type {
         this.decls       = decls;
     }
 
+    public TypeRef llvmType() {
+        throw new RuntimeException("Class Type unimplemented");
+    }
     public FieldEnv getFields() {
         return fields;
     }
@@ -245,6 +250,18 @@ public final class ClassType extends Type {
         a.emitVTable(this, width, vtable);
     }
 
+    public void llvmGen(LLVM l) {
+        if (fields != null) {
+            for (FieldEnv e : fields) {
+                e.llvmGen(l);
+            }
+        }
+        if (methods != null) {
+            for (MethEnv m : methods) {
+                m.llvmGen(l);
+            }
+        }
+    }
     /** Construct an object for a new object of this class.
      */
     public ObjValue newObject() {

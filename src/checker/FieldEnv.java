@@ -8,20 +8,24 @@ import compiler.*;
 import syntax.*;
 import codegen.*;
 import interp.*;
-
+import util.*;
+import java.lang.Iterable;
+import java.util.Iterator;
 /** Provides a representation for object field environments.
  */
-public final class FieldEnv extends MemberEnv {
+public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
+        ListIteratorIF<FieldEnv> {
     private FieldEnv next;
     private int      offset;  // offset of field within object (0 for static)
-
     public FieldEnv(Modifiers mods, Id id, Type type, ClassType owner,
                     int offset, FieldEnv next) {
         super(mods, id, type, owner);
         this.offset = offset;
         this.next   = next;
     }
-
+    public Iterator<FieldEnv> iterator() {
+        return new ListIterator<FieldEnv>(this);
+    }
     public int getOffset() {
         return offset;
     }
@@ -67,6 +71,12 @@ public final class FieldEnv extends MemberEnv {
     void compileField(Assembly a) {
         if (isStatic()) {
             a.emitVar(this, type.size());
+        }
+    }
+
+    public void llvmGen(LLVM l) {
+        if (isStatic()) {
+            throw new RuntimeException("Does not currently support static variables");
         }
     }
 

@@ -57,8 +57,9 @@ public class Compiler {
                     }
                 }
             } else if (type.equals("--LLVM")) {
+                System.out.print("Converting to LLVM\n");
                 LLVM llvm = new LLVM();
-                llvm.emit(inputFile);
+                llvm.llvmGen(classes);
             }
         }
     }

@@ -16,6 +16,10 @@ public abstract class Expression extends Syntax {
         super(pos);
     }
 
+    public org.llvm.Value llvmGen(LLVM l) {
+        throw new RuntimeException("Not Yet Implemented");
+    }
+
     /** Check this expression and return an object that describes its
      *  type (or throw an exception if an unrecoverable error occurs).
      */

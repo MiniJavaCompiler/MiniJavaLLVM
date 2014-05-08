@@ -19,7 +19,23 @@ import org.llvm.binding.LLVMLibrary.LLVMIntPredicate;
 import compiler.*;
 
 public class LLVM {
+    private Builder builder;
     public LLVM() {
+    }
+
+    public void setBuilder(Builder b) {
+        builder = b;
+    }
+
+    public Builder getBuilder() {
+        return builder;
+    }
+    public void llvmGen(ClassType [] classes) {
+        for (ClassType c : classes) {
+            System.out.print("x\n");
+            c.llvmGen(this);
+        }
+        /*
         SourcePosition p = new SourcePosition(new JavaSource("some file", null), 0, 0);
         Expression expr = new MulExpr(p, new IntLiteral(p, 2), new IntLiteral(p, 3));
         Module mod = Module.createWithName("fac_module");
@@ -30,11 +46,9 @@ public class LLVM {
         BasicBlock entry = fac.appendBasicBlock("entry");
         Builder builder = Builder.createBuilder();
         builder.positionBuilderAtEnd(entry);
-        //Value v = Something.compile(builder, expr);
+        Value v = expr.llvmGen(this);
         //builder.buildRet(v);
-        mod.dumpModule();
-    }
-    public void emit(String file) {
 
+        */
     }
 }

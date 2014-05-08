@@ -7,13 +7,21 @@ package syntax;
 import checker.*;
 import codegen.*;
 import interp.*;
+import util.*;
+import java.lang.Iterable;
+import java.util.Iterator;
+
 
 /** Provides a representation for the statements in a block.
  */
-public abstract class Stmts {
+public abstract class Stmts implements Iterable<Stmts>, ListIteratorIF<Stmts> {
     protected Stmts next;
     public Stmts(Stmts next) {
         this.next = next;
+    }
+
+    public Iterator<Stmts> getIterator() {
+        return new ListIterator<Stmts>(this);
     }
 
     /** Reverse the elements in this list.
