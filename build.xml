@@ -18,6 +18,13 @@
     <pathelement location="${bridj.jar}"/>
     <pathelement location="${llvm-j.jar}"/>
   </path>
+  <target name="git_setup">
+    <exec executable="git">
+      <arg value="config" />
+      <arg value="filter.java_code.clean" />
+      <arg value="astyle --options=${basedir}/.javastyle &lt; %f" />
+    </exec>
+  </target>
   <target name="ubuntu_depends">
     <exec executable="sudo">
       <arg value="apt-get" />
