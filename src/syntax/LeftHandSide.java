@@ -24,7 +24,5 @@ public abstract class LeftHandSide extends Expression {
      */
     public abstract void save(State st, Value val);
 
-    public void forceNull(Type t) {
-        /* LeftHandSides cannot be of Null Type */
-    }
+    public abstract org.llvm.Value llvmSave(LLVM l, org.llvm.Value v);
 }

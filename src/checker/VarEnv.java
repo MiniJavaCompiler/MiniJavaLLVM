@@ -118,6 +118,13 @@ public final class VarEnv extends Env {
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
-        return l.getNamedValue(getName());
+        org.llvm.Value v = l.getNamedValue(getName());
+        return l.getBuilder().buildLoad(v, getName());
     }
+
+    public org.llvm.Value llvmSave(LLVM l, org.llvm.Value r) {
+        org.llvm.Value v = l.getNamedValue(getName());
+        return l.getBuilder().buildStore(r, v);
+    }
+
 }

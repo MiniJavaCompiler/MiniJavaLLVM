@@ -292,7 +292,7 @@ public final class ClassType extends Type {
                     org.llvm.Value v = l.getModule().addGlobal(f.getType().llvmType(),
                                        f.getOwner() + "." + f.getName());
                     l.setNamedValue(f.getOwner() + "." + f.getName(), v);
-                    b.buildStore(f.getType().llvmType().constInt(0, false), v);
+                    b.buildStore(f.getType().defaultValue(), v);
                 }
             }
         }

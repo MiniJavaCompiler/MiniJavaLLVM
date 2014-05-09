@@ -47,4 +47,9 @@ public abstract class Env {
         throw new RuntimeException(this.getClass().getName() +
                                    ": Not Yet Implemented.");
     }
+
+    public org.llvm.Value llvmSave(LLVM l, org.llvm.Value v) {
+        throw new RuntimeException(this.getClass().getName() +
+                                   ": Not Yet Implemented.");
+    }
 }

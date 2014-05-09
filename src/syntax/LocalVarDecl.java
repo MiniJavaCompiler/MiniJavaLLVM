@@ -68,12 +68,11 @@ public class LocalVarDecl extends Statement {
         for (VarDecls vs = varDecls; vs != null; vs = vs.getNext()) {
             TypeRef t = type.llvmType();
 
-            /* not sure if neccesary to convert to pointer type */
             if (type.isClass() != null) {
                 t = t.pointerType();
             }
 
-            org.llvm.Value v = b.buildAlloca(type.llvmType(), vs.getId().getName());
+            org.llvm.Value v = b.buildAlloca(t, vs.getId().getName());
             l.setNamedValue(vs.getId().getName(), v);
             b.buildStore(type.defaultValue(), v);
         }
