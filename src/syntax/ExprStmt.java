@@ -37,6 +37,9 @@ public final class ExprStmt extends Statement {
         expr.compileExpr(a);
     }
 
+    public void llvmGen(LLVM l) {
+        expr.llvmGen(l);
+    }
     /** Execute this statement.  If the statement is terminated by a
      *  return statement, return the corresponding value.  Otherwise,
      *  a null indicates that no result was returned.

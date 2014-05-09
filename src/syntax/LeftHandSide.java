@@ -23,4 +23,8 @@ public abstract class LeftHandSide extends Expression {
     /** Save a value in the location specified by this left hand side.
      */
     public abstract void save(State st, Value val);
+
+    public void forceNull(Type t) {
+        /* LeftHandSides cannot be of Null Type */
+    }
 }

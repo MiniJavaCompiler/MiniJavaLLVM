@@ -2,6 +2,9 @@
   <property name="junit.jar" value="/usr/share/java/junit4.jar" />
   <property name="bridj.jar" value="build/libs/bridj-0.6.2.jar" />
   <property name="llvm-j.jar" value="build/libs/llvm-j.jar" />
+  <property name="asm.jar" value="build/libs/asm-3.0.jar" />
+  <property name="sprintabout.jar" value="build/libs/sprintabout.jar" />
+  <property name="dir.build" value="build/" />
   <property name="dir.libs" value="build/libs" />
   <property name="dir.classes" value="build/classes" />
   <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
@@ -17,6 +20,8 @@
   <path id="project.classpath">
     <pathelement location="${bridj.jar}"/>
     <pathelement location="${llvm-j.jar}"/>
+    <pathelement location="${asm.jar}"/>
+    <pathelement location="${sprintabout.jar}"/>
   </path>
   <target name="git_setup">
     <exec executable="git">
@@ -73,6 +78,27 @@
           <arg value="reset" />
           <arg value="--hard" />
         </exec>
+
+      </else>
+    </if>
+    <if>
+      <available file="${sprintabout.jar}"/>
+      <else>
+        <exec executable="wget" dir="${dir.build}">         
+          <arg value="-N" />
+          <arg value="http://www-igm.univ-mlv.fr/~forax/works/sprintabout/sprintabout-src.zip" />
+        </exec>
+        <exec executable="unzip" dir="${dir.build}">
+          <arg value="sprintabout-src.zip" />
+        </exec>
+        <exec executable="ant" dir="${dir.build}/sprintabout/">
+          <arg value="jar" />
+          <arg value="-Dasm.lib.dir=lib/" />
+        </exec>
+        <copy todir="${dir.libs}">
+          <file file="build/sprintabout/lib/sprintabout.jar" />
+          <file file="build/sprintabout/lib/asm-3.0.jar" />
+        </copy>
       </else>
     </if>
   </target>

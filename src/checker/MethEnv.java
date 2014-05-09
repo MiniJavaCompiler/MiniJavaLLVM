@@ -98,7 +98,7 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
     void checkMethod(Context ctxt) {
         if (body != null) {
             ctxt.setCurrMethod(this);
-            if (body.check(ctxt, params, 0) && getType() != null) {
+            if (body.check(ctxt, params, 0) && getType() != Type.VOID) {
                 ctxt.report(new Failure(body.getPos(),
                                         "Method does not return a value"));
             }
@@ -161,28 +161,58 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
         }
     }
 
-    public void llvmGen(LLVM l) {
-        Module mod = Module.createWithName(owner.toString());
+    public void llvmGenMethod(LLVM l) {
         if (body != null) {
 
             ArrayList<TypeRef> llvm_formals = new ArrayList<TypeRef>();
-            for (VarEnv p = params; p != null; p = p.getNext()) {
-                llvm_formals.add(p.getType().llvmType());
+            if (!isStatic()) {
+                llvm_formals.add(owner.llvmType().pointerType()); //this pointer
             }
-            TypeRef func_type = TypeRef.functionType(TypeRef.int32Type(), llvm_formals);
-            org.llvm.Value f = mod.addFunction(owner.toString() + "." + getName(),
-                                               func_type);
+            for (VarEnv p = params; p != null; p = p.getNext()) {
+                TypeRef formal = p.getType().llvmType();
+                if (p.getType().isClass() != null) {
+                    formal = formal.pointerType();
+                }
+                llvm_formals.add(formal);
+            }
+            System.out.println(owner.toString() + "." + getName());
+            System.out.println(llvm_formals);
+
+            TypeRef return_type = type.llvmType();
+            if (type.isClass() != null) {
+                return_type = return_type.pointerType();
+            }
+            TypeRef func_type = TypeRef.functionType(return_type, llvm_formals);
+            org.llvm.Value f = l.getModule().addFunction(owner.toString() + "." + getName(),
+                               func_type);
             f.setFunctionCallConv(LLVMCallConv.LLVMCCallConv);
 
+            if (getName().equals("main")) {
+                l.setUserEntry(f);
+            }
             BasicBlock entry = f.appendBasicBlock("entry");
-            Builder builder = Builder.createBuilder();
-            builder.positionBuilderAtEnd(entry);
-            //builder.positionBuilderAtEnd(entry);
-            l.setBuilder(builder);
-            //a.emitPrologue(methName(a), localBytes);
+
+            l.getBuilder().positionBuilderAtEnd(entry);
+            int n = 0;
+            if (!isStatic()) {
+                org.llvm.Value v = l.getBuilder().buildAlloca(f.getParam(n).typeOf(), "this");
+                l.getBuilder().buildStore(f.getParam(n), v);
+                l.setNamedValue("this", v);
+                n++;
+            }
+            for (VarEnv p = params; p != null; p = p.getNext()) {
+                org.llvm.Value v = l.getBuilder().buildAlloca(f.getParam(n).typeOf(),
+                                   p.getName());
+                l.getBuilder().buildStore(f.getParam(n), v);
+                l.setNamedValue(p.getName(), v);
+                n++;
+            }
             body.llvmGen(l);
+
+            if (type == Type.VOID) {
+                l.getBuilder().buildRetVoid();
+            }
         }
-        mod.dumpModule();
     }
 
     /** Generate code for a call to this method, assuming that the receiving

@@ -12,8 +12,11 @@ import interp.*;
 /** Provides a representation for the null literal.
  */
 public final class NullLiteral extends Literal {
+    Type resolvedNull;
+
     public NullLiteral(Position pos) {
         super(pos);
+        resolvedNull = null;
     }
 
     /** Check this expression and return an object that describes its
@@ -21,7 +24,15 @@ public final class NullLiteral extends Literal {
      */
     public Type typeOf(Context ctxt, VarEnv env)
     throws Diagnostic {
-        return Type.NULL;
+        if (resolvedNull == null) {
+            return Type.NULL;
+        } else {
+            return resolvedNull;
+        }
+    }
+
+    public void forceNull(Type t) {
+        resolvedNull = t;
     }
 
     /** Generate code to evaluate this expression and
@@ -52,6 +63,14 @@ public final class NullLiteral extends Literal {
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
-        return Type.NULL.llvmType().constNull();
+        org.llvm.Value v;
+        if (resolvedNull != null) {
+            v = resolvedNull.llvmType().pointerType().constNull();
+        } else {
+            v = Type.NULL.llvmType().pointerType().constNull();
+        }
+
+        v.setValueName("null");
+        return v;
     }
 }

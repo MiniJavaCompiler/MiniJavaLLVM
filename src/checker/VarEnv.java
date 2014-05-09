@@ -116,4 +116,8 @@ public final class VarEnv extends Env {
     public void setFrame(State st, Value val) {
         st.setFrame(offset, val);
     }
+
+    public org.llvm.Value llvmGen(LLVM l) {
+        return l.getNamedValue(getName());
+    }
 }

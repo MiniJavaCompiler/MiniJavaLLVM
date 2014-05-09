@@ -19,7 +19,8 @@ public abstract class Statement extends Syntax {
 
     /* this will be eventually made abstract*/
     public void llvmGen(LLVM l) {
-        throw new RuntimeException("Syntax Type not supported (yet).");
+        throw new RuntimeException(this.getClass().getName() +
+                                   ": Not Yet Implemented.");
     }
 
     /** Check whether this statement is valid and return a boolean

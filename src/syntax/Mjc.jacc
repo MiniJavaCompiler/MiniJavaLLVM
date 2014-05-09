@@ -85,7 +85,7 @@ decl    : modifiers type vardecls ';'
                                                        VarDecls.reverse($3)); }
         | modifiers VOID IDENT '(' formals ')' body
                                 { checkMethodModifiers($1, $7);
-                                  $$ = new MethDecl($1, null, $3, $5, $7); }
+                                  $$ = new MethDecl($1, Type.VOID, $3, $5, $7); }
         | modifiers type IDENT '(' formals ')' body
                                 { checkMethodModifiers($1, $7);
                                   $$ = new MethDecl($1, $2,   $3, $5, $7); }

@@ -69,4 +69,13 @@ public final class SimpleAccess extends FieldAccess {
         ObjValue obj = env.isStatic() ? null : st.getThis(size);
         env.setField(obj, val);
     }
+
+    public org.llvm.Value llvmGen(LLVM l) {
+        if (env.getFieldIndex() != -1) {
+            org.llvm.Value obj = l.getNamedValue("this");
+            return l.getBuilder().buildStructGEP(obj, env.getFieldIndex(), env.getName());
+        } else {
+            return l.getNamedValue(env.getOwner() + "." + env.getName());
+        }
+    }
 }

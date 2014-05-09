@@ -19,6 +19,9 @@ public abstract class Type {
     public static final Type DOUBLE  = new PrimitiveType("double");
     public static final Type BOOLEAN = new PrimitiveType("boolean");
     public static final Type NULL    = new PrimitiveType("null");
+    public static final Type VOID    = new PrimitiveType("void");
+
+    public abstract org.llvm.Value defaultValue();
 
     /** Test for equality with another type.
      */
@@ -51,5 +54,14 @@ public abstract class Type {
      */
     public int size() {
         return Assembly.WORDSIZE;
+    }
+
+    public static boolean mixedNull(Type l_t, Type r_t) {
+        if (l_t.equal(Type.NULL) && !r_t.equal(Type.NULL)) {
+            return true;
+        } else if (!l_t.equal(Type.NULL) && r_t.equal(Type.NULL)) {
+            return true;
+        }
+        return false;
     }
 }

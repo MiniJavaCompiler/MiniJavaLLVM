@@ -33,6 +33,9 @@ public final class FrameAccess extends FieldAccess {
         env.loadVar(a, free);
     }
 
+    public org.llvm.Value llvmGen(LLVM l) {
+        return env.llvmGen(l);
+    }
     /** Save the value in the free register in the variable specified by
      *  this expression.
      */

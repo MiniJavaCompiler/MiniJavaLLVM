@@ -28,6 +28,7 @@ public abstract class EqOpExpr extends BinaryOp {
                 " left operand has type " + lt +
                 " and the right operand has type " + rt));
             }
+            forceNull(lt, rt);
         } catch (Diagnostic d) {
             ctxt.report(d);
         }

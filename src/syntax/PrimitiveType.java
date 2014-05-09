@@ -43,10 +43,20 @@ public final class PrimitiveType extends Type {
         } else if (this.equal(Type.BOOLEAN)) {
             return TypeRef.int32Type();
         } else if (this.equal(Type.NULL)) {
-            //return TypeRef.pointerType();
-            throw new RuntimeException("Pointer Type Unhandled");
+            /* this should really be the type it's going to be assigned to */
+            return TypeRef.int32Type().pointerType();
+        } else if (this.equal(Type.VOID)) {
+            return TypeRef.voidType();
         } else {
-            throw new RuntimeException("Unknown LLVM Primitive Type");
+            throw new RuntimeException("Unknown LLVM Primitive Type: " + name);
+        }
+    }
+
+    public org.llvm.Value defaultValue() {
+        if (this.equal(Type.NULL)) {
+            return llvmType().constPointerNull();
+        } else {
+            return llvmType().constInt(0, false);
         }
     }
 }

@@ -10,6 +10,7 @@ import codegen.*;
 import interp.*;
 import java.util.Iterator;
 import java.util.Collections;
+import org.llvm.TypeRef;
 
 /** Provides a representation for local variable declarations in a block.
  */
@@ -59,6 +60,25 @@ public class LocalVarDecl extends Statement {
     void compile(Assembly a) {
         /* this does nothing in a computational sense */
     }
+
+    public void llvmGen(LLVM l) {
+        org.llvm.Builder b = l.getBuilder();
+        org.llvm.Value func = b.getInsertBlock().getParent();
+
+        for (VarDecls vs = varDecls; vs != null; vs = vs.getNext()) {
+            TypeRef t = type.llvmType();
+
+            /* not sure if neccesary to convert to pointer type */
+            if (type.isClass() != null) {
+                t = t.pointerType();
+            }
+
+            org.llvm.Value v = b.buildAlloca(type.llvmType(), vs.getId().getName());
+            l.setNamedValue(vs.getId().getName(), v);
+            b.buildStore(type.defaultValue(), v);
+        }
+    }
+
 
     /** Execute this statement.  If the statement is terminated by a
      *  return statement, return the corresponding value.  Otherwise,

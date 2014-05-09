@@ -6,6 +6,7 @@ package checker;
 
 import compiler.*;
 import syntax.*;
+import codegen.*;
 
 /** Provides a base representation for environments.
  */
@@ -40,5 +41,10 @@ public abstract class Env {
      */
     public final Type getType() {
         return type;
+    }
+
+    public org.llvm.Value llvmGen(LLVM l) {
+        throw new RuntimeException(this.getClass().getName() +
+                                   ": Not Yet Implemented.");
     }
 }

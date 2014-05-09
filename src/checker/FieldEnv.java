@@ -17,17 +17,27 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
         ListIteratorIF<FieldEnv> {
     private FieldEnv next;
     private int      offset;  // offset of field within object (0 for static)
+    private int fieldIndex;
     public FieldEnv(Modifiers mods, Id id, Type type, ClassType owner,
-                    int offset, FieldEnv next) {
+                    int fieldIndex, int offset, FieldEnv next) {
         super(mods, id, type, owner);
         this.offset = offset;
         this.next   = next;
+        this.fieldIndex = fieldIndex;
     }
     public Iterator<FieldEnv> iterator() {
         return new ListIterator<FieldEnv>(this);
     }
     public int getOffset() {
         return offset;
+    }
+
+    public int getFieldIndex() {
+        return fieldIndex;
+    }
+
+    public ClassType getOwner() {
+        return owner;
     }
 
     public FieldEnv getNext() {
@@ -74,10 +84,8 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
         }
     }
 
-    public void llvmGen(LLVM l) {
-        if (isStatic()) {
-            throw new RuntimeException("Does not currently support static variables");
-        }
+    public org.llvm.TypeRef llvmGenFieldtype() {
+        return type.llvmType();
     }
 
     /** Generate code to load the value of a field from an object whose
@@ -131,4 +139,7 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
         }
     }
 
+    public org.llvm.Value llvmField(LLVM l, org.llvm.Value object) {
+        return l.getBuilder().buildStructGEP(object, offset, id.getName());
+    }
 }

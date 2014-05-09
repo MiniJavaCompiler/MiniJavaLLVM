@@ -126,7 +126,7 @@ public final class Context extends Phase {
             } else if (!mainMeth.isStatic()) {
                 report(new Failure(mainMeth.getPos(),
                                    "Main.main is not static"));
-            } else if (!mainMeth.eqSig(null, null)) {
+            } else if (!mainMeth.eqSig(Type.VOID, null)) {
                 report(new Failure(mainMeth.getPos(),
                                    "Main.main does not have the right type"));
             } else {

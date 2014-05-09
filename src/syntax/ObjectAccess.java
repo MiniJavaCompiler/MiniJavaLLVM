@@ -69,4 +69,9 @@ public final class ObjectAccess extends FieldAccess {
     public void save(State st, Value val) {
         env.setField(object.eval(st).getObj(), val);
     }
+
+    public org.llvm.Value llvmGen(LLVM l) {
+        org.llvm.Value obj = object.llvmGen(l);
+        return l.getBuilder().buildStructGEP(obj, env.getFieldIndex(), env.getName());
+    }
 }

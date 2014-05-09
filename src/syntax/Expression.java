@@ -17,7 +17,8 @@ public abstract class Expression extends Syntax {
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
-        throw new RuntimeException("Not Yet Implemented");
+        throw new RuntimeException(this.getClass().getName() +
+                                   ": Not Yet Implemented.");
     }
 
     /** Check this expression and return an object that describes its
