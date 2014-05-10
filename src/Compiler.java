@@ -12,40 +12,79 @@ import java.io.Reader;
 import java.io.FileReader;
 import java.io.FileNotFoundException;
 
+import org.apache.commons.cli.*;
+
 /** A top-level driver for the mini Java compiler.
  */
 public class Compiler {
     /** A command line entry point to the mini Java compiler.
      */
     public static void main(String[] args) {
-        if (args.length != 3) {
-            System.err.println("usage: java -jar mjc.jar --x86|--LLVM inputFile outputFile");
-            return;
-        }
-        String type = args[0];
-        String  inputFile  = args[1];
-        String  outputFile = args[2];
-        Handler handler    = new SimpleHandler();
+        CommandLineParser parser = new BasicParser();
+        Options options = new Options();
+
+        options.addOption("L", "LLVM", true, "LLVM Bitcode Output Location.");
+        options.addOption("x", "x86", true, "x86 Output File Location");
+        options.addOption("l", "llvm", false, "Dump Human Readable LLVM Code.");
+        options.addOption("i", "input", true, "Compile to x86 Assembly");
+        options.addOption("h", "help", false, "Print this help message.");
+        options.addOption("V", "version", false, "Version information.");
+
         try {
-            Reader  reader     = new FileReader(inputFile);
-            compile(type, handler, reader, inputFile, outputFile);
-        } catch (FileNotFoundException e) {
-            handler.report(new Failure("Cannot open input file " +
-                                       inputFile));
+            CommandLine cmd = parser.parse(options, args);
+
+            if (cmd.hasOption("v")) {
+                System.out.println("MiniJava Compiler");
+                System.out.println("Written By Mark Jones http://web.cecs.pdx.edu/~mpj/");
+                System.out.println("Extended for LLVM by Mitch Souders and Mark Smith");
+            }
+            if (cmd.hasOption("h")) {
+                HelpFormatter formatter = new HelpFormatter();
+                formatter.printHelp("java -jar mjc.jar -i <INPUT> (--x86 <OUT>|--LLVM <OUT>|--llvm)",
+                                    options);
+                System.exit(0);
+            }
+            int errors = 0;
+            if (!cmd.hasOption("i")) {
+                System.out.println("-i|--input requires a MiniJava input file");
+                System.out.println("--help for more info.");
+                errors++;
+            }
+            if (!cmd.hasOption("x") && !cmd.hasOption("l") && !cmd.hasOption("L")) {
+                System.out.println("--x86|--llvm|--LLVM required for some sort of output.");
+                System.out.println("--help for more info.");
+                errors++;
+            }
+
+            if (errors > 0) {
+                System.exit(1);
+            }
+            String inputFile = cmd.getOptionValue("i");
+            Handler handler = new SimpleHandler();
+            try {
+                Reader  reader = new FileReader(inputFile);
+                compile(handler, reader, inputFile, cmd);
+            } catch (FileNotFoundException e) {
+                handler.report(new Failure("Cannot open input file " +
+                                           inputFile));
+            }
+        } catch (ParseException exp) {
+            System.out.println("Argument Error: " + exp.getMessage());
         }
     }
 
     /** A method for invoking the compiler without going through any
      *  particular user interface.
      */
-    static void compile(String type, Handler handler, Reader reader,
-                        String inputFile, String assemblyFile) {
+    static void compile(Handler handler, Reader reader,
+                        String inputFile, CommandLine cmd) {
         Source      source  = new JavaSource(handler, inputFile, reader);
         MjcLexer    lexer   = new MjcLexer(handler, source);
-        Parser      parser  = new Parser(handler, lexer);
+        syntax.Parser parser  = new syntax.Parser(handler, lexer);
         ClassType[] classes = parser.getClasses();
         if (new Context(handler, classes).check() != null) {
-            if (type.equals("--x86")) {
+            if (cmd.hasOption("x")) {
+                String assemblyFile = cmd.getOptionValue("x");
                 Assembly assembly = Assembly.assembleToFile(assemblyFile);
                 if (assembly == null) {
                     handler.report(new Failure("Cannot open file " +
@@ -56,9 +95,10 @@ public class Compiler {
                         classes[i].compile(assembly);
                     }
                 }
-            } else if (type.equals("--LLVM")) {
+            }
+            if (cmd.hasOption("L") || cmd.hasOption("l")) {
                 LLVM llvm = new LLVM();
-                llvm.emit(inputFile);
+                llvm.llvmGen(classes,  cmd.getOptionValue("L"), cmd.hasOption("l"));
             }
         }
     }

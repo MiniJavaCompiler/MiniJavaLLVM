@@ -7,6 +7,7 @@ import org.llvm.ExecutionEngine;
 import org.llvm.GenericValue;
 import org.llvm.LLVMException;
 import org.llvm.Module;
+import org.llvm.Context;
 import org.llvm.PassManager;
 import org.llvm.Target;
 import org.llvm.TypeRef;
@@ -15,26 +16,110 @@ import org.llvm.Value;
 import org.llvm.binding.LLVMLibrary.LLVMCallConv;
 import org.llvm.binding.LLVMLibrary.LLVMIntPredicate;
 
+import java.util.Collections;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.ArrayList;
 
 import compiler.*;
 
 public class LLVM {
-    public LLVM() {
-        SourcePosition p = new SourcePosition(new JavaSource("some file", null), 0, 0);
-        Expression expr = new MulExpr(p, new IntLiteral(p, 2), new IntLiteral(p, 3));
-        Module mod = Module.createWithName("fac_module");
-        Value fac = mod.addFunction("fac",
-                                    TypeRef.functionType(TypeRef.int32Type()));
-        fac.setFunctionCallConv(LLVMCallConv.LLVMCCallConv);
+    private Builder builder;
+    private Module module;
+    private Value function;
+    private BasicBlock staticInit;
+    private Value staticInitFn;
+    private Value printf;
 
-        BasicBlock entry = fac.appendBasicBlock("entry");
-        Builder builder = Builder.createBuilder();
-        builder.positionBuilderAtEnd(entry);
-        //Value v = Something.compile(builder, expr);
-        //builder.buildRet(v);
-        mod.dumpModule();
+    private Hashtable<String, Value> namedValues;
+
+    public Value getStaticInitFn() {
+        return staticInitFn;
     }
-    public void emit(String file) {
+    public BasicBlock getStaticInit() {
+        return staticInit;
+    }
 
+    public LLVM() {
+        namedValues = new Hashtable<String, Value>();
+    }
+
+    public Value getNamedValue(String s) {
+        Value v = namedValues.get(s);
+        return v;
+    }
+
+    public void setNamedValue(String s, Value v) {
+        v.setValueName(s);
+        namedValues.put(s, v);
+    }
+    public void setBuilder(Builder b) {
+        builder = b;
+    }
+
+    public Builder getBuilder() {
+        return builder;
+    }
+
+    public void setFunction(Value f) {
+        this.function = f;
+    }
+
+    public Value getFunction() {
+        return function;
+    }
+
+    public Module getModule() {
+        return module;
+    }
+    public void setModule(Module module) {
+        this.module = module;
+    }
+
+    public Value getPrintf() {
+        return printf;
+    }
+
+    public void llvmGen(ClassType [] classes, String output_path, Boolean dump) {
+        Module mod = Module.createWithName("llvm_module");
+        setModule(mod);
+        ArrayList<TypeRef> args = new ArrayList<TypeRef>();
+        args.add(TypeRef.int8Type().pointerType());
+        args.add(TypeRef.int32Type());
+        TypeRef printf_type = TypeRef.functionType(TypeRef.int32Type(), args);
+        printf = mod.addFunction("printf", printf_type);
+        printf.setFunctionCallConv(LLVMCallConv.LLVMCCallConv);
+
+        TypeRef program_entry_type = TypeRef.functionType(Type.VOID.llvmType(),
+                                     (List)Collections.emptyList());
+
+        staticInitFn = mod.addFunction("static_init", program_entry_type);
+        staticInit = staticInitFn.appendBasicBlock("entry");
+
+        for (ClassType c : classes) {
+            c.llvmGenTypes(this);
+        }
+        Builder builder = Builder.createBuilderInContext(Context.getModuleContext(mod));
+        setBuilder(builder);
+
+        for (ClassType c : classes) {
+            c.llvmGen(this);
+        }
+
+        builder.positionBuilderAtEnd(staticInit);
+        builder.buildRetVoid();
+
+        try {
+            if (dump) {
+                mod.dumpModule();
+            }
+            mod.verify();
+            if (output_path != null) {
+                System.out.println("Writing LLVM Bitcode to " + output_path);
+                mod.writeBitcodeToFile(output_path);
+            }
+        } catch (LLVMException e) {
+            System.out.println(e.getMessage());
+        }
     }
 }

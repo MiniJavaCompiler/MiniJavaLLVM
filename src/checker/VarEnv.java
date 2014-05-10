@@ -26,6 +26,9 @@ public final class VarEnv extends Env {
         this(id, type, 0, next);
     }
 
+    public VarEnv getNext() {
+        return next;
+    }
     /** Look for the entry corresponding to a particular identifier
      *  in a given environment.
      */
@@ -113,4 +116,15 @@ public final class VarEnv extends Env {
     public void setFrame(State st, Value val) {
         st.setFrame(offset, val);
     }
+
+    public org.llvm.Value llvmGen(LLVM l) {
+        org.llvm.Value v = l.getNamedValue(getName());
+        return l.getBuilder().buildLoad(v, getName());
+    }
+
+    public org.llvm.Value llvmSave(LLVM l, org.llvm.Value r) {
+        org.llvm.Value v = l.getNamedValue(getName());
+        return l.getBuilder().buildStore(r, v);
+    }
+
 }

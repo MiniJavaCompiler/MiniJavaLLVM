@@ -16,6 +16,8 @@ import compiler.Warning;
 import compiler.Position;
 import java.util.Vector;
 import lexer.MjcLexer;
+import java.util.ArrayList;
+
 %}
 %semantic Object
 
@@ -54,7 +56,7 @@ import lexer.MjcLexer;
 %type  <Modifiers>      modifiers
 %type  <Position>       pos
 %type  <Statement>      stmt
-%type  <Stmts>          stmts
+%type  <ArrayList>      stmts
 %type  <Block>          block body
 %type  <AssignExpr>     assign 
 %type  <NewExpr>        new
@@ -83,7 +85,7 @@ decl    : modifiers type vardecls ';'
                                                        VarDecls.reverse($3)); }
         | modifiers VOID IDENT '(' formals ')' body
                                 { checkMethodModifiers($1, $7);
-                                  $$ = new MethDecl($1, null, $3, $5, $7); }
+                                  $$ = new MethDecl($1, Type.VOID, $3, $5, $7); }
         | modifiers type IDENT '(' formals ')' body
                                 { checkMethodModifiers($1, $7);
                                   $$ = new MethDecl($1, $2,   $3, $5, $7); }
@@ -134,17 +136,16 @@ stmt    : /* empty */ ';'       { $$ = new Empty($1); }
         | RETURN expr ';'       { $$ = new Return($1, $2); }
         | block
         ;
-block   : '{' stmts '}'         { $$ = new Block($1, Stmts.reverse($2)); }
+block   : '{' stmts '}'         { $$ = new Block($1, (Statement[])$2.toArray(new Statement[0])); }
         ;
 exprstmt: call
         | new
         | assign
         ;
-stmts   : /* empty */           { $$ = null; }
-        | stmts stmt            { $$ = new BlockStatement($2,$1); }
+stmts   : /* empty */           { $$ = new ArrayList<Statement>(); }
+        | stmts stmt            { $1.add($2); $$ = $1; }
         | stmts type pos vardecls ';'
-                                { $$ = new LocalVarDecl($3,$2,
-                                                   VarDecls.reverse($4),$1); }
+                                { $1.add(new LocalVarDecl($3,$2, VarDecls.reverse($4))); $$ = $1; }
         ;
 expr    : assign
         | cOrExpr

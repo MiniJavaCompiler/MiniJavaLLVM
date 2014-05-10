@@ -9,6 +9,13 @@ import compiler.*;
 import codegen.*;
 import interp.*;
 
+import java.util.Arrays;
+import org.llvm.TypeRef;
+import java.util.ArrayList;
+import org.llvm.Builder;
+
+import org.llvm.binding.LLVMLibrary.LLVMLinkage;
+
 /** Provides a representation for class types.
  */
 public final class ClassType extends Type {
@@ -22,11 +29,18 @@ public final class ClassType extends Type {
     private int       vfuns;    // # entries in vtable
     private MethEnv[] vtable;   // virtual function table for this class
 
+    private TypeRef llvmType;
+    private TypeRef llvmVtable;
+
+    private int fieldCount;
     public ClassType(Modifiers mods, Id id, Type extendsType, Decls decls) {
         this.mods        = mods;
         this.id          = id;
         this.extendsType = extendsType;
         this.decls       = decls;
+        this.llvmType = null;
+        this.llvmVtable = null;
+        this.fieldCount = 1;  /* always reserve one spot for vtable */
     }
 
     public FieldEnv getFields() {
@@ -118,6 +132,7 @@ public final class ClassType extends Type {
                     extendsClass.checkClass(ctxt);
                     level = 1 + extendsClass.level;
                     width = extendsClass.width;
+                    fieldCount = extendsClass.fieldCount;
                     vfuns = extendsClass.vfuns;
                 }
             } else {
@@ -133,8 +148,8 @@ public final class ClassType extends Type {
             }
 
             // Finally, build vtable
+            vtable = new MethEnv[vfuns];
             if (vfuns > 0) {
-                vtable = new MethEnv[vfuns];
                 if (extendsClass != null) {
                     for (int i = 0; i < extendsClass.vfuns; i++) {
                         vtable[i] = extendsClass.vtable[i];
@@ -171,9 +186,9 @@ public final class ClassType extends Type {
             ctxt.report(new Failure(id.getPos(),
                                     "Multiple definitions for field " + id));
         } else if (mods.isStatic()) {
-            fields = new FieldEnv(mods, id, type, this, 0,     fields);
+            fields = new FieldEnv(mods, id, type, this, -1,  0, fields);
         } else {
-            fields = new FieldEnv(mods, id, type, this, width, fields);
+            fields = new FieldEnv(mods, id, type, this, fieldCount++, width, fields);
             width += type.size();
         }
     }
@@ -245,6 +260,84 @@ public final class ClassType extends Type {
         a.emitVTable(this, width, vtable);
     }
 
+    private TypeRef [] llvmFields() {
+        return llvmType().getStructElementTypes();
+    }
+
+    public void llvmGenTypes(LLVM l) {
+        buildVtable();
+        if (methods != null) {
+            for (MethEnv m : methods) {
+                m.llvmGenTypes(l);
+            }
+        }
+        llvmType();
+    }
+
+    public TypeRef llvmType() {
+        if (llvmType == null) {
+            llvmType = TypeRef.structTypeNamed(id.getName());
+            ArrayList<TypeRef> llvm_fields;
+            if (extendsType != null) {
+                TypeRef [] fields = ((ClassType)extendsType).llvmFields();
+                llvm_fields = new ArrayList(Arrays.asList(fields));
+            } else {
+                llvm_fields = new ArrayList<TypeRef>();
+                llvm_fields.add(llvmVtable.pointerType());
+            }
+            if (fields != null) {
+                for (FieldEnv f : fields) {
+                    TypeRef t;
+                    if (f.getType() == this) {
+                        t = llvmType.pointerType();
+                    } else {
+                        t = f.llvmType();
+                        if (f.getType().isClass() != null) {
+                            t = t.pointerType();
+                        }
+                    }
+                    llvm_fields.add(t);
+                }
+            }
+            TypeRef.structSetBody(llvmType, llvm_fields, false);
+        }
+        return llvmType;
+    }
+
+    private void buildVtable() {
+        llvmVtable = TypeRef.structTypeNamed(id.getName() + "_vtable");
+        ArrayList<TypeRef> vtable_items = new ArrayList<TypeRef>();
+
+        if (methods != null) {
+            for (MethEnv m : vtable) {
+                TypeRef t = m.llvmType().pointerType();
+                vtable_items.add(t);
+            }
+        }
+
+        TypeRef.structSetBody(llvmVtable, vtable_items, false);
+    }
+
+    public void llvmGen(LLVM l) {
+        if (fields != null) {
+            Builder b = l.getBuilder();
+            l.getBuilder().positionBuilderAtEnd(l.getStaticInit());
+            for (FieldEnv f : fields) {
+                if (f.getFieldIndex() == -1) {
+                    org.llvm.Value v = l.getModule().addGlobal(f.llvmType(),
+                                       f.getOwner() + "." + f.getName());
+                    l.setNamedValue(f.getOwner() + "." + f.getName(), v);
+                    v.setInitializer(f.getType().defaultValue());
+                }
+            }
+        }
+
+        if (methods != null) {
+            for (MethEnv m : methods) {
+                m.llvmGenMethod(l);
+            }
+        }
+    }
     /** Construct an object for a new object of this class.
      */
     public ObjValue newObject() {
@@ -258,4 +351,9 @@ public final class ClassType extends Type {
         return st.call(vtable[slot]);
     }
 
+    public org.llvm.Value defaultValue() {
+        org.llvm.Value v = llvmType().pointerType().constPointerNull();
+        v.setValueName("null");
+        return v;
+    }
 }

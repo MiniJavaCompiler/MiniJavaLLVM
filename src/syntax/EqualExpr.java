@@ -9,9 +9,12 @@ import checker.*;
 import codegen.*;
 import interp.*;
 
+import org.llvm.binding.LLVMLibrary.LLVMIntPredicate;
+import org.llvm.binding.LLVMLibrary.LLVMRealPredicate;
+
 /** Provides a representation for the equality test (==).
  */
-public final class EqualExpr extends EqOpExpr {
+public final class EqualExpr extends RelOpExpr {
     public EqualExpr(Position pos, Expression left, Expression right) {
         super(pos, left, right);
     }
@@ -43,4 +46,9 @@ public final class EqualExpr extends EqOpExpr {
         // Should handle comparisons other than integers ...
         return BoolValue.make(left.eval(st).getInt() == right.eval(st).getInt());
     }
+
+    public LLVMIntPredicate getllvmRelOp() {
+        return LLVMIntPredicate.LLVMIntEQ;
+    }
+
 }

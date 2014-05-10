@@ -15,6 +15,9 @@ public final class AssignExpr extends StatementExpr {
     private LeftHandSide lhs;
     private Expression rhs;
 
+    public Expression getRHS() {
+        return rhs;
+    }
     public AssignExpr(Position pos, LeftHandSide lhs, Expression rhs) {
         super(pos);
         this.lhs = lhs;
@@ -28,9 +31,13 @@ public final class AssignExpr extends StatementExpr {
     throws Diagnostic {
         Type lt = lhs.typeOf(ctxt, env);
         Type rt = rhs.typeOf(ctxt, env);
+
         if (!lt.isSuperOf(rt)) {
             throw new Failure(pos, "Cannot assign value of type " + rt +
             " to variable of type " + lt);
+        }
+        if (Type.mixedNull(lt, rt)) {
+            NullFixer.FixNulls(lt, rhs);
         }
         return lt;
     }
@@ -41,6 +48,11 @@ public final class AssignExpr extends StatementExpr {
     public void compileExpr(Assembly a, int free) {
         rhs.compileExpr(a, free);
         lhs.saveVar(a, free);
+    }
+
+    public org.llvm.Value llvmGen(LLVM l) {
+        org.llvm.Value right = rhs.llvmGen(l);
+        return lhs.llvmSave(l, right);
     }
 
     /** Evaluate this expression.

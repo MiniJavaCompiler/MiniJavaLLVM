@@ -8,6 +8,8 @@ import compiler.*;
 import checker.*;
 import codegen.*;
 import interp.*;
+import org.llvm.BasicBlock;
+import org.llvm.Builder;
 
 /** Provides a representation for if-then-else (and if-then) statements.
  */
@@ -73,6 +75,25 @@ public final class IfThenElse extends Statement {
             test.branchFalse(a, lab);
             ifTrue.compileThen(a, lab);
         }
+    }
+
+    public void llvmGen(LLVM l) {
+        Builder b = l.getBuilder();
+        BasicBlock fBranch = l.getFunction().appendBasicBlock("if_false");
+        BasicBlock tBranch = l.getFunction().appendBasicBlock("if_true");
+        BasicBlock endBranch = l.getFunction().appendBasicBlock("if_end");
+        org.llvm.Value res = test.llvmGen(l);
+        b.buildCondBr(res, tBranch, fBranch);
+
+        b.positionBuilderAtEnd(tBranch);
+        ifTrue.llvmGen(l);
+        b.buildBr(endBranch);
+
+        b.positionBuilderAtEnd(fBranch);
+        ifFalse.llvmGen(l);
+        b.buildBr(endBranch);
+
+        b.positionBuilderAtEnd(endBranch);
     }
 
     /** Execute this statement.  If the statement is terminated by a

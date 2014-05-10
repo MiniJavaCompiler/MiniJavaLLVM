@@ -8,22 +8,36 @@ import compiler.*;
 import syntax.*;
 import codegen.*;
 import interp.*;
-
+import util.*;
+import java.lang.Iterable;
+import java.util.Iterator;
 /** Provides a representation for object field environments.
  */
-public final class FieldEnv extends MemberEnv {
+public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
+        ListIteratorIF<FieldEnv> {
     private FieldEnv next;
     private int      offset;  // offset of field within object (0 for static)
-
+    private int fieldIndex;
     public FieldEnv(Modifiers mods, Id id, Type type, ClassType owner,
-                    int offset, FieldEnv next) {
+                    int fieldIndex, int offset, FieldEnv next) {
         super(mods, id, type, owner);
         this.offset = offset;
         this.next   = next;
+        this.fieldIndex = fieldIndex;
     }
-
+    public Iterator<FieldEnv> iterator() {
+        return new ListIterator<FieldEnv>(this);
+    }
     public int getOffset() {
         return offset;
+    }
+
+    public int getFieldIndex() {
+        return fieldIndex;
+    }
+
+    public ClassType getOwner() {
+        return owner;
     }
 
     public FieldEnv getNext() {
@@ -68,6 +82,10 @@ public final class FieldEnv extends MemberEnv {
         if (isStatic()) {
             a.emitVar(this, type.size());
         }
+    }
+
+    public org.llvm.TypeRef llvmType() {
+        return type.llvmType();
     }
 
     /** Generate code to load the value of a field from an object whose
@@ -121,4 +139,7 @@ public final class FieldEnv extends MemberEnv {
         }
     }
 
+    public org.llvm.Value llvmField(LLVM l, org.llvm.Value object) {
+        return l.getBuilder().buildStructGEP(object, offset, id.getName());
+    }
 }

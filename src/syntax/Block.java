@@ -8,12 +8,14 @@ import compiler.*;
 import checker.*;
 import codegen.*;
 import interp.*;
+import java.util.Iterator;
+import java.util.Arrays;
 
 /** Provides a representation for blocks.
  */
 public final class Block extends Statement {
-    private Stmts stmts;
-    public Block(Position pos, Stmts stmts) {
+    private Statement [] stmts;
+    public Block(Position pos, Statement [] stmts) {
         super(pos);
         this.stmts = stmts;
     }
@@ -22,14 +24,20 @@ public final class Block extends Statement {
      *  indicating whether execution can continue at the next statement.
      */
     public boolean check(Context ctxt, VarEnv env, int frameOffset) {
-        return (stmts == null) || stmts.check(ctxt, env, frameOffset);
+        Iterator<Statement> iter = Arrays.asList(stmts).iterator();
+        boolean good = true;
+        while (iter.hasNext()) {
+            Statement s = iter.next();
+            good = good && s.check(ctxt, env, frameOffset, iter);
+        }
+        return good;
     }
 
     /** Emit code to execute this statement.
      */
     void compile(Assembly a) {
-        if (stmts != null) {
-            stmts.compile(a);
+        for (Statement s : stmts) {
+            s.compile(a);
         }
     }
 
@@ -37,8 +45,10 @@ public final class Block extends Statement {
      *  to a specified label.
      */
     void compileThen(Assembly a, String lab) {
-        if (stmts != null) {
-            stmts.compileThen(a, lab);
+        if (stmts.length > 0) {
+            for (Statement s : stmts) {
+                s.compileThen(a, lab);
+            }
         } else {
             a.emit("jmp", lab);
         }
@@ -48,8 +58,10 @@ public final class Block extends Statement {
      *  the current method.
      */
     public void compileRet(Assembly a) {
-        if (stmts != null) {
-            stmts.compileRet(a);
+        if (stmts.length > 0) {
+            for (Statement s : stmts) {
+                s.compileRet(a);
+            }
         } else {
             a.emitEpilogue();
         }
@@ -61,9 +73,18 @@ public final class Block extends Statement {
      */
     public Value exec(State st) {
         Value v = null;
-        for (Stmts ss = stmts; v == null && ss != null; ss = ss.next) {
+        for (Statement ss : stmts) {
             v = ss.exec(st);
+            if (v != null) {
+                return v;
+            }
         }
         return v;
+    }
+
+    public void llvmGen(LLVM l) {
+        for (Statement ss : stmts) {
+            ss.llvmGen(l);
+        }
     }
 }

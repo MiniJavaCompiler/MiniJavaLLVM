@@ -49,4 +49,11 @@ public abstract class BitOpExpr extends BinaryOp {
         compileExpr(a, free);
         a.emit("jnz", lab);
     }
+    public abstract org.llvm.Value llvmGenBitOp(LLVM l, org.llvm.Value l_v,
+            org.llvm.Value r_v);
+    public org.llvm.Value llvmGen(LLVM l) {
+        org.llvm.Value l_v = left.llvmGen(l);
+        org.llvm.Value r_v = right.llvmGen(l);
+        return llvmGenBitOp(l, l_v, r_v);
+    }
 }

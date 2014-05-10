@@ -5,6 +5,7 @@
 package syntax;
 
 import compiler.*;
+import codegen.*;
 
 /** Provides a representation for syntactic elements, each of which is
  *  annotated with a position in the input file.

@@ -9,6 +9,9 @@ import checker.*;
 import codegen.*;
 import interp.*;
 
+import org.llvm.Builder;
+import org.llvm.BasicBlock;
+
 /** Provides a representation for while statements.
  */
 public final class While extends Statement {
@@ -68,5 +71,22 @@ public final class While extends Statement {
             v = body.exec(st);
         }
         return v;
+    }
+
+    public void llvmGen(LLVM l) {
+        Builder b = l.getBuilder();
+        BasicBlock loopCond = l.getFunction().appendBasicBlock("while_cond");
+        BasicBlock loopBody = l.getFunction().appendBasicBlock("while_body");
+        BasicBlock loopEnd = l.getFunction().appendBasicBlock("while_end");
+        b.buildBr(loopCond);
+
+        b.positionBuilderAtEnd(loopCond);
+        b.buildCondBr(test.llvmGen(l), loopBody, loopEnd);
+
+        b.positionBuilderAtEnd(loopBody);
+        body.llvmGen(l);
+        b.buildBr(loopCond);
+
+        b.positionBuilderAtEnd(loopEnd);
     }
 }

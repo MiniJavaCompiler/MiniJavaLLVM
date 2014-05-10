@@ -8,25 +8,30 @@ import compiler.*;
 import checker.*;
 import codegen.*;
 import interp.*;
+import java.util.Iterator;
+import java.util.Collections;
+import org.llvm.TypeRef;
 
 /** Provides a representation for local variable declarations in a block.
  */
-public class LocalVarDecl extends Stmts {
-    private Position pos;
+public class LocalVarDecl extends Statement {
     private Type type;
     private VarDecls varDecls;
-    public LocalVarDecl(Position pos, Type type,
-                        VarDecls varDecls, Stmts next) {
-        super(next);
-        this.pos      = pos;
+    public LocalVarDecl(Position pos, Type type, VarDecls varDecls) {
+        super(pos);
         this.type     = type;
         this.varDecls = varDecls;
     }
 
+    public boolean check(Context ctxt, VarEnv env, int frameOffset) {
+        return check(ctxt, env, frameOffset,
+                     Collections.<Statement>emptyList().iterator());
+    }
     /** Check whether this statement is valid and return a boolean
      *  indicating whether execution can continue at the next statement.
      */
-    public boolean check(Context ctxt, VarEnv env, int frameOffset) {
+    public boolean check(Context ctxt, VarEnv env, int frameOffset,
+                         Iterator<Statement> iter) {
         type = type.check(ctxt);
         if (type != null) {
             int size = type.size();
@@ -41,33 +46,38 @@ public class LocalVarDecl extends Stmts {
             }
             ctxt.reserveSpace(frameOffset);
         }
-        if (next == null) {
+        if (!iter.hasNext()) {
             ctxt.report(new Failure(pos, "Declarations have no use"));
             return true;
         } else {
-            return next.check(ctxt, env, frameOffset);
+            Statement s = iter.next();
+            return s.check(ctxt, env, frameOffset, iter);
         }
     }
 
     /** Emit code to execute this statement.
      */
     void compile(Assembly a) {
-        next.compile(a);            // static analysis ensures next!=null
+        /* this does nothing in a computational sense */
     }
 
-    /** Emit code that executes this statement and then branches
-     *  to a specified label.
-     */
-    void compileThen(Assembly a, String lab) {
-        next.compileThen(a, lab);   // static analysis ensures next!=null
+    public void llvmGen(LLVM l) {
+        org.llvm.Builder b = l.getBuilder();
+        org.llvm.Value func = b.getInsertBlock().getParent();
+
+        for (VarDecls vs = varDecls; vs != null; vs = vs.getNext()) {
+            TypeRef t = type.llvmType();
+
+            if (type.isClass() != null) {
+                t = t.pointerType();
+            }
+
+            org.llvm.Value v = b.buildAlloca(t, vs.getId().getName());
+            l.setNamedValue(vs.getId().getName(), v);
+            b.buildStore(type.defaultValue(), v);
+        }
     }
 
-    /** Emit code that executes this statement and then returns from the
-     *  current method.
-     */
-    public void compileRet(Assembly a) {
-        next.compileRet(a);         // static analysis ensures next!=null
-    }
 
     /** Execute this statement.  If the statement is terminated by a
      *  return statement, return the corresponding value.  Otherwise,

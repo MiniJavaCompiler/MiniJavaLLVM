@@ -9,6 +9,9 @@ import compiler.*;
 import codegen.*;
 import interp.*;
 
+import org.llvm.Builder;
+import org.llvm.BasicBlock;
+
 /** Provides a representation for while statements.
  */
 public final class DoWhile extends Statement {
@@ -55,4 +58,18 @@ public final class DoWhile extends Statement {
         } while (v == null && test.eval(st).getBool());
         return v;
     }
+
+    public void llvmGen(LLVM l) {
+        Builder b = l.getBuilder();
+        BasicBlock loopBody = l.getFunction().appendBasicBlock("do_body");
+        BasicBlock loopEnd = l.getFunction().appendBasicBlock("do_end");
+        b.buildBr(loopBody);
+
+        b.positionBuilderAtEnd(loopBody);
+        body.llvmGen(l);
+        b.buildCondBr(test.llvmGen(l), loopBody, loopEnd);
+
+        b.positionBuilderAtEnd(loopEnd);
+    }
+
 }

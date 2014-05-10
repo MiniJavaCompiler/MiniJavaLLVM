@@ -42,4 +42,8 @@ public final class This extends Expression {
     public Value eval(State st) {
         return st.getThis(size);
     }
+
+    public org.llvm.Value llvmGen(LLVM l) {
+        return l.getBuilder().buildLoad(l.getNamedValue("this"), "*this");
+    }
 }

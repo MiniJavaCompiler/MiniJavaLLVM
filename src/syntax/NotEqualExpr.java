@@ -8,9 +8,12 @@ import compiler.*;
 import codegen.*;
 import interp.*;
 
+import org.llvm.binding.LLVMLibrary.LLVMIntPredicate;
+import org.llvm.binding.LLVMLibrary.LLVMRealPredicate;
+
 /** Provides a representation for the inequality test (!=).
  */
-public final class NotEqualExpr extends EqOpExpr {
+public final class NotEqualExpr extends RelOpExpr {
     public NotEqualExpr(Position pos, Expression left, Expression right) {
         super(pos, left, right);
     }
@@ -43,4 +46,8 @@ public final class NotEqualExpr extends EqOpExpr {
         return BoolValue.make(left.eval(st).getInt()
                               != right.eval(st).getInt());
     }
+    public LLVMIntPredicate getllvmRelOp() {
+        return LLVMIntPredicate.LLVMIntNE;
+    }
+
 }

@@ -5,15 +5,22 @@
 package syntax;
 
 import interp.*;
+import util.*;
+import java.lang.Iterable;
+import java.util.Iterator;
 
 /** Provides a representation for formal parameter declarations.
  */
-public class Args {
+public class Args implements Iterable<Args>, ListIteratorIF<Args> {
     private Expression arg;
     private Args next;
     public Args(Expression arg, Args next) {
         this.arg  = arg;
         this.next = next;
+    }
+
+    public Iterator<Args> iterator() {
+        return new ListIterator<Args>(this);
     }
 
     /** Returns the expression for this argument.

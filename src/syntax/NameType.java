@@ -6,6 +6,9 @@ package syntax;
 
 import compiler.*;
 import checker.*;
+import codegen.*;
+
+import org.llvm.TypeRef;
 
 /** Provides a representation for types that have been mentioned by
  *  name but not yet verified.
@@ -22,6 +25,15 @@ public final class NameType extends Type {
         return name.toString();
     }
 
+    public TypeRef llvmType() {
+        throw new RuntimeException("Type has not been determined.");
+    }
+    public org.llvm.Value defaultValue() {
+        throw new RuntimeException("Type has not been determined.");
+    }
+    public void llvmGenTypes(LLVM l) {
+        throw new RuntimeException("Type has not been determined.");
+    }
     /** Check to ensure that this is a valid type.  Used to deal with
      *  types that are specified by name, which cannot be properly
      *  resolved until parsing is complete.

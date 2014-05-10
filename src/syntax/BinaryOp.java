@@ -22,6 +22,13 @@ public abstract class BinaryOp extends Expression {
         this.depth = 1 + Math.max(left.getDepth(), right.getDepth());
     }
 
+    public void forceNull(Type l_t, Type r_t) {
+        if (Type.mixedNull(l_t, r_t)) {
+            NullFixer.FixNulls(r_t, left);
+            NullFixer.FixNulls(l_t, right);
+        }
+    }
+
     public Expression getLeft() {
         return left;
     }

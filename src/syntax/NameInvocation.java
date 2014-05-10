@@ -44,4 +44,8 @@ public final class NameInvocation extends Invocation {
     public Value eval(State st) {
         return resolved.eval(st);
     }
+
+    public org.llvm.Value llvmGen(LLVM l) {
+        return resolved.llvmGen(l);
+    }
 }

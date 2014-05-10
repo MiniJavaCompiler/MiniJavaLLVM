@@ -38,6 +38,10 @@ public final class Return extends Statement {
                                                 " where a value of type " + rt +
                                                 " is required"));
                     }
+
+                    if (Type.mixedNull(rt, it)) {
+                        NullFixer.FixNulls(rt, result);
+                    }
                 } catch (Diagnostic d) {
                     ctxt.report(d);
                 }
@@ -48,6 +52,8 @@ public final class Return extends Statement {
         } else if (rt != null) {
             ctxt.report(new Failure(pos, "A return value is required"));
         }
+
+
         return false;
     }
 
@@ -80,5 +86,10 @@ public final class Return extends Statement {
      */
     public Value exec(State st) {
         return (result == null) ? Value.NULL : result.eval(st);
+    }
+
+    public void llvmGen(LLVM l) {
+        org.llvm.Value v = result.llvmGen(l);
+        l.getBuilder().buildRet(v);
     }
 }

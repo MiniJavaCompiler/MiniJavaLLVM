@@ -6,6 +6,7 @@ package syntax;
 
 import compiler.*;
 import checker.*;
+import codegen.*;
 
 /** Provides a representation for logical binary connectives.
  */

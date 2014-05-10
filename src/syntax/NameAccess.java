@@ -40,6 +40,13 @@ public final class NameAccess extends FieldAccess {
         resolved.compileExpr(a, free);
     }
 
+    public org.llvm.Value llvmGen(LLVM l) {
+        return resolved.llvmGen(l);
+    }
+
+    public org.llvm.Value llvmSave(LLVM l, org.llvm.Value v) {
+        return resolved.llvmSave(l, v);
+    }
     /** Save the value in the free register in the variable specified by
      *  this expression.
      */

@@ -56,4 +56,8 @@ public final class BooleanLiteral extends Literal {
     public Value eval(State st) {
         return BoolValue.make(value);
     }
+
+    public org.llvm.Value llvmGen(LLVM l) {
+        return Type.BOOLEAN.llvmType().constInt(value ? 1 : 0, false);
+    }
 }

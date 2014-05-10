@@ -23,4 +23,6 @@ public abstract class LeftHandSide extends Expression {
     /** Save a value in the location specified by this left hand side.
      */
     public abstract void save(State st, Value val);
+
+    public abstract org.llvm.Value llvmSave(LLVM l, org.llvm.Value v);
 }

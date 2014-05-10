@@ -8,10 +8,30 @@ import compiler.*;
 import syntax.*;
 import codegen.*;
 import interp.*;
+import util.*;
+import java.lang.Iterable;
+import java.util.Iterator;
+
+
+import org.llvm.BasicBlock;
+import org.llvm.Builder;
+import org.llvm.ExecutionEngine;
+import org.llvm.GenericValue;
+import org.llvm.LLVMException;
+import org.llvm.Module;
+import org.llvm.PassManager;
+import org.llvm.Target;
+import org.llvm.TypeRef;
+
+import org.llvm.binding.LLVMLibrary.LLVMCallConv;
+import org.llvm.binding.LLVMLibrary.LLVMIntPredicate;
+
+import java.util.ArrayList;
 
 /** Provides a representation for method environments.
  */
-public final class MethEnv extends MemberEnv {
+public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
+        ListIteratorIF<MethEnv>  {
     private VarEnv    params;
     private Statement body;
     private int       slot;        // virtual function table slot number
@@ -19,6 +39,11 @@ public final class MethEnv extends MemberEnv {
     private int       localBytes;  // #bytes of locals
 
     private MethEnv   next;
+    private TypeRef   llvmFuncType;
+    private org.llvm.Value functionVal;
+
+    private boolean isMain;
+    private boolean isPrintf;
 
     public MethEnv(Modifiers mods, Type type, Id id, VarEnv params,
                    Statement body, ClassType owner, int slot, int size,
@@ -29,6 +54,17 @@ public final class MethEnv extends MemberEnv {
         this.size   = size;
         this.body   = body;
         this.next   = next;
+        this.llvmFuncType = null;
+        this.functionVal = null;
+        this.isMain = false;
+        this.isPrintf = false;
+    }
+
+    public org.llvm.Value getFunctionVal() {
+        return functionVal;
+    }
+    public Iterator<MethEnv> iterator() {
+        return new ListIterator<MethEnv>(this);
     }
     public Statement getBody() {
         return body;
@@ -74,7 +110,7 @@ public final class MethEnv extends MemberEnv {
     void checkMethod(Context ctxt) {
         if (body != null) {
             ctxt.setCurrMethod(this);
-            if (body.check(ctxt, params, 0) && getType() != null) {
+            if (body.check(ctxt, params, 0) && getType() != Type.VOID) {
                 ctxt.report(new Failure(body.getPos(),
                                         "Method does not return a value"));
             }
@@ -134,6 +170,93 @@ public final class MethEnv extends MemberEnv {
         if (body != null) {
             a.emitPrologue(methName(a), localBytes);
             body.compileRet(a);
+        }
+    }
+
+    public void llvmGenTypes(LLVM l) {
+        llvmType();
+        String functionName = owner.toString() + "." + getName();
+        if (owner.toString().equals("Main") && getName().equals("main")) {
+            functionName = "main";
+            isMain = true;
+        } else if (owner.toString().equals("System")
+                   && getName().equals("out")
+                   && isStatic()
+                   && body == null
+                   && size == 4) {
+            isPrintf = true;
+        }
+        org.llvm.Value f = l.getModule().addFunction(functionName, llvmType());
+        functionVal = f;
+    }
+
+    public TypeRef llvmType() {
+        if (llvmFuncType == null) {
+            ArrayList<TypeRef> llvm_formals = new ArrayList<TypeRef>();
+            if (!isStatic()) {
+                llvm_formals.add(owner.llvmType().pointerType()); //this pointer
+            }
+            for (VarEnv p = params; p != null; p = p.getNext()) {
+                TypeRef formal = p.getType().llvmType();
+                if (p.getType().isClass() != null) {
+                    formal = formal.pointerType();
+                }
+                llvm_formals.add(formal);
+            }
+            TypeRef return_type = type.llvmType();
+            if (type.isClass() != null) {
+                return_type = return_type.pointerType();
+            }
+            llvmFuncType = TypeRef.functionType(return_type, llvm_formals);
+        }
+        return llvmFuncType;
+    }
+
+    public void llvmGenMethod(LLVM l) {
+        org.llvm.Value f = functionVal;
+        if (body != null) {
+            l.setFunction(f);
+            BasicBlock entry = f.appendBasicBlock("entry");
+            l.getBuilder().positionBuilderAtEnd(entry);
+            if (isMain) {
+                ArrayList<org.llvm.Value> values = new ArrayList<org.llvm.Value>();
+                l.getBuilder().buildCall(l.getStaticInitFn(), "", values);
+            }
+            int n = 0;
+            if (!isStatic()) {
+                org.llvm.Value v = l.getBuilder().buildAlloca(f.getParam(n).typeOf(), "this");
+                l.getBuilder().buildStore(f.getParam(n), v);
+                l.setNamedValue("this", v);
+                n++;
+            }
+            for (VarEnv p = params; p != null; p = p.getNext()) {
+                org.llvm.Value v = l.getBuilder().buildAlloca(f.getParam(n).typeOf(),
+                                   p.getName());
+                l.getBuilder().buildStore(f.getParam(n), v);
+                l.setNamedValue(p.getName(), v);
+                n++;
+            }
+            body.llvmGen(l);
+
+            if (type == Type.VOID) {
+                l.getBuilder().buildRetVoid();
+            }
+        } else if (isPrintf) {
+            ArrayList<org.llvm.Value> args = new ArrayList<org.llvm.Value>();
+            //l.getModule().addGlobal(
+            org.llvm.Value str = org.llvm.Value.constString("%d\n");
+            org.llvm.Value pf_string = l.getModule().addGlobal(TypeRef.int8Type().arrayType(
+                                           4), "print_f");
+            pf_string.setInitializer(str);
+            org.llvm.Value [] indices = {Type.INT.llvmType().constInt(0, false), Type.INT.llvmType().constInt(0, false)};
+            org.llvm.Value v = l.getBuilder().buildInBoundsGEP(pf_string, "format",
+                               indices);
+            args.add(v);
+            args.add(f.getParam(0));
+            BasicBlock entry = f.appendBasicBlock("entry");
+            l.getBuilder().positionBuilderAtEnd(entry);
+            l.getBuilder().buildCall(l.getPrintf(), "ret", args);
+            l.getBuilder().buildRetVoid();
         }
     }
 
