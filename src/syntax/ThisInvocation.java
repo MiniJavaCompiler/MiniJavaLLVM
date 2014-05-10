@@ -49,15 +49,23 @@ public final class ThisInvocation extends Invocation {
 
     public org.llvm.Value llvmGen(LLVM l) {
         Builder b = l.getBuilder();
-        org.llvm.Value obj = b.buildLoad(l.getNamedValue("this"), "*this");
-        org.llvm.Value vtable_addr =  b.buildStructGEP(obj, 0, "vtable_lookup");
-        org.llvm.Value vtable = b.buildLoad(vtable_addr, "vtable");
-        org.llvm.Value func_addr = b.buildStructGEP(vtable, menv.getSlot(),
-                                   "func_lookup");
-        org.llvm.Value func = b.buildLoad(func_addr, menv.getName());
+        org.llvm.Value method_this;
+        org.llvm.Value func;
+        if (!menv.isStatic()) {
+            org.llvm.Value obj = b.buildLoad(l.getNamedValue("this"), "*this");
+            org.llvm.Value vtable_addr =  b.buildStructGEP(obj, 0, "vtable_lookup");
+            org.llvm.Value vtable = b.buildLoad(vtable_addr, "vtable");
+            org.llvm.Value func_addr = b.buildStructGEP(vtable, menv.getSlot(),
+                                       "func_lookup");
+            func = b.buildLoad(func_addr, menv.getName());
+            method_this = b.buildBitCast(obj, menv.getOwner().llvmType().pointerType(),
+                                         "cast_this");
+        } else {
+            /* static method can just use the existing functoin name */
+            method_this = null;
+            func = menv.getFunctionVal();
+        }
 
-        org.llvm.Value method_this = b.buildBitCast(obj,
-                                     menv.getOwner().llvmType().pointerType(), "cast_this");
 
         return llvmInvoke(l, menv.getName(), menv.getType(), func, method_this);
     }
