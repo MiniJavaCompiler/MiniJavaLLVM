@@ -11,3 +11,5 @@
 src/syntax/MjcParser.java
 src/syntax/MjcTokens.java
 build
+*.out
+*.bc

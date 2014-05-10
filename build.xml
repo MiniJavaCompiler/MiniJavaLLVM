@@ -3,6 +3,8 @@
   <property name="bridj.jar" value="build/libs/bridj-0.6.2.jar" />
   <property name="llvm-j.jar" value="build/libs/llvm-j.jar" />
   <property name="asm.jar" value="build/libs/asm-3.0.jar" />
+  <property name="commons.jar.system" value="/usr/share/java/commons-cli-1.2.jar" />
+  <property name="commons.jar" value="build/libs/commons-cli-1.2.jar" />
   <property name="sprintabout.jar" value="build/libs/sprintabout.jar" />
   <property name="dir.build" value="build/" />
   <property name="dir.libs" value="build/libs" />
@@ -22,6 +24,7 @@
     <pathelement location="${llvm-j.jar}"/>
     <pathelement location="${asm.jar}"/>
     <pathelement location="${sprintabout.jar}"/>
+    <pathelement location="${commons.jar}"/>
   </path>
   <target name="git_setup">
     <exec executable="git">
@@ -40,33 +43,34 @@
       <arg value="g++-4.7-multilib" />
       <arg value="junit4" />
       <arg value="ant-contrib" />
+      <arg value="libcommons-cli-java" />
     </exec>
   </target>
   <target name="clean">
     <delete dir="build"/>
-    <exec executable="git" dir="llvm-j">
-      <arg value="reset" />
-      <arg value="--hard" />
-    </exec>
   </target>
   <target name="build_libs">
     <mkdir dir="${dir.libs}" />
     <if>
       <available file="${bridj.jar}"/>
       <else>
-        <exec executable="wget" dir="${dir.libs}">
+        <exec executable="wget" dir="${dir.libs}" failonerror="true">
           <arg value="https://bridj.googlecode.com/files/bridj-0.6.2.jar" />
         </exec>
       </else>
     </if>
     <if>
+      <available file="${commons.jar}"/>
+      <else>
+        <copy todir="${dir.libs}">
+          <file file="${commons.jar.system}" />
+        </copy>
+      </else>
+    </if>
+    <if>
       <available file="${llvm-j.jar}"/>
       <else>
-        <exec executable="git" dir="llvm-j">
-          <arg value="reset" />
-          <arg value="--hard" />
-        </exec>
-        <exec executable="make" dir="llvm-j">
+        <exec executable="make" dir="llvm-j" failonerror="true">
           <arg value="llvm" />
           <arg value="LLVM_HOME=/usr/" />
         </exec>
@@ -74,24 +78,19 @@
         <javac includeantruntime="false" srcdir="llvm-j/src/" 
                destdir="llvm-j/build/classes/" classpathref="llvm-j.build.classpath" />
         <jar destfile="${llvm-j.jar}" basedir="llvm-j/build/classes" />
-        <exec executable="git" dir="llvm-j">
-          <arg value="reset" />
-          <arg value="--hard" />
-        </exec>
-
       </else>
     </if>
     <if>
       <available file="${sprintabout.jar}"/>
       <else>
-        <exec executable="wget" dir="${dir.build}">         
+        <exec executable="wget" dir="${dir.build}" failonerror="true">         
           <arg value="-N" />
           <arg value="http://www-igm.univ-mlv.fr/~forax/works/sprintabout/sprintabout-src.zip" />
         </exec>
-        <exec executable="unzip" dir="${dir.build}">
+        <exec executable="unzip" dir="${dir.build}" failonerror="true">
           <arg value="sprintabout-src.zip" />
         </exec>
-        <exec executable="ant" dir="${dir.build}/sprintabout/">
+        <exec executable="ant" dir="${dir.build}/sprintabout/" failonerror="true">
           <arg value="jar" />
           <arg value="-Dasm.lib.dir=lib/" />
         </exec>
@@ -109,6 +108,7 @@
       <arg value="org.llvm.test.TestFactorial" />
     </java>
   </target>
+
   <target name="compile" depends="build_libs">
     <mkdir dir="${dir.classes}"/>
     <outofdate>
@@ -120,7 +120,7 @@
         <pathelement path="src/syntax/MjcTokens.java"/>
       </targetfiles>
       <sequential>
-        <exec executable="jacc">
+        <exec executable="jacc" failonerror="true">
           <arg value="src/syntax/Mjc.jacc" />
         </exec>
       </sequential>
@@ -141,5 +141,9 @@
   </target>
   <target name="run" depends="jar">
     <java jar="build/jar/mjc.jar" fork="true"/>
+  </target>
+  <target name="test" depends="jar">
+    <exec executable="./runTests.py" failonerror="true">
+    </exec>
   </target>
 </project>
