@@ -6,6 +6,7 @@ package syntax;
 
 import compiler.*;
 import org.llvm.TypeRef;
+import codegen.*;
 
 /** Provides a representation for primitive types.
  */
@@ -19,6 +20,10 @@ public final class PrimitiveType extends Type {
      */
     public String toString() {
         return name;
+    }
+
+    public void llvmGenTypes(LLVM l) {
+        /* primitive types already exist */
     }
 
     /** Test for equality with another type.
@@ -41,7 +46,7 @@ public final class PrimitiveType extends Type {
         } else if (this.equal(Type.DOUBLE)) {
             return TypeRef.doubleType();
         } else if (this.equal(Type.BOOLEAN)) {
-            return TypeRef.int32Type();
+            return TypeRef.int1Type();
         } else if (this.equal(Type.NULL)) {
             /* this should really be the type it's going to be assigned to */
             return TypeRef.int32Type().pointerType();

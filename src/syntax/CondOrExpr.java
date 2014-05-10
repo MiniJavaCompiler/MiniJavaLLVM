@@ -7,6 +7,8 @@ package syntax;
 import compiler.*;
 import codegen.*;
 import interp.*;
+import org.llvm.BasicBlock;
+import org.llvm.Builder;
 
 /** Provides a representation for conditional or expressions (||).
  */
@@ -30,6 +32,24 @@ public final class CondOrExpr extends LogicOpExpr {
         a.emit("movl", a.immed(1), a.reg(free));
 
         a.emitLabel(l2);
+    }
+
+    public org.llvm.Value llvmGen(LLVM l) {
+        Builder b = l.getBuilder();
+        BasicBlock fBranch = l.getFunction().appendBasicBlock("cond_false");
+        BasicBlock tBranch = l.getFunction().appendBasicBlock("cond_true");
+        org.llvm.Value cmptmp = b.buildAlloca(Type.BOOLEAN.llvmType(), "cmptmp");
+        org.llvm.Value res = left.llvmGen(l);
+
+        b.buildStore(res, cmptmp);
+        b.buildCondBr(res, tBranch, fBranch);
+
+        b.positionBuilderAtEnd(fBranch);
+        b.buildStore(right.llvmGen(l), cmptmp);
+        b.buildBr(tBranch);
+
+        b.positionBuilderAtEnd(tBranch);
+        return b.buildLoad(cmptmp, "cmpres");
     }
 
     /** Generate code to evaluate this expression and

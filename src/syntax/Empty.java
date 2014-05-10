@@ -16,6 +16,10 @@ public final class Empty extends Statement {
         super(pos);
     }
 
+    public void llvmGen(LLVM l) {
+        /* does nothing */
+    }
+
     /** Check whether this statement is valid and return a boolean
      *  indicating whether execution can continue at the next statement.
      */

@@ -50,4 +50,9 @@ public final class ClassInvocation extends Invocation {
     public Value eval(State st) {
         return menv.call(st, null, args);
     }
+
+    public org.llvm.Value llvmGen(LLVM l) {
+        return llvmInvoke(l, menv.getName(), menv.getType(), menv.getFunctionVal(),
+                          null);
+    }
 }

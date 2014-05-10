@@ -41,4 +41,9 @@ public final class NegExpr extends UnaryOp {
     public Value eval(State st) {
         return new IntValue(-expr.eval(st).getInt());
     }
+
+    public org.llvm.Value llvmGen(LLVM l) {
+        return l.getBuilder().buildNeg(expr.llvmGen(l), "neg_temp");
+    }
+
 }

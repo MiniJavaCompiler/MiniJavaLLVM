@@ -44,6 +44,6 @@ public final class This extends Expression {
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
-        return l.getNamedValue("this");
+        return l.getBuilder().buildLoad(l.getNamedValue("this"), "*this");
     }
 }

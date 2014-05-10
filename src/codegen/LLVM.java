@@ -19,30 +19,33 @@ import org.llvm.binding.LLVMLibrary.LLVMIntPredicate;
 import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.ArrayList;
 
 import compiler.*;
 
 public class LLVM {
     private Builder builder;
     private Module module;
-    private Hashtable<String, Value> namedValues;
-    org.llvm.Value programEntry;
-    BasicBlock programEntryBlock;
-    org.llvm.Value userEntry;
+    private Value function;
+    private BasicBlock staticInit;
+    private Value staticInitFn;
+    private Value printf;
 
-    public BasicBlock getProgramEntry() {
-        return programEntryBlock;
+    private Hashtable<String, Value> namedValues;
+
+    public Value getStaticInitFn() {
+        return staticInitFn;
     }
-    public void setUserEntry(org.llvm.Value userEntryPoint) {
-        userEntry = userEntryPoint;
+    public BasicBlock getStaticInit() {
+        return staticInit;
     }
+
     public LLVM() {
         namedValues = new Hashtable<String, Value>();
     }
 
     public Value getNamedValue(String s) {
         Value v = namedValues.get(s);
-        //v = builder.buildLoad(v, s);
         return v;
     }
 
@@ -58,30 +61,63 @@ public class LLVM {
         return builder;
     }
 
+    public void setFunction(Value f) {
+        this.function = f;
+    }
+
+    public Value getFunction() {
+        return function;
+    }
+
     public Module getModule() {
         return module;
     }
     public void setModule(Module module) {
         this.module = module;
     }
-    public void llvmGen(ClassType [] classes) {
+
+    public Value getPrintf() {
+        return printf;
+    }
+
+    public void llvmGen(ClassType [] classes, String output_path, Boolean dump) {
         Module mod = Module.createWithName("llvm_module");
-        Builder builder = Builder.createBuilderInContext(Context.getModuleContext(mod));
         setModule(mod);
-        setBuilder(builder);
+        ArrayList<TypeRef> args = new ArrayList<TypeRef>();
+        args.add(TypeRef.int8Type().pointerType());
+        args.add(TypeRef.int32Type());
+        TypeRef printf_type = TypeRef.functionType(TypeRef.int32Type(), args);
+        printf = mod.addFunction("printf", printf_type);
+        printf.setFunctionCallConv(LLVMCallConv.LLVMCCallConv);
+
         TypeRef program_entry_type = TypeRef.functionType(Type.VOID.llvmType(),
                                      (List)Collections.emptyList());
-        programEntry = mod.addFunction("prog_entry", program_entry_type);
-        programEntryBlock = programEntry.appendBasicBlock("entry");
+
+        staticInitFn = mod.addFunction("static_init", program_entry_type);
+        staticInit = staticInitFn.appendBasicBlock("entry");
+
+        for (ClassType c : classes) {
+            c.llvmGenTypes(this);
+        }
+        Builder builder = Builder.createBuilderInContext(Context.getModuleContext(mod));
+        setBuilder(builder);
+
         for (ClassType c : classes) {
             c.llvmGen(this);
         }
-        builder.positionBuilderAtEnd(programEntryBlock);
-        builder.buildCall(userEntry, "", (List)Collections.emptyList());
+
+        builder.positionBuilderAtEnd(staticInit);
         builder.buildRetVoid();
-        mod.dumpModule();
+
         try {
+            if (dump) {
+                mod.dumpModule();
+            }
             mod.verify();
+            if (output_path != null) {
+                System.out.println("Writing LLVM Bitcode to " + output_path);
+                mod.writeBitcodeToFile(output_path);
+            }
         } catch (LLVMException e) {
             System.out.println(e.getMessage());
         }

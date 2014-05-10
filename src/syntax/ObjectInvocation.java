@@ -9,6 +9,8 @@ import checker.*;
 import codegen.*;
 import interp.*;
 
+import org.llvm.Builder;
+
 /** Represents an instance method invocation.
  */
 public final class ObjectInvocation extends Invocation {
@@ -51,5 +53,21 @@ public final class ObjectInvocation extends Invocation {
      */
     public Value eval(State st) {
         return menv.call(st, object.eval(st).getObj(), args);
+    }
+
+    public org.llvm.Value llvmGen(LLVM l) {
+        Builder b = l.getBuilder();
+        org.llvm.Value obj = object.llvmGen(l);
+        org.llvm.Value vtable_addr =  b.buildStructGEP(obj, 0, "vtable_lookup");
+        org.llvm.Value vtable = b.buildLoad(vtable_addr, "vtable");
+        org.llvm.Value func_addr = b.buildStructGEP(vtable, menv.getSlot(),
+                                   "func_lookup");
+        org.llvm.Value func = b.buildLoad(func_addr, menv.getName());
+
+        org.llvm.Value method_this = b.buildBitCast(obj,
+                                     menv.getOwner().llvmType().pointerType(), "cast_this");
+
+
+        return llvmInvoke(l, menv.getName(), menv.getType(), func, method_this);
     }
 }

@@ -8,6 +8,8 @@ import compiler.*;
 import syntax.*;
 import codegen.*;
 
+import org.llvm.TypeRef;
+
 /** Provides a base representation for environments.
  */
 public abstract class Env {
@@ -41,6 +43,16 @@ public abstract class Env {
      */
     public final Type getType() {
         return type;
+    }
+
+    public TypeRef llvmType() {
+        throw new RuntimeException(this.getClass().getName() +
+                                   ": Not Yet Implemented.");
+    }
+
+    public void llvmGenTypes() {
+        throw new RuntimeException(this.getClass().getName() +
+                                   ": Not Yet Implemented.");
     }
 
     public org.llvm.Value llvmGen(LLVM l) {

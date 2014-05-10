@@ -17,11 +17,7 @@ public abstract class Statement extends Syntax {
         super(pos);
     }
 
-    /* this will be eventually made abstract*/
-    public void llvmGen(LLVM l) {
-        throw new RuntimeException(this.getClass().getName() +
-                                   ": Not Yet Implemented.");
-    }
+    abstract public void llvmGen(LLVM l);
 
     /** Check whether this statement is valid and return a boolean
      *  indicating whether execution can continue at the next statement.

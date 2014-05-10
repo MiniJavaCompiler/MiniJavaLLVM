@@ -39,6 +39,11 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
     private int       localBytes;  // #bytes of locals
 
     private MethEnv   next;
+    private TypeRef   llvmFuncType;
+    private org.llvm.Value functionVal;
+
+    private boolean isMain;
+    private boolean isPrintf;
 
     public MethEnv(Modifiers mods, Type type, Id id, VarEnv params,
                    Statement body, ClassType owner, int slot, int size,
@@ -49,8 +54,15 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
         this.size   = size;
         this.body   = body;
         this.next   = next;
+        this.llvmFuncType = null;
+        this.functionVal = null;
+        this.isMain = false;
+        this.isPrintf = false;
     }
 
+    public org.llvm.Value getFunctionVal() {
+        return functionVal;
+    }
     public Iterator<MethEnv> iterator() {
         return new ListIterator<MethEnv>(this);
     }
@@ -161,9 +173,25 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
         }
     }
 
-    public void llvmGenMethod(LLVM l) {
-        if (body != null) {
+    public void llvmGenTypes(LLVM l) {
+        llvmType();
+        String functionName = owner.toString() + "." + getName();
+        if (owner.toString().equals("Main") && getName().equals("main")) {
+            functionName = "main";
+            isMain = true;
+        } else if (owner.toString().equals("System")
+                   && getName().equals("out")
+                   && isStatic()
+                   && body == null
+                   && size == 4) {
+            isPrintf = true;
+        }
+        org.llvm.Value f = l.getModule().addFunction(functionName, llvmType());
+        functionVal = f;
+    }
 
+    public TypeRef llvmType() {
+        if (llvmFuncType == null) {
             ArrayList<TypeRef> llvm_formals = new ArrayList<TypeRef>();
             if (!isStatic()) {
                 llvm_formals.add(owner.llvmType().pointerType()); //this pointer
@@ -175,24 +203,25 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
                 }
                 llvm_formals.add(formal);
             }
-            System.out.println(owner.toString() + "." + getName());
-            System.out.println(llvm_formals);
-
             TypeRef return_type = type.llvmType();
             if (type.isClass() != null) {
                 return_type = return_type.pointerType();
             }
-            TypeRef func_type = TypeRef.functionType(return_type, llvm_formals);
-            org.llvm.Value f = l.getModule().addFunction(owner.toString() + "." + getName(),
-                               func_type);
-            f.setFunctionCallConv(LLVMCallConv.LLVMCCallConv);
+            llvmFuncType = TypeRef.functionType(return_type, llvm_formals);
+        }
+        return llvmFuncType;
+    }
 
-            if (getName().equals("main")) {
-                l.setUserEntry(f);
-            }
+    public void llvmGenMethod(LLVM l) {
+        org.llvm.Value f = functionVal;
+        if (body != null) {
+            l.setFunction(f);
             BasicBlock entry = f.appendBasicBlock("entry");
-
             l.getBuilder().positionBuilderAtEnd(entry);
+            if (isMain) {
+                ArrayList<org.llvm.Value> values = new ArrayList<org.llvm.Value>();
+                l.getBuilder().buildCall(l.getStaticInitFn(), "", values);
+            }
             int n = 0;
             if (!isStatic()) {
                 org.llvm.Value v = l.getBuilder().buildAlloca(f.getParam(n).typeOf(), "this");
@@ -212,6 +241,22 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
             if (type == Type.VOID) {
                 l.getBuilder().buildRetVoid();
             }
+        } else if (isPrintf) {
+            ArrayList<org.llvm.Value> args = new ArrayList<org.llvm.Value>();
+            //l.getModule().addGlobal(
+            org.llvm.Value str = org.llvm.Value.constString("%d\n");
+            org.llvm.Value pf_string = l.getModule().addGlobal(TypeRef.int8Type().arrayType(
+                                           4), "print_f");
+            pf_string.setInitializer(str);
+            org.llvm.Value [] indices = {Type.INT.llvmType().constInt(0, false), Type.INT.llvmType().constInt(0, false)};
+            org.llvm.Value v = l.getBuilder().buildInBoundsGEP(pf_string, "format",
+                               indices);
+            args.add(v);
+            args.add(f.getParam(0));
+            BasicBlock entry = f.appendBasicBlock("entry");
+            l.getBuilder().positionBuilderAtEnd(entry);
+            l.getBuilder().buildCall(l.getPrintf(), "ret", args);
+            l.getBuilder().buildRetVoid();
         }
     }
 

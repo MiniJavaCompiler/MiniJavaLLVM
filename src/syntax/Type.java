@@ -29,6 +29,8 @@ public abstract class Type {
 
     public abstract TypeRef llvmType();
 
+    public abstract void llvmGenTypes(LLVM l);
+
     /** Test to see if this class is a supertype of another type.
      */
     public boolean isSuperOf(Type type) {

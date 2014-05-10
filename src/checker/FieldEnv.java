@@ -84,7 +84,7 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
         }
     }
 
-    public org.llvm.TypeRef llvmGenFieldtype() {
+    public org.llvm.TypeRef llvmType() {
         return type.llvmType();
     }
 

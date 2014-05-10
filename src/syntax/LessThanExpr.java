@@ -8,6 +8,9 @@ import compiler.*;
 import codegen.*;
 import interp.*;
 
+import org.llvm.binding.LLVMLibrary.LLVMIntPredicate;
+import org.llvm.binding.LLVMLibrary.LLVMRealPredicate;
+
 /** Provides a representation for less than comparisons.
  */
 public final class LessThanExpr extends RelOpExpr {
@@ -41,5 +44,8 @@ public final class LessThanExpr extends RelOpExpr {
     public Value eval(State st) {
         // Should handle comparisons other than integers ...
         return BoolValue.make(left.eval(st).getInt() < right.eval(st).getInt());
+    }
+    public LLVMIntPredicate getllvmRelOp() {
+        return LLVMIntPredicate.LLVMIntSLT;
     }
 }

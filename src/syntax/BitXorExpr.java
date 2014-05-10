@@ -34,4 +34,10 @@ public final class BitXorExpr extends BitOpExpr {
     public Value eval(State st) {
         return new IntValue(left.eval(st).getInt() ^ right.eval(st).getInt());
     }
+
+    public org.llvm.Value llvmGenBitOp(LLVM l, org.llvm.Value l_v,
+                                       org.llvm.Value r_v) {
+        return l.getBuilder().buildXor(l_v, r_v, "ortemp");
+    }
+
 }

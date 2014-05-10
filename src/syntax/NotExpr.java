@@ -41,4 +41,8 @@ public final class NotExpr extends UnaryOp {
     public Value eval(State st) {
         return BoolValue.make(!expr.eval(st).getBool());
     }
+
+    public org.llvm.Value llvmGen(LLVM l) {
+        return l.getBuilder().buildNot(expr.llvmGen(l), "not_temp");
+    }
 }
