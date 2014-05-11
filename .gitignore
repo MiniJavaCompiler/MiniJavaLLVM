@@ -13,3 +13,8 @@ src/syntax/MjcTokens.java
 build
 *.out
 *.bc
+
+#no eclipse projects or metadata
+*.project
+*.metadata
+*.classpath
