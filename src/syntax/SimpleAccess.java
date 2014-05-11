@@ -71,27 +71,27 @@ public final class SimpleAccess extends FieldAccess {
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
-        if (env.getFieldIndex() != -1) {
-            org.llvm.Value obj = l.getNamedValue("this");
-            org.llvm.Value deref = l.getBuilder().buildLoad(obj, "*this");
-            return l.getBuilder().buildStructGEP(deref, env.getFieldIndex(), env.getName());
-        } else {
-            System.out.println("SimpleAccess: " + env.getOwner() + "." + env.getName());
-            return l.getNamedValue(env.getOwner() + "." + env.getName());
-        }
-    }
-
-    public org.llvm.Value llvmSave(LLVM l, org.llvm.Value v) {
         org.llvm.Value field;
         if (env.getFieldIndex() != -1) {
-            System.out.println("SimpleAccess: " + env.getOwner() + "." + env.getName() +
-                               env.getFieldIndex());
             org.llvm.Value obj = l.getNamedValue("this");
             org.llvm.Value deref = l.getBuilder().buildLoad(obj, "*this");
             field = l.getBuilder().buildStructGEP(deref, env.getFieldIndex(),
                                                   env.getName());
         } else {
             System.out.println("SimpleAccess: " + env.getOwner() + "." + env.getName());
+            field = l.getNamedValue(env.getOwner() + "." + env.getName());
+        }
+        return l.getBuilder().buildLoad(field, env.getName());
+    }
+
+    public org.llvm.Value llvmSave(LLVM l, org.llvm.Value v) {
+        org.llvm.Value field;
+        if (env.getFieldIndex() != -1) {
+            org.llvm.Value obj = l.getNamedValue("this");
+            org.llvm.Value deref = l.getBuilder().buildLoad(obj, "*this");
+            field = l.getBuilder().buildStructGEP(deref, env.getFieldIndex(),
+                                                  env.getName());
+        } else {
             field = l.getNamedValue(env.getOwner() + "." + env.getName());
         }
         return l.getBuilder().buildStore(v, field);

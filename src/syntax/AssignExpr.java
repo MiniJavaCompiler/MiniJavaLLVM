@@ -35,10 +35,10 @@ public final class AssignExpr extends StatementExpr {
         if (!lt.isSuperOf(rt)) {
             throw new Failure(pos, "Cannot assign value of type " + rt +
             " to variable of type " + lt);
+        } else if (lt != rt) {
+            rhs = new CastExpr(pos, lt, rhs);
         }
-        if (Type.mixedNull(lt, rt)) {
-            NullFixer.FixNulls(lt, rhs);
-        }
+
         return lt;
     }
 

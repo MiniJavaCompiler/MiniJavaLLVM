@@ -70,6 +70,10 @@
     <if>
       <available file="${llvm-j.jar}"/>
       <else>
+        <exec executable="git">
+          <arg value="submodule" />
+          <arg value="update" />
+        </exec>
         <exec executable="make" dir="llvm-j" failonerror="true">
           <arg value="llvm" />
           <arg value="LLVM_HOME=/usr/" />
@@ -144,6 +148,7 @@
   </target>
   <target name="test" depends="jar">
     <exec executable="./runTests.py" failonerror="true">
+      <arg value="show_diff" />
     </exec>
   </target>
 </project>

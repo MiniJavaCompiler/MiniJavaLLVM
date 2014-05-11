@@ -61,12 +61,11 @@ public final class ThisInvocation extends Invocation {
             method_this = b.buildBitCast(obj, menv.getOwner().llvmType().pointerType(),
                                          "cast_this");
         } else {
-            /* static method can just use the existing functoin name */
+            /* static method can just use the existing function name */
             method_this = null;
             func = menv.getFunctionVal();
         }
 
-
-        return llvmInvoke(l, menv.getName(), menv.getType(), func, method_this);
+        return llvmInvoke(l, menv, func, method_this);
     }
 }

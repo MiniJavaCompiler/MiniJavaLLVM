@@ -8,6 +8,7 @@ import compiler.*;
 import checker.*;
 import codegen.*;
 import interp.*;
+import org.llvm.Builder;
 
 /** Provides a representation for "new" expressions that allocate an
  *  instance of a class.
@@ -49,5 +50,16 @@ public final class NewExpr extends StatementExpr {
      */
     public Value eval(State st) {
         return cls.newObject();
+    }
+
+    public org.llvm.Value llvmGen(LLVM l) {
+        Builder b = l.getBuilder();
+        org.llvm.Value [] args = {cls.llvmType().sizeOf()};
+        org.llvm.Value mem = b.buildCall(l.getMalloc(), "malloc", args);
+        org.llvm.Value res = b.buildBitCast(mem, cls.llvmType().pointerType(), "cast");
+        org.llvm.Value vtable_field = b.buildStructGEP(res, 0, "vtable");
+        b.buildStore(cls.getVtableLoc(), vtable_field);
+
+        return res;
     }
 }

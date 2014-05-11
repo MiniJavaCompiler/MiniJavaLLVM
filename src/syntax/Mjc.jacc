@@ -124,7 +124,7 @@ body    : /* empty */ ';'       { $$ = null; }
         | block
         ;
 stmt    : /* empty */ ';'       { $$ = new Empty($1); }
-        | IF '(' expr ')' stmt  { $$ = new IfThenElse($1, $3, $5, null); }
+        | IF '(' expr ')' stmt  { $$ = new IfThenElse($1, $3, $5, new Empty($1)); }
         | IF '(' expr ')' stmt ELSE stmt
                                 { $$ = new IfThenElse($1, $3, $5, $7); }
         | WHILE '(' expr ')' stmt

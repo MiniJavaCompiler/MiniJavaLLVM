@@ -37,10 +37,8 @@ public final class Return extends Statement {
                                                 "Cannot return a value of type " + it +
                                                 " where a value of type " + rt +
                                                 " is required"));
-                    }
-
-                    if (Type.mixedNull(rt, it)) {
-                        NullFixer.FixNulls(rt, result);
+                    } else if (rt != it) {
+                        result = new CastExpr(pos, rt, result);
                     }
                 } catch (Diagnostic d) {
                     ctxt.report(d);

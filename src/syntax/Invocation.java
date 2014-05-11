@@ -9,6 +9,7 @@ import checker.*;
 import codegen.*;
 
 import java.util.ArrayList;
+import org.llvm.TypeRef;
 
 /** Provides a representation for method invocations.
  */
@@ -67,22 +68,29 @@ public abstract class Invocation extends StatementExpr {
         a.unspillAll(free);
     }
 
-    public org.llvm.Value llvmInvoke(LLVM l, String func_name, Type return_type,
-                                     org.llvm.Value function, org.llvm.Value this_ptr) {
+    public org.llvm.Value llvmInvoke(LLVM l, MethEnv menv, org.llvm.Value function,
+                                     org.llvm.Value this_ptr) {
         /* static methods will provide null for this_ptr */
         ArrayList<org.llvm.Value> func_args = new ArrayList<org.llvm.Value>();
+        //TypeRef [] formals = menv.llvmType().getParamTypes();
+
+        int i = 0;
         if (this_ptr != null) {
             func_args.add(this_ptr);
+            i++;
         }
 
         if (args != null) {
             for (Args a : args) {
-                func_args.add(a.getArg().llvmGen(l));
+                org.llvm.Value arg_val = a.getArg().llvmGen(l);
+                func_args.add(arg_val);
+                i++;
             }
         }
 
+        String func_name = menv.getName();
         String name = "call_" + func_name;
-        if (return_type == Type.VOID) {
+        if (menv.getType() == Type.VOID) {
             name = "";
         }
 
