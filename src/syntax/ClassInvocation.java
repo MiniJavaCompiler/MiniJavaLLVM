@@ -52,7 +52,6 @@ public final class ClassInvocation extends Invocation {
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
-        return llvmInvoke(l, menv.getName(), menv.getType(), menv.getFunctionVal(),
-                          null);
+        return llvmInvoke(l, menv, menv.getFunctionVal(), null);
     }
 }

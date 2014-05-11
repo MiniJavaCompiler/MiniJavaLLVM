@@ -29,6 +29,10 @@ public class Args implements Iterable<Args>, ListIteratorIF<Args> {
         return arg;
     }
 
+    public void setArg(Expression e) {
+        arg = e;
+    }
+
     /** Returns the next argument in this list.
      */
     public Args getNext() {

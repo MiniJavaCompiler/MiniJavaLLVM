@@ -32,8 +32,13 @@ public abstract class RelOpExpr extends BinaryOp {
                 "Operands should have the same type, but the " +
                 " left operand has type " + lt +
                 " and the right operand has type " + rt));
+            } else if (Type.mixedNull(lt, rt)) {
+                if (lt == Type.NULL) {
+                    left = new CastExpr(pos, rt, left);
+                } else {
+                    right = new CastExpr(pos, lt, right);
+                }
             }
-            forceNull(lt, rt);
         } catch (Diagnostic d) {
             ctxt.report(d);
         }

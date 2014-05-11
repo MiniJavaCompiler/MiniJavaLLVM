@@ -52,6 +52,8 @@ public final class VarEnv extends Env {
                                             "Cannot use argument of type " + argt +
                                             " where a value of type " + fort +
                                             " is expected"));
+                } else if (argt != fort) {
+                    args.setArg(new CastExpr(pos, fort, args.getArg()));
                 }
             } catch (Diagnostic d) {
                 ctxt.report(d);

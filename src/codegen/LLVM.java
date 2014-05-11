@@ -30,6 +30,7 @@ public class LLVM {
     private BasicBlock staticInit;
     private Value staticInitFn;
     private Value printf;
+    private Value malloc;
 
     private Hashtable<String, Value> namedValues;
 
@@ -80,15 +81,23 @@ public class LLVM {
         return printf;
     }
 
+    public Value getMalloc() {
+        return malloc;
+    }
+
     public void llvmGen(ClassType [] classes, String output_path, Boolean dump) {
         Module mod = Module.createWithName("llvm_module");
         setModule(mod);
-        ArrayList<TypeRef> args = new ArrayList<TypeRef>();
-        args.add(TypeRef.int8Type().pointerType());
-        args.add(TypeRef.int32Type());
+        TypeRef [] args = {TypeRef.int8Type().pointerType(), TypeRef.int32Type()};
         TypeRef printf_type = TypeRef.functionType(TypeRef.int32Type(), args);
         printf = mod.addFunction("printf", printf_type);
         printf.setFunctionCallConv(LLVMCallConv.LLVMCCallConv);
+
+        TypeRef [] malloc_args = {TypeRef.int64Type()};
+        TypeRef malloc_type = TypeRef.functionType(TypeRef.int8Type().pointerType(),
+                              malloc_args);
+        malloc = mod.addFunction("malloc", malloc_type);
+        malloc.setFunctionCallConv(LLVMCallConv.LLVMCCallConv);
 
         TypeRef program_entry_type = TypeRef.functionType(Type.VOID.llvmType(),
                                      (List)Collections.emptyList());

@@ -31,6 +31,7 @@ public final class ClassType extends Type {
 
     private TypeRef llvmType;
     private TypeRef llvmVtable;
+    private org.llvm.Value llvmVtableLoc;
 
     private int fieldCount;
     public ClassType(Modifiers mods, Id id, Type extendsType, Decls decls) {
@@ -41,6 +42,10 @@ public final class ClassType extends Type {
         this.llvmType = null;
         this.llvmVtable = null;
         this.fieldCount = 1;  /* always reserve one spot for vtable */
+    }
+
+    public org.llvm.Value getVtableLoc() {
+        return llvmVtableLoc;
     }
 
     public FieldEnv getFields() {
@@ -265,13 +270,22 @@ public final class ClassType extends Type {
     }
 
     public void llvmGenTypes(LLVM l) {
-        buildVtable();
         if (methods != null) {
             for (MethEnv m : methods) {
                 m.llvmGenTypes(l);
             }
         }
         llvmType();
+
+        ArrayList<org.llvm.Value> vtable_inits = new ArrayList<org.llvm.Value>();
+        for (MethEnv m : vtable) {
+            vtable_inits.add(m.getFunctionVal());
+        }
+
+        llvmVtableLoc = l.getModule().addGlobal(getLLVMVtable(),
+                                                id.getName() + "_vtable_loc");
+        llvmVtableLoc.setInitializer(org.llvm.Value.constNamedStruct(getLLVMVtable(),
+                                     vtable_inits.toArray(new org.llvm.Value[0])));
     }
 
     public TypeRef llvmType() {
@@ -280,11 +294,15 @@ public final class ClassType extends Type {
             ArrayList<TypeRef> llvm_fields;
             if (extendsType != null) {
                 TypeRef [] fields = ((ClassType)extendsType).llvmFields();
+                /* remove the vtable entry for the parent type */
                 llvm_fields = new ArrayList(Arrays.asList(fields));
+                llvm_fields.remove(0);
             } else {
                 llvm_fields = new ArrayList<TypeRef>();
-                llvm_fields.add(llvmVtable.pointerType());
             }
+            /* insert vtable entry for current */
+            llvm_fields.add(0, getLLVMVtable().pointerType());
+
             if (fields != null) {
                 for (FieldEnv f : fields) {
                     TypeRef t;
@@ -304,18 +322,19 @@ public final class ClassType extends Type {
         return llvmType;
     }
 
-    private void buildVtable() {
-        llvmVtable = TypeRef.structTypeNamed(id.getName() + "_vtable");
-        ArrayList<TypeRef> vtable_items = new ArrayList<TypeRef>();
+    private TypeRef getLLVMVtable() {
+        if (llvmVtable == null) {
+            llvmVtable = TypeRef.structTypeNamed(id.getName() + "_vtable");
+            ArrayList<TypeRef> vtable_items = new ArrayList<TypeRef>();
 
-        if (methods != null) {
             for (MethEnv m : vtable) {
                 TypeRef t = m.llvmType().pointerType();
                 vtable_items.add(t);
             }
-        }
 
-        TypeRef.structSetBody(llvmVtable, vtable_items, false);
+            TypeRef.structSetBody(llvmVtable, vtable_items, false);
+        }
+        return llvmVtable;
     }
 
     public void llvmGen(LLVM l) {
