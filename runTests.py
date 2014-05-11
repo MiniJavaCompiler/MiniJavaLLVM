@@ -38,13 +38,11 @@ def runTest(testfile, ignore_ref, create_ref):
     
     compare_files = [CompareFile(out, "".join(os.path.splitext(out)[:-1]) + ".ref") for out in out_files]
 
-    error = 0;
+    missing_refs = 0;
     for c in compare_files:
         if not ignore_ref and not c.fileCheck():
-            error += 1;
+            missing_refs += 1;
 
-    if error > 0:
-        return False;
 
     mjc_output = open(mjc_file, 'w');
     print("Running MJC on %s" % testfile)
@@ -63,6 +61,9 @@ def runTest(testfile, ignore_ref, create_ref):
                     stdout=llvm_output,
                     stderr=llvm_output)
     
+    if missing_refs > 0:
+        return False;
+
     compare_result = True
     for c in compare_files:
         if create_ref:
