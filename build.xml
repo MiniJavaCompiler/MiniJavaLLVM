@@ -148,6 +148,7 @@
   </target>
   <target name="test" depends="jar">
     <exec executable="./runTests.py" failonerror="true">
+      <arg value="show_diff" />
     </exec>
   </target>
 </project>
