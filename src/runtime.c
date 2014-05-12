@@ -146,6 +146,12 @@ uintptr_t *new_array(int32_t size) {
   if (size < 0)
     exit(-1);
 
+  // initialize heap on first use
+  // TODO: allow user to dynamically set heap size
+  if (!heap) {
+    initialize_heap(DEF_HEAP_SIZE);
+  }
+
   // array header includes type and size
   uintptr_t *a = heapalloc(size+OBJ_HEADER_SIZE) + OBJ_HEADER_SIZE;
   // store the marker "ARRAY" to indicate an array object
