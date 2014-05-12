@@ -9,6 +9,7 @@
   <property name="dir.build" value="build/" />
   <property name="dir.libs" value="build/libs" />
   <property name="dir.classes" value="build/classes" />
+  <property name="dir.runtime" value="build/runtime" />
   <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
   <path id="llvm-j.build.classpath">
     <pathelement location="${junit.jar}" />
@@ -36,9 +37,11 @@
   <target name="ubuntu_depends">
     <exec executable="sudo">
       <arg value="apt-get" />
+      <arg value="-y" />
       <arg value="install" />
       <arg value="libjna-java" />
       <arg value="llvm-3.4-dev" />
+      <arg value="clang-3.4" />
       <arg value="gcc-4.7-multilib" />
       <arg value="g++-4.7-multilib" />
       <arg value="junit4" />
@@ -48,6 +51,26 @@
   </target>
   <target name="clean">
     <delete dir="build"/>
+  </target>
+  <target name="runtime">
+    <mkdir dir="${dir.runtime}"/>
+    <outofdate>
+      <sourcefiles>
+        <pathelement path="src/runtime.c"/>
+      </sourcefiles>
+      <targetfiles>
+        <pathelement path="${dir.runtime}/runtime.bc"/>
+      </targetfiles>
+      <sequential>
+        <exec executable="clang" failonerror="true">
+          <arg value="-emit-llvm" />
+          <arg value="src/runtime.c" />
+          <arg value="-c" />
+          <arg value="-o" />
+          <arg value="${dir.runtime}/runtime.bc"/>
+        </exec>
+      </sequential>
+    </outofdate>
   </target>
   <target name="build_libs">
     <mkdir dir="${dir.libs}" />
@@ -131,7 +154,7 @@
     </outofdate>
     <javac debug="on" includeantruntime="false" srcdir="src" destdir="${dir.classes}" classpathref="project.classpath" />
   </target>
-  <target name="jar" depends="compile">    
+  <target name="jar" depends="compile,runtime">    
     <mkdir dir="build/jar"/>
     <manifestclasspath property="jar.classpath" jarfile="build/jar/mjc.jar">
       <classpath refid="project.classpath"/>

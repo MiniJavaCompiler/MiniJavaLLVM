@@ -96,7 +96,7 @@ public class LLVM {
         TypeRef [] malloc_args = {TypeRef.int64Type()};
         TypeRef malloc_type = TypeRef.functionType(TypeRef.int8Type().pointerType(),
                               malloc_args);
-        malloc = mod.addFunction("malloc", malloc_type);
+        malloc = mod.addFunction("new_object", malloc_type);
         malloc.setFunctionCallConv(LLVMCallConv.LLVMCCallConv);
 
         TypeRef program_entry_type = TypeRef.functionType(Type.VOID.llvmType(),
