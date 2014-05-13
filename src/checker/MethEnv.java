@@ -215,6 +215,7 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
     public void llvmGenMethod(LLVM l) {
         org.llvm.Value f = functionVal;
         if (body != null) {
+            f.setGC("shadow-stack");
             l.setFunction(f);
             BasicBlock entry = f.appendBasicBlock("entry");
             l.getBuilder().positionBuilderAtEnd(entry);
