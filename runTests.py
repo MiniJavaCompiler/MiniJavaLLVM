@@ -117,10 +117,12 @@ class Test:
         x86_compiled = testname
         gcc_file = testname + ".gcc.out"
         mjc_file = testname + ".mjc.out"
+        llvm_link_file = testname + ".llvmlink.out"
 
         llvm_file = testname + ".llvm.out"
         x86_file = testname + ".x86.out"
         interp_file = testname + ".interp.out"
+        
 
         run_output = [
             llvm_file,
@@ -139,11 +141,11 @@ class Test:
                                            "--LLVM", BUILDDIR + bitcode_file,
                                            "--x86", BUILDDIR + x86_asm_file])
 
-        link_test = RunTest(mjc_file, ["llvm-link", 
-                                        BUILDDIR + bitcode_file, 
-                                        RUNTIMEFILE,
-                                        "-o",
-                                        BUILDDIR + bitcode_file])
+        link_test = RunTest(llvm_link_file, ["llvm-link", 
+                                             BUILDDIR + bitcode_file, 
+                                             RUNTIMEFILE,
+                                             "-o",
+                                             BUILDDIR + bitcode_file])
 
         if self.bad:
             self.compare_files = [CompareFile([mjc_file], testname + ".mjc.ref")]
