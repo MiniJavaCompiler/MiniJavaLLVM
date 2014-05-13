@@ -4,7 +4,7 @@
 extern void Main_main();
 
 void System_out(int x) {
-    printf("out: %d\n",x);
+    printf("%d\n",x);
 }
 
 #define HEAPLEN 4000
@@ -35,9 +35,9 @@ int* new_array(int size) {
 }
 
 int main() {
-    printf("Starting:\n");
+    //    printf("Starting:\n");
     Main_main();
-    printf("Finishing (%d words allocated).\n",freeHeap);
+    //    printf("Finishing (%d words allocated).\n",freeHeap);
     return 0;
 }
 
