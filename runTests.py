@@ -8,6 +8,7 @@ import sys
 import shutil
 
 BUILDDIR = "build/test/"
+RUNTIMEFILE = "build/runtime/runtime_llvm.bc"
 TESTDIR = "unitTests/"
 
 class CompareFile:
@@ -137,11 +138,20 @@ class Test:
                                            "-i", self.testfile,
                                            "--LLVM", BUILDDIR + bitcode_file,
                                            "--x86", BUILDDIR + x86_asm_file])
+
+        link_test = RunTest(mjc_file, ["llvm-link", 
+                                        BUILDDIR + bitcode_file, 
+                                        RUNTIMEFILE,
+                                        "-o",
+                                        BUILDDIR + bitcode_file])
+
         if self.bad:
             self.compare_files = [CompareFile([mjc_file], testname + ".mjc.ref")]
             compile_test.run(self.verbose) # we don't actually care if this passes, must match ref
             self.passed = (self.missingRefs() == 0
                            and self.compareRefs())
+            link_test.run(self.verbose)    # ditto
+
             return
         
         self.compare_files = [CompareFile(run_output, testname + ".run.ref")]    
@@ -149,13 +159,13 @@ class Test:
             CompareFile([out], "".join(os.path.splitext(out)[:-1]) + ".ref")
             for out in out_files]
 
-        all_tests = [compile_test,
+        all_tests = [compile_test, link_test,
             RunTest(llvm_file, ["lli", BUILDDIR + bitcode_file]),
             RunTest(interp_file, ["java",
                                   "-jar", "build/jar/mjc.jar",
                                   "-I",
                                   "-i", self.testfile]),
-            RunTest(gcc_file, ["gcc", "-m32", "src/runtime.c",
+            RunTest(gcc_file, ["gcc", "-m32", "src/runtime_x86.c",
                                BUILDDIR + x86_asm_file,
                                "-o", BUILDDIR + x86_compiled]),
             RunTest(x86_file, ["./" + BUILDDIR + x86_compiled])
