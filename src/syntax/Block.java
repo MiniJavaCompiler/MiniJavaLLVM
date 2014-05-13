@@ -45,26 +45,20 @@ public final class Block extends Statement {
      *  to a specified label.
      */
     void compileThen(Assembly a, String lab) {
-        if (stmts.length > 0) {
-            for (Statement s : stmts) {
-                s.compileThen(a, lab);
-            }
-        } else {
-            a.emit("jmp", lab);
+        for (Statement s : stmts) {
+            s.compile(a);
         }
+        a.emit("jmp", lab);
     }
 
     /** Emit code that executes this statement and then returns from
      *  the current method.
      */
     public void compileRet(Assembly a) {
-        if (stmts.length > 0) {
-            for (Statement s : stmts) {
-                s.compileRet(a);
-            }
-        } else {
-            a.emitEpilogue();
+        for (Statement s : stmts) {
+            s.compile(a);
         }
+        a.emitEpilogue();
     }
 
     /** Execute this statement.  If the statement is terminated by a

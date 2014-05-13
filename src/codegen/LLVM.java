@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 import compiler.*;
+import checker.*;
+import syntax.*;
 
 public class LLVM {
     private Builder builder;
@@ -105,6 +107,10 @@ public class LLVM {
         staticInitFn = mod.addFunction("static_init", program_entry_type);
         staticInit = staticInitFn.appendBasicBlock("entry");
 
+        TypeRef main_entry_type = TypeRef.functionType(Type.INT.llvmType(),
+                                  (List)Collections.emptyList());
+
+
         for (ClassType c : classes) {
             c.llvmGenTypes(this);
         }
@@ -117,6 +123,28 @@ public class LLVM {
 
         builder.positionBuilderAtEnd(staticInit);
         builder.buildRetVoid();
+
+        Value main = mod.addFunction("main", main_entry_type);
+        BasicBlock main_block = main.appendBasicBlock("entry");
+
+        builder.positionBuilderAtEnd(main_block);
+        builder.buildCall(getStaticInitFn(), "", (List)Collections.emptyList());
+        Value userMain = null;
+        Boolean found = false;
+        for (ClassType c : classes) {
+            for (MethEnv m : c.getMethods()) {
+                if (m.isMain()) {
+                    userMain = m.getFunctionVal();
+                    found = true;
+                }
+            }
+        }
+        if (found) {
+            builder.buildCall(userMain, "", (List)Collections.emptyList());
+        } else {
+            System.out.println("Cannot find user main function");
+        }
+        builder.buildRet(Type.INT.llvmType().constInt(0, false));
 
         try {
             if (dump) {

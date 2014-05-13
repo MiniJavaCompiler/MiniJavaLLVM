@@ -7,6 +7,7 @@ import lexer.*;
 import syntax.*;
 import checker.*;
 import codegen.*;
+import interp.*;
 
 import java.io.Reader;
 import java.io.FileReader;
@@ -26,7 +27,8 @@ public class Compiler {
         options.addOption("L", "LLVM", true, "LLVM Bitcode Output Location.");
         options.addOption("x", "x86", true, "x86 Output File Location");
         options.addOption("l", "llvm", false, "Dump Human Readable LLVM Code.");
-        options.addOption("i", "input", true, "Compile to x86 Assembly");
+        options.addOption("i", "input", true, "Compile to x86 Assembly.");
+        options.addOption("I", "interp", false, "Run the interpreter.");
         options.addOption("h", "help", false, "Print this help message.");
         options.addOption("V", "version", false, "Version information.");
 
@@ -50,8 +52,9 @@ public class Compiler {
                 System.out.println("--help for more info.");
                 errors++;
             }
-            if (!cmd.hasOption("x") && !cmd.hasOption("l") && !cmd.hasOption("L")) {
-                System.out.println("--x86|--llvm|--LLVM required for some sort of output.");
+            if (!cmd.hasOption("x") && !cmd.hasOption("l") && !cmd.hasOption("L")
+                && !cmd.hasOption("I")) {
+                System.out.println("--x86|--llvm|--LLVM|--interp required for some sort of output.");
                 System.out.println("--help for more info.");
                 errors++;
             }
@@ -94,11 +97,16 @@ public class Compiler {
                     for (int i = 0; i < classes.length; i++) {
                         classes[i].compile(assembly);
                     }
+                    assembly.close();
                 }
             }
             if (cmd.hasOption("L") || cmd.hasOption("l")) {
                 LLVM llvm = new LLVM();
                 llvm.llvmGen(classes,  cmd.getOptionValue("L"), cmd.hasOption("l"));
+            }
+            if (cmd.hasOption("I")) {
+                MethEnv main = new Context(handler, classes).check();
+                new State().call(main);
             }
         }
     }

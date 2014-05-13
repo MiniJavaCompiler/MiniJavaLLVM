@@ -44,7 +44,11 @@ public final class ThisInvocation extends Invocation {
     /** Evaluate this expression.
      */
     public Value eval(State st) {
-        return menv.call(st, st.getThis(size), args);
+        if (menv.isStatic()) {
+            return menv.call(st, null, args);
+        } else {
+            return menv.call(st, st.getThis(size), args);
+        }
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
