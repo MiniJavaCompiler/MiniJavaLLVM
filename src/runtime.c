@@ -7,6 +7,7 @@
 void gc();
 uintptr_t forward(uintptr_t p);
 
+<<<<<<< HEAD
 #ifndef bool
 typedef int bool;
 enum bool { false, true };
@@ -72,6 +73,10 @@ void initialize_heap(size_t heap_words) {
   #ifdef DEBUG
   printf("initialize_heap called, size=%zu\n", heap_words);  
   #endif
+=======
+void System_out(int x) {
+    printf("%d\n",x);
+>>>>>>> f9f4a4af2e9af40cfb55251774a24ec14b0b3b95
 }
 
 /* allocate a heap record of specified number of words */
@@ -260,6 +265,7 @@ void gc() {
   tospace = 1 - tospace;
 }
 
+<<<<<<< HEAD
 uintptr_t forward(uintptr_t p) {
   uintptr_t *fwdptr = (uintptr_t*)(p) - OBJ_HEADER_SIZE;  // forward pointer start at offset -2
   size_t size = *((uintptr_t*)(p) - 1) + OBJ_HEADER_SIZE; // size pointer is value at offset -1
@@ -283,6 +289,13 @@ uintptr_t forward(uintptr_t p) {
 
     return (uintptr_t)fwdptr;
   }
+=======
+int main() {
+    //printf("Starting:\n");
+    Main_main();
+    //printf("Finishing (%d words allocated).\n",freeHeap);
+    return 0;
+>>>>>>> f9f4a4af2e9af40cfb55251774a24ec14b0b3b95
 }
 
 

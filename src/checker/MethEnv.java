@@ -60,6 +60,9 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
         this.isPrintf = false;
     }
 
+    public boolean isMain() {
+        return this.isMain;
+    }
     public org.llvm.Value getFunctionVal() {
         return functionVal;
     }
@@ -177,7 +180,7 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
         llvmType();
         String functionName = owner.toString() + "." + getName();
         if (owner.toString().equals("Main") && getName().equals("main")) {
-            functionName = "main";
+            functionName = "user_main";
             isMain = true;
         } else if (owner.toString().equals("System")
                    && getName().equals("out")
@@ -219,10 +222,7 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
             l.setFunction(f);
             BasicBlock entry = f.appendBasicBlock("entry");
             l.getBuilder().positionBuilderAtEnd(entry);
-            if (isMain) {
-                ArrayList<org.llvm.Value> values = new ArrayList<org.llvm.Value>();
-                l.getBuilder().buildCall(l.getStaticInitFn(), "", values);
-            }
+
             int n = 0;
             if (!isStatic()) {
                 org.llvm.Value v = l.getBuilder().buildAlloca(f.getParam(n).typeOf(), "this");
@@ -244,7 +244,6 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
             }
         } else if (isPrintf) {
             ArrayList<org.llvm.Value> args = new ArrayList<org.llvm.Value>();
-            //l.getModule().addGlobal(
             org.llvm.Value str = org.llvm.Value.constString("%d\n");
             org.llvm.Value pf_string = l.getModule().addGlobal(TypeRef.int8Type().arrayType(
                                            4), "print_f");
@@ -321,7 +320,7 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
             && getName().equals("out")
             && isStatic()
             && size == 4) {
-            System.out.println("out: " + st.getFrame(8).getInt());
+            System.out.println(st.getFrame(8).getInt());
             return Value.NULL;
         }
         Interp.abort("Cannot execute method " + getName()
