@@ -4,6 +4,10 @@
 
 package checker;
 
+import org.llvm.BasicBlock;
+import org.llvm.Builder;
+import org.llvm.TypeRef;
+
 import compiler.*;
 import syntax.*;
 import codegen.*;
@@ -120,8 +124,14 @@ public final class VarEnv extends Env {
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
+        Builder b = l.getBuilder();
         org.llvm.Value v = l.getNamedValue(getName());
-        return l.getBuilder().buildLoad(v, getName());
+
+        //org.llvm.Value res = b.buildBitCast(v, TypeRef.int8Type().pointerType(), "gcrootcast");
+        //org.llvm.Value [] args = {res, null};
+        //org.llvm.Value gc = b.buildCall(l.getGCRoot(), "gcroot", args);
+        //b.insertIntoBuilder(gc);
+        return b.buildLoad(v, getName());
     }
 
     public org.llvm.Value llvmSave(LLVM l, org.llvm.Value r) {

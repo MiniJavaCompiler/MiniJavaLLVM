@@ -33,6 +33,7 @@ public class LLVM {
     private Value staticInitFn;
     private Value printf;
     private Value malloc;
+    private Value gcroot;
 
     private Hashtable<String, Value> namedValues;
 
@@ -86,6 +87,10 @@ public class LLVM {
     public Value getMalloc() {
         return malloc;
     }
+    
+    public Value getGCRoot() {
+    	return gcroot;
+    }
 
     public void llvmGen(ClassType [] classes, String output_path, Boolean dump) {
         Module mod = Module.createWithName("llvm_module");
@@ -101,6 +106,13 @@ public class LLVM {
         malloc = mod.addFunction("new_object", malloc_type);
         malloc.setFunctionCallConv(LLVMCallConv.LLVMCCallConv);
 
+
+        TypeRef [] gcroot_args = {TypeRef.int8Type().pointerType()};
+        TypeRef gcroot_type = TypeRef.functionType(TypeRef.voidType(), gcroot_args);
+        gcroot = mod.addFunction("llvm.gcroot", gcroot_type);
+        gcroot.setFunctionCallConv(LLVMCallConv.LLVMAnyRegCallConv);
+        
+        
         TypeRef program_entry_type = TypeRef.functionType(Type.VOID.llvmType(),
                                      (List)Collections.emptyList());
 
@@ -132,12 +144,14 @@ public class LLVM {
         Value userMain = null;
         Boolean found = false;
         for (ClassType c : classes) {
-            for (MethEnv m : c.getMethods()) {
-                if (m.isMain()) {
-                    userMain = m.getFunctionVal();
-                    found = true;
-                }
-            }
+        	if (null != c.getMethods()) {
+	            for (MethEnv m : c.getMethods()) {
+	                if (m.isMain()) {
+	                    userMain = m.getFunctionVal();
+	                    found = true;
+	                }
+	            }
+        	}
         }
         if (found) {
             builder.buildCall(userMain, "", (List)Collections.emptyList());
