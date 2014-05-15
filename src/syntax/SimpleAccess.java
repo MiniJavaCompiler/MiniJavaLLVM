@@ -78,7 +78,6 @@ public final class SimpleAccess extends FieldAccess {
             field = l.getBuilder().buildStructGEP(deref, env.getFieldIndex(),
                                                   env.getName());
         } else {
-            System.out.println("SimpleAccess: " + env.getOwner() + "." + env.getName());
             field = l.getNamedValue(env.getOwner() + "." + env.getName());
         }
         return l.getBuilder().buildLoad(field, env.getName());

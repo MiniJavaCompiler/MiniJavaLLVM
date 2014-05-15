@@ -20,7 +20,14 @@ public abstract class Type {
     public static final Type BOOLEAN = new PrimitiveType("boolean");
     public static final Type NULL    = new PrimitiveType("null");
     public static final Type VOID    = new PrimitiveType("void");
+    public static final Type STRING  = new PrimitiveType("str_lit");
+    public static final Type CHAR    = new PrimitiveType("char");
 
+    public static Type [] getArrayPrimitives() {
+        Type [] prims = {Type.INT, Type.LONG, Type.FLOAT, Type.DOUBLE, Type.BOOLEAN, Type.CHAR};
+        return prims;
+    }
+    public abstract String toString();
     public abstract org.llvm.Value defaultValue();
 
     /** Test for equality with another type.
@@ -28,6 +35,14 @@ public abstract class Type {
     public abstract boolean equal(Type type);
 
     public abstract TypeRef llvmType();
+
+    public TypeRef llvmTypeField() {
+        if (this instanceof PrimitiveType) {
+            return llvmType();
+        } else {
+            return llvmType().pointerType();
+        }
+    }
 
     public abstract void llvmGenTypes(LLVM l);
 
@@ -43,6 +58,9 @@ public abstract class Type {
         return null;
     }
 
+    public ArrayType isArray() {
+        return null;
+    }
     /** Check to ensure that this is a valid type.  This is part of the
      *  mechanism used to deal with types that are specified by name,
      *  which cannot be properly resolved until parsing is complete.

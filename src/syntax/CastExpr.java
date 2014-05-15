@@ -18,16 +18,9 @@ public class CastExpr extends Expression {
         this.needsCast = needsCast;
     }
 
-    /** Type check this expression in places where it is used as a statement.
-     *  We override this method in Invocation to deal with methods that
-     *  return void.
-     */
-    void checkExpr(Context ctxt, VarEnv env) throws Diagnostic {
-        typeOf(ctxt, env);
-    }
-
     public Type typeOf(Context ctxt, VarEnv env)
     throws Diagnostic {
+        castType = castType.check(ctxt);
         needsCast.typeOf(ctxt, env);
         return castType;
     }

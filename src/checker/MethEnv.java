@@ -63,7 +63,10 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
     public boolean isMain() {
         return this.isMain;
     }
-    public org.llvm.Value getFunctionVal() {
+    public org.llvm.Value getFunctionVal(LLVM l) {
+        if (functionVal == null) {
+            llvmGenTypes(l);
+        }
         return functionVal;
     }
     public Iterator<MethEnv> iterator() {
@@ -178,19 +181,21 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
 
     public void llvmGenTypes(LLVM l) {
         llvmType();
-        String functionName = owner.toString() + "." + getName();
-        if (owner.toString().equals("Main") && getName().equals("main")) {
-            functionName = "user_main";
-            isMain = true;
-        } else if (owner.toString().equals("System")
-                   && getName().equals("out")
-                   && isStatic()
-                   && body == null
-                   && size == 4) {
-            isPrintf = true;
+        if (functionVal == null) {
+            String functionName = owner.toString() + "." + getName();
+            if (owner.toString().equals("Main") && getName().equals("main")) {
+                functionName = "user_main";
+                isMain = true;
+            } else if (owner.toString().equals("MJC")
+                       && getName().equals("print")
+                       && isStatic()
+                       && body == null
+                       && size == 4) {
+                isPrintf = true;
+            }
+            org.llvm.Value f = l.getModule().addFunction(functionName, llvmType());
+            functionVal = f;
         }
-        org.llvm.Value f = l.getModule().addFunction(functionName, llvmType());
-        functionVal = f;
     }
 
     public TypeRef llvmType() {
@@ -213,6 +218,10 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
             llvmFuncType = TypeRef.functionType(return_type, llvm_formals);
         }
         return llvmFuncType;
+    }
+
+    public org.llvm.TypeRef llvmTypeField() {
+        return llvmType().pointerType();
     }
 
     public void llvmGenMethod(LLVM l) {
@@ -243,19 +252,35 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
                 l.getBuilder().buildRetVoid();
             }
         } else if (isPrintf) {
+            BasicBlock entry = f.appendBasicBlock("entry");
+            l.getBuilder().positionBuilderAtEnd(entry);
             ArrayList<org.llvm.Value> args = new ArrayList<org.llvm.Value>();
-            org.llvm.Value str = org.llvm.Value.constString("%d\n");
+
+            //org.llvm.Value str = org.llvm.Value.constString("%s");
+            /*
             org.llvm.Value pf_string = l.getModule().addGlobal(TypeRef.int8Type().arrayType(
                                            4), "print_f");
             pf_string.setInitializer(str);
             org.llvm.Value [] indices = {Type.INT.llvmType().constInt(0, false), Type.INT.llvmType().constInt(0, false)};
             org.llvm.Value v = l.getBuilder().buildInBoundsGEP(pf_string, "format",
                                indices);
-            args.add(v);
+            */
+            //org.llvm.Value v = l.getBuilder().buildGlobalStringPtr("%s", "print_format");
+            /*
+
+            org.llvm.Value str = l.getBuilder().buildGlobalStringPtr("TEST 123", "print_format");
+            args.add(str);
+            l.getBuilder().buildCall(l.getGlobalFn(LLVM.GlobalFn.PRINTF), "ret", args);
+
+            args.clear();
+            */
+            //org.llvm.Value chr_str = l.getBuilder().buildStructGEP(f.getParam(0), 2, "str");
+            //chr_str = l.getBuilder().buildLoad(chr_str, "*str");
+            //org.llvm.Value chr_str = l.getBuilder().buildGlobalStringPtr("TEST 123", "print_format");// l.getBuilder().buildLoad(addr, "real_str");
+            //args.add(str);
+            //args.add(chr_str);
             args.add(f.getParam(0));
-            BasicBlock entry = f.appendBasicBlock("entry");
-            l.getBuilder().positionBuilderAtEnd(entry);
-            l.getBuilder().buildCall(l.getPrintf(), "ret", args);
+            l.getBuilder().buildCall(l.getGlobalFn(LLVM.GlobalFn.PRINTF), "", args);
             l.getBuilder().buildRetVoid();
         }
     }
@@ -316,8 +341,8 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
         if (body != null) {
             return body.exec(st);
         }
-        if (owner.toString().equals("System")
-            && getName().equals("out")
+        if (owner.toString().equals("MJC")
+            && getName().equals("print")
             && isStatic()
             && size == 4) {
             System.out.println(st.getFrame(8).getInt());

@@ -56,17 +56,22 @@ public final class ObjectInvocation extends Invocation {
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
-
         Builder b = l.getBuilder();
-        org.llvm.Value obj = object.llvmGen(l);
-        org.llvm.Value vtable_addr =  b.buildStructGEP(obj, 0, "vtable_lookup");
-        org.llvm.Value vtable = b.buildLoad(vtable_addr, "vtable");
-        org.llvm.Value func_addr = b.buildStructGEP(vtable, menv.getSlot(),
-                                   "func_lookup");
-        org.llvm.Value func = b.buildLoad(func_addr, menv.getName());
-        org.llvm.Value method_this = b.buildBitCast(obj,
-                                     menv.getOwner().llvmType().pointerType(), "cast_this");
+        org.llvm.Value func, method_this;
+        if (!menv.isStatic()) {
+            org.llvm.Value obj = object.llvmGen(l);
+            org.llvm.Value vtable_addr =  b.buildStructGEP(obj, 0, "vtable_lookup");
+            org.llvm.Value vtable = b.buildLoad(vtable_addr, "vtable");
+            org.llvm.Value func_addr = b.buildStructGEP(vtable, menv.getSlot(),
+                                       "func_lookup");
+            func = b.buildLoad(func_addr, menv.getName());
+            method_this = b.buildBitCast(obj,
+                                         menv.getOwner().llvmType().pointerType(), "cast_this");
 
+        } else {
+            method_this = null;
+            func = menv.getFunctionVal(l);
+        }
         return llvmInvoke(l, menv, func, method_this);
     }
 }

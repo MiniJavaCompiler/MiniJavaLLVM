@@ -1,10 +1,5 @@
 // Here is a small program for the Mini Java compiler:
 //
-
-class System {
-    static void out(int x);
-}
-
 class Expr {
     int eval() {
         return 0;  // should never be called
@@ -47,7 +42,7 @@ class Main {
         Expr e;
         e = AddExpr.make(IntExpr.make(1), IntExpr.make(2));
         e = AddExpr.make(e,e);
-        System.out(e.eval());
+        System.out.println(e.eval());
     }
 }
 

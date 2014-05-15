@@ -309,4 +309,12 @@ uintptr_t forward(uintptr_t p) {
   }
 }
 
+/* This is just copying a c_string into a Java char array */
+void load_string(int n, int * length, char * src, char * dst) {
+    *length = n;
+    strncpy(dst, src, n);
+}
 
+void printc(char c) {
+    printf("%c", c);
+}

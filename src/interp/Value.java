@@ -17,6 +17,11 @@ public abstract class Value {
         return 0;
     }
 
+    public String getString() {
+        Interp.abort("Type error: value is not a string");
+        return "";
+    }
+
     /** Convert this value into a Boolean, or fail with an error message
      *  if this value does not represent a Boolean.
      */

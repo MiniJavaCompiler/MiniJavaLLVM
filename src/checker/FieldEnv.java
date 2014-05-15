@@ -18,12 +18,20 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
     private FieldEnv next;
     private int      offset;  // offset of field within object (0 for static)
     private int fieldIndex;
+    private org.llvm.Value staticField;
     public FieldEnv(Modifiers mods, Id id, Type type, ClassType owner,
                     int fieldIndex, int offset, FieldEnv next) {
         super(mods, id, type, owner);
         this.offset = offset;
         this.next   = next;
         this.fieldIndex = fieldIndex;
+        this.staticField = null;
+    }
+    public void setStaticField(org.llvm.Value field) {
+        staticField = field;
+    }
+    public org.llvm.Value getStaticField() {
+        return staticField;
     }
     public Iterator<FieldEnv> iterator() {
         return new ListIterator<FieldEnv>(this);
@@ -42,6 +50,11 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
 
     public FieldEnv getNext() {
         return next;
+    }
+
+    public FieldEnv setNext(FieldEnv e) {
+        next = e;
+        return this;
     }
     /** Look for the entry corresponding to a particular identifier
      *  in a given environment.
@@ -86,6 +99,10 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
 
     public org.llvm.TypeRef llvmType() {
         return type.llvmType();
+    }
+
+    public org.llvm.TypeRef llvmTypeField() {
+        return type.llvmTypeField();
     }
 
     /** Generate code to load the value of a field from an object whose
@@ -140,6 +157,10 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
     }
 
     public org.llvm.Value llvmField(LLVM l, org.llvm.Value object) {
-        return l.getBuilder().buildStructGEP(object, offset, id.getName());
+        if (isStatic()) {
+            return staticField;
+        } else {
+            return l.getBuilder().buildStructGEP(object, offset, id.getName());
+        }
     }
 }

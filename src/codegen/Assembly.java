@@ -197,6 +197,8 @@ public class Assembly {
     public void emitStart(String filename) {
         emit(".file",  "\"" + filename + "\"");
         emit(".globl", mangle("Main", "main"));
+        emit(".data");
+
     }
 
     public void emitPrologue(String fname, int localBytes) {

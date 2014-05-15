@@ -55,11 +55,11 @@ public final class NewExpr extends StatementExpr {
     public org.llvm.Value llvmGen(LLVM l) {
         Builder b = l.getBuilder();
         org.llvm.Value [] args = {cls.llvmType().sizeOf()};
-        org.llvm.Value mem = b.buildCall(l.getMalloc(), "malloc", args);
+        org.llvm.Value mem = b.buildCall(l.getGlobalFn(LLVM.GlobalFn.NEW_OBJECT),
+                                         "new_obj", args);
         org.llvm.Value res = b.buildBitCast(mem, cls.llvmType().pointerType(), "cast");
         org.llvm.Value vtable_field = b.buildStructGEP(res, 0, "vtable");
         b.buildStore(cls.getVtableLoc(), vtable_field);
-
         return res;
     }
 }
