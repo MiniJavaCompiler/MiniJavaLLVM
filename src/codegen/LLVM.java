@@ -132,12 +132,14 @@ public class LLVM {
         Value userMain = null;
         Boolean found = false;
         for (ClassType c : classes) {
-            for (MethEnv m : c.getMethods()) {
-                if (m.isMain()) {
-                    userMain = m.getFunctionVal();
-                    found = true;
-                }
-            }
+	    if (null != c.getMethods()) {
+		for (MethEnv m : c.getMethods()) {
+		    if (m.isMain()) {
+			userMain = m.getFunctionVal();
+			found = true;
+		    }
+		}
+	    }
         }
         if (found) {
             builder.buildCall(userMain, "", (List)Collections.emptyList());
