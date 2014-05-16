@@ -27,7 +27,7 @@ import java.util.ArrayList;
 // Operators:
 %token <Position>       '>' '<' EQEQ NEQ               // relational
 %token <Position>       '='                            // assignment
-%token <Position>       '+' '-' '*' '/'                // arithmetic
+%token <Position>       '+' '-' '*' '/' '%'            // arithmetic
 %token <Position>       '&' '|' '^' CAND COR '!'       // logic
 
 // Keywords:
@@ -123,6 +123,7 @@ vardecls: vardecls ',' vardecl  { $$ = $3.link($1); }
         | vardecl
         ;
 vardecl : IDENT                 { $$ = new VarDecls($1); }
+        | IDENT '=' expr        { $$ = new VarDecls($1, $3); }
         ;
 formals : formals1              { $$ = $1; }
         | /* empty */           { $$ = null; }
@@ -191,10 +192,12 @@ relExpr : relExpr '<' addExpr   { $$ = new LessThanExpr($2, $1, $3); }
         | addExpr
         ;
 addExpr : addExpr '+' mulExpr   { $$ = new AddExpr($2, $1, $3); }
+        | addExpr '-' mulExpr   { $$ = new SubExpr($2, $1, $3); }
         | mulExpr
         ;
 mulExpr : mulExpr '*' unary     { $$ = new MulExpr($2, $1, $3); }
 	| mulExpr '/' unary     { $$ = new DivExpr($2, $1, $3); }
+	| mulExpr '%' unary     { $$ = new ModExpr($2, $1, $3); }
         | unary
         ;
 unary   : name			{ $$ = new NameAccess($1); }

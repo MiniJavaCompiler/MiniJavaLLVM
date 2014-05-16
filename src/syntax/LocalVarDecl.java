@@ -36,12 +36,19 @@ public class LocalVarDecl extends Statement {
         if (type != null) {
             int size = type.size();
             for (VarDecls vs = varDecls; vs != null; vs = vs.getNext()) {
-                if (VarEnv.find(vs.getId().getName(), env) != null) {
-                    ctxt.report(new Failure(pos,
-                                            "Repeated definition for variable " + vs.getId()));
-                } else {
-                    frameOffset -= size;
-                    env = new VarEnv(vs.getId(), type, frameOffset, env);
+                try {
+                    if (VarEnv.find(vs.getId().getName(), env) != null) {
+                        ctxt.report(new Failure(pos,
+                                                "Repeated definition for variable " + vs.getId()));
+                    } else if (vs.getInitExpr() != null
+                               && !type.isSuperOf(vs.getInitExpr().typeOf(ctxt, env))) {
+                        ctxt.report(new Failure(pos, "Incorrect type for initialization expression"));
+                    } else {
+                        frameOffset -= size;
+                        env = new VarEnv(vs.getId(), type, frameOffset, env);
+                    }
+                } catch (Diagnostic d) {
+                    ctxt.report(d);
                 }
             }
             ctxt.reserveSpace(frameOffset);
@@ -58,7 +65,7 @@ public class LocalVarDecl extends Statement {
     /** Emit code to execute this statement.
      */
     void compile(Assembly a) {
-        /* this does nothing in a computational sense */
+        throw new RuntimeException("Needs to be implemented to init vars");
     }
 
     public void llvmGen(LLVM l) {
@@ -73,8 +80,12 @@ public class LocalVarDecl extends Statement {
             }
 
             org.llvm.Value v = b.buildAlloca(t, vs.getId().getName());
+            if (vs.getInitExpr() != null) {
+                b.buildStore(vs.getInitExpr().llvmGen(l), v);
+            } else {
+                b.buildStore(type.defaultValue(), v);
+            }
             l.setNamedValue(vs.getId().getName(), v);
-            b.buildStore(type.defaultValue(), v);
         }
     }
 

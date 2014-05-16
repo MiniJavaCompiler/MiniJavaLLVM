@@ -126,11 +126,12 @@ public class MjcLexer extends SourceLexer implements Tokens {
             case '-'  :
                 nextChar();
                 return token = '-';
-
             case '*'  :
                 nextChar();
                 return token = '*';
-
+            case '%' :
+                nextChar();
+                return token = '%';
             case '/'  :
                 nextChar();
                 if (c == '/') {

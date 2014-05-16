@@ -247,9 +247,10 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
                 n++;
             }
             body.llvmGen(l);
-
             if (type == Type.VOID) {
                 l.getBuilder().buildRetVoid();
+            } else {
+                l.getBuilder().buildRet(type.llvmTypeField().constNull());
             }
         } else if (isPrintf) {
             BasicBlock entry = f.appendBasicBlock("entry");

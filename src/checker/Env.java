@@ -50,7 +50,10 @@ public abstract class Env {
                                    ": Not Yet Implemented.");
     }
 
-    abstract public TypeRef llvmTypeField();
+    public TypeRef llvmTypeField() {
+        throw new RuntimeException(this.getClass().getName() +
+                                   ": Not Yet Implemented.");
+    }
 
     public void llvmGenTypes(LLVM l) {
         throw new RuntimeException(this.getClass().getName() +

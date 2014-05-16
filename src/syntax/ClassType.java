@@ -192,15 +192,17 @@ public class ClassType extends Type {
 
     /** Add a new field to this class.
      */
-    public void addField(Context ctxt, Modifiers mods, Id id, Type type) {
+    public void addField(Context ctxt, Modifiers mods, Id id, Type type,
+                         Expression init_expr) {
         FieldEnv field = null;
         if (FieldEnv.find(id.getName(), fields) != null) {
             ctxt.report(new Failure(id.getPos(),
                                     "Multiple definitions for field " + id));
         } else if (mods.isStatic()) {
-            field = new FieldEnv(mods, id, type, this, -1,  0, null);
+            field = new FieldEnv(mods, id, type, this, -1,  0, null, init_expr);
         } else {
-            field = new FieldEnv(mods, id, type, this, fieldCount++, width, null);
+            field = new FieldEnv(mods, id, type, this, fieldCount++, width, null,
+                                 init_expr);
             width += type.size();
         }
         if (fields == null) {
@@ -337,7 +339,7 @@ public class ClassType extends Type {
                     org.llvm.Value v = l.getModule().addGlobal(f.llvmTypeField(),
                                        f.getOwner() + "." + f.getName());
                     l.setNamedValue(f.getOwner() + "." + f.getName(), v);
-                    v.setInitializer(f.llvmTypeField().constNull());
+                    /* initializer will be set later in llvmgen */
                     f.setStaticField(v);
                 }
             }
@@ -368,6 +370,18 @@ public class ClassType extends Type {
     }
 
     public void llvmGen(LLVM l) {
+        l.getBuilder().positionBuilderAtEnd(l.getStaticInit());
+        if (fields != null) {
+            for (FieldEnv f : fields) {
+                if (f.isStatic()) {
+                    org.llvm.Value v = f.getStaticField();
+                    v.setInitializer(f.llvmTypeField().constNull());
+                    if (f.getInitExpr() != null) {
+                        l.getBuilder().buildStore(f.getInitExpr().llvmGen(l), v);
+                    }
+                }
+            }
+        }
 
         if (methods != null) {
             for (MethEnv m : methods) {

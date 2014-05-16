@@ -9,8 +9,18 @@ package syntax;
 public class VarDecls {
     private Id id;
     private VarDecls next;
+    private Expression init;
     public VarDecls(Id id) {
         this.id   = id;
+    }
+
+    public VarDecls(Id id, Expression init) {
+        this.id = id;
+        this.init = init;
+    }
+
+    public Expression getInitExpr() {
+        return this.init;
     }
 
     /** Returns the identifier for this variable declaration.

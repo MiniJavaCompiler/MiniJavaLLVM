@@ -9,6 +9,8 @@ import checker.*;
 import codegen.*;
 import interp.*;
 
+import org.llvm.BasicBlock;
+
 /** Provides a representation for return statements.
  */
 public final class Return extends Statement {
@@ -89,5 +91,9 @@ public final class Return extends Statement {
     public void llvmGen(LLVM l) {
         org.llvm.Value v = result.llvmGen(l);
         l.getBuilder().buildRet(v);
+        /* this is a small hack to allow extra instructions after a return */
+        /* without it, llvm complains that the block does not follow their desired form */
+        BasicBlock new_block = l.getFunction().appendBasicBlock("after_ret");
+        l.getBuilder().positionBuilderAtEnd(new_block);
     }
 }

@@ -1,12 +1,9 @@
-class System {
-    static void out(int x);
-}
 class Main {
     static public void main() {
         int p;
         p = 5;
         test();
-        System.out(p);
+        System.out.println(Integer.toString(p));
         if (true) {
             int p;
             p = 2;

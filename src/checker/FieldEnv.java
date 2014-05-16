@@ -19,13 +19,18 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
     private int      offset;  // offset of field within object (0 for static)
     private int fieldIndex;
     private org.llvm.Value staticField;
+    private Expression init_expr;
     public FieldEnv(Modifiers mods, Id id, Type type, ClassType owner,
-                    int fieldIndex, int offset, FieldEnv next) {
+                    int fieldIndex, int offset, FieldEnv next, Expression init_expr) {
         super(mods, id, type, owner);
         this.offset = offset;
         this.next   = next;
         this.fieldIndex = fieldIndex;
         this.staticField = null;
+        this.init_expr = init_expr;
+    }
+    public Expression getInitExpr() {
+        return this.init_expr;
     }
     public void setStaticField(org.llvm.Value field) {
         staticField = field;
@@ -69,9 +74,21 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
     /** Check a list of field definitions.
      */
     public static void checkFields(Context ctxt, FieldEnv env) {
-        // No action required here!
+        if (env != null) {
+            for (FieldEnv f : env) {
+                try {
+                    if (!f.isStatic() && f.getInitExpr() != null) {
+                        ctxt.report(new Failure("Non-static members cannot have initializers."));
+                    } else if (f.isStatic() && f.getInitExpr() != null
+                               && !f.getType().isSuperOf(f.getInitExpr().typeOf(ctxt, null))) {
+                        ctxt.report(new Failure("Type of static member initialization does not match"));
+                    }
+                } catch (Diagnostic d) {
+                    ctxt.report(d);
+                }
+            }
+        }
     }
-
     /** Construct a printable description of this environment entry for
      *  use in error diagnostics.
      */

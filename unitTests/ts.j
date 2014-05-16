@@ -25,8 +25,7 @@ class AddExpr extends Expr {
     Expr right;
 
     static AddExpr make(Expr l, Expr r) {
-        AddExpr e;
-        e       = new AddExpr();
+        AddExpr e = new AddExpr();
         e.left  = l;
         e.right = r;
         return e;
@@ -42,7 +41,7 @@ class Main {
         Expr e;
         e = AddExpr.make(IntExpr.make(1), IntExpr.make(2));
         e = AddExpr.make(e,e);
-        System.out.println(e.eval());
+        System.out.println(Integer.toString(e.eval()));
     }
 }
 
