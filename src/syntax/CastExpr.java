@@ -27,7 +27,7 @@ public class CastExpr extends Expression {
 
     public org.llvm.Value llvmGen(LLVM l) {
         return l.getBuilder().buildBitCast(needsCast.llvmGen(l),
-                                           castType.llvmType().pointerType(), "cast");
+                                           castType.llvmTypeField(), "cast");
     }
 
     public void compileExpr(Assembly a, int free) {

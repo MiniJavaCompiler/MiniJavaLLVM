@@ -20,6 +20,7 @@ class String {
         String s;
         s = new String();
         s.string = new char[c.length];
+        x = 0;
         while (x < c.length) {
             s.string[x] = c[x];           
             x = x + 1;

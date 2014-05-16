@@ -4,7 +4,7 @@ class Main {
         char [] test = new char[3];
         test[0] = 'p';
         test[1] = 'q'; 
-        test[2] = '\n';        
+        test[2] = '\n';
         String s = String.makeStringChar(test);
         System.out.print(s);
         String big = "test123";
