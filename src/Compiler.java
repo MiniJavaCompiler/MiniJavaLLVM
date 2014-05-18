@@ -78,7 +78,7 @@ public class Compiler {
         String [] input_files = {inputFile, "src/Runtime.j"};
         ArrayList<ClassType> class_list = new ArrayList<ClassType>();
         ArrayList<StringLiteral> string_list = new ArrayList<StringLiteral>();
-        Source fake = new JavaSource(null, "<fake>", null);
+        Source fake = new JavaSource(null, "<MJCInternal>", null);
         Position fake_pos = new SourcePosition(fake, 0, 0);
         for (Type p : Type.getArrayPrimitives()) {
             class_list.add(
@@ -103,7 +103,10 @@ public class Compiler {
 
         ClassType [] classes = class_list.toArray(new ClassType[0]);
         StringLiteral [] strings = string_list.toArray(new StringLiteral[0]);
-        if (new Context(handler, classes).check() != null) {
+        MethEnv main = null;
+        Context context = new Context(fake_pos, handler, classes);
+        if ((main = context.check()) != null) {
+            classes = context.getClasses();
             if (cmd.hasOption("x")) {
                 String assemblyFile = cmd.getOptionValue("x");
                 Assembly assembly = Assembly.assembleToFile(assemblyFile);
@@ -111,7 +114,7 @@ public class Compiler {
                     handler.report(new Failure("Cannot open file " +
                                                assemblyFile + " for output"));
                 } else {
-                    assembly.emitStart(inputFile);
+                    assembly.emitStart(inputFile, classes, strings);
                     for (int i = 0; i < classes.length; i++) {
                         classes[i].compile(assembly);
                     }
@@ -123,8 +126,10 @@ public class Compiler {
                 llvm.llvmGen(classes, strings, cmd.getOptionValue("L"), cmd.hasOption("l"));
             }
             if (cmd.hasOption("I")) {
-                MethEnv main = new Context(handler, classes).check();
-                new State().call(main);
+                State s = new State();
+                MethEnv init = context.findClass("MJCStatic").findMethod("init");
+                s.call(init);
+                s.call(main);
             }
         }
     }

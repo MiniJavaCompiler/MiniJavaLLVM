@@ -26,8 +26,7 @@ public final class CharLiteral extends Literal {
      *  leave the result in the specified free variable.
      */
     public void compileExpr(Assembly a, int free) {
-        throw new RuntimeException("Can't compile char literal yet");
-        //a.emit("movl", a.immed(value ? 1 : 0), a.reg(free));
+        a.emit("movl", a.immed(value), a.reg(free));
     }
 
     /** Generate code to evaluate this expression and

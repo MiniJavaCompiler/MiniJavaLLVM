@@ -53,4 +53,8 @@ public final class NameType extends Type {
         // to register some kind of internal error at this point.
         return false;
     }
+
+    public int getWidth() {
+        return Assembly.WORDSIZE;
+    }
 }

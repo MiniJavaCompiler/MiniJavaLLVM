@@ -13,7 +13,7 @@ import org.llvm.Builder;
 
 /** Represents an instance method invocation.
  */
-public final class ObjectInvocation extends Invocation {
+public class ObjectInvocation extends Invocation {
     private Expression object;
     private String     name;
     private MethEnv    menv;
@@ -49,6 +49,9 @@ public final class ObjectInvocation extends Invocation {
         menv.compileInvocation(a, args, free);
     }
 
+    public Expression getObject() {
+        return object;
+    }
     /** Evaluate this expression.
      */
     public Value eval(State st) {

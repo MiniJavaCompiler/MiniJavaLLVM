@@ -42,26 +42,48 @@ public final class ArrayAccess extends FieldAccess {
      *  leave the result in the specified free variable.
      */
     public void compileExpr(Assembly a, int free) {
-        throw new RuntimeException("Unimplemented");
+        index.compileExpr(a, free);
+        a.emit("imull",  a.immed(array_class.getElementType().getWidth()), a.reg(free));
+        a.spill(free + 1);
+        object.compileExpr(a, free + 1);
+        FieldEnv f = array_class.findField("array");
+        a.emit("movl", a.indirect(f.getOffset(), a.reg(free + 1)), a.reg(free + 1));
+        a.emit("addl", a.reg(free), a.reg(free + 1));
+        a.emit("movl", a.indirect(0, a.reg(free + 1)), a.reg(free));
+        a.unspill(free + 1);
     }
 
     /** Save the value in the free register in the variable specified by
      *  this expression.
      */
     void saveVar(Assembly a, int free) {
-        throw new RuntimeException("Unimplemented");
+        a.spill(free + 1);
+        index.compileExpr(a, free + 1);
+        a.emit("imull", a.immed(array_class.getElementType().getWidth()),
+               a.reg(free + 1));
+        a.spill(free + 2);
+        object.compileExpr(a, free + 2);
+        FieldEnv f = array_class.findField("array");
+        a.emit("movl", a.indirect(f.getOffset(), a.reg(free + 2)), a.reg(free + 2));
+        a.emit("addl", a.reg(free + 1), a.reg(free + 2));
+        a.emit("movl", a.reg(free), a.indirect(0, a.reg(free + 2)));
+        a.unspill(free + 1);
     }
 
     /** Evaluate this expression.
      */
     public Value eval(State st) {
-        throw new RuntimeException("Unimplemented");
+        return object.eval(st).getObj()
+               .getField(array_class.findField("array").getOffset())
+               .getArray().getElem(index.eval(st).getInt());
     }
 
     /** Save a value in the location specified by this left hand side.
      */
     public void save(State st, Value val) {
-        throw new RuntimeException("Unimplemented");
+        object.eval(st).getObj()
+        .getField(array_class.findField("array").getOffset())
+        .getArray().setElem(index.eval(st).getInt(), val);
     }
 
     public org.llvm.Value llvmGen(LLVM l) {

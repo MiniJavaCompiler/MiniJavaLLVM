@@ -114,6 +114,18 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
         }
     }
 
+    public Statement staticInit() {
+        if (isStatic()) {
+            Expression init = init_expr;
+            Position pos = id.getPos();
+            if (init == null) {
+                init = new NullLiteral(pos);
+            }
+            return new ExprStmt(pos, new AssignExpr(pos, new ClassAccess(this), init));
+        }
+        return null;
+    }
+
     public org.llvm.TypeRef llvmType() {
         return type.llvmType();
     }
@@ -157,7 +169,7 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
     public Value getField(ObjValue obj) {
         if (isStatic()) {
             if (val == null) {
-                Interp.abort("Attempt to use uninitialized static variable!");
+                Interp.abort("Attempt to use uninitialized static variable! " + id.getName());
             }
             return val;
         } else {

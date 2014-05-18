@@ -1,5 +1,7 @@
 class MJC {
-    static void print(char s);
+    static void putc(char s);
+    static CPOINTER allocObject(int bytes);
+    static CPOINTER allocArray(int bytes, int len);
 }
 
 /* If you modify Object or String and add new fields, MJC
@@ -67,7 +69,7 @@ class PrintStream {
         int x;
         x = 0;
         while (x < s.length()) {
-            MJC.print(s.charAt(x));
+            MJC.putc(s.charAt(x));
             x = x + 1;
         }
     }
@@ -113,11 +115,15 @@ class Integer {
             num = num / 10;
             size = size + 1;
         }
+        /* minimum digit size should be at least 1 (for a zero) */
+        if (size < 1) {
+            size = 1;
+        }
         if (neg) {
             size = size + 1;
         }
         char [] number = new char[size];
-
+        
         int x = size - 1;
         num = pos;
         while (x > 0 || x == 0) {

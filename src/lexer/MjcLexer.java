@@ -306,6 +306,7 @@ public class MjcLexer extends SourceLexer implements Tokens {
         reserved.put("null",    new Integer(NULL));
         reserved.put("true",    new Integer(TRUE));
         reserved.put("false",   new Integer(FALSE));
+        reserved.put("CPOINTER",   new Integer(PTR));
     }
 
     //- Numeric integer literals ----------------------------------------------

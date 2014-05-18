@@ -27,19 +27,17 @@ import checker.*;
 import syntax.*;
 
 public class LLVM {
-    public enum GlobalFn {
+    static public enum GlobalFn {
         NEW_OBJECT,
         NEW_ARRAY,
-        PRINTF,
-        INIT,
+        PUTC,
+        //        INIT,
     };
     private Builder builder;
     private Module module;
     private Value function;
-    private BasicBlock staticInit;
-    private Value staticInitFn;
-    private Value printf;
-    private Value malloc;
+    //private BasicBlock staticInit;
+    //private Value staticInitFn;
 
     private Hashtable<String, Value> namedValues;
     private Value [] globalFns;
@@ -52,10 +50,11 @@ public class LLVM {
     public Value getGlobalFn(GlobalFn g) {
         return globalFns[g.ordinal()];
     }
+    /*
     public BasicBlock getStaticInit() {
         return staticInit;
     }
-
+    */
     public Value getNamedValue(String s) {
         Value v = namedValues.get(s);
         return v;
@@ -92,23 +91,29 @@ public class LLVM {
         TypeRef printf_type = TypeRef.functionType(TypeRef.voidType(), false,
                               Arrays.asList(args));
 
-        globalFns[GlobalFn.PRINTF.ordinal()] = mod.addFunction("printc", printf_type);
+        globalFns[GlobalFn.PUTC.ordinal()] = mod.addFunction("MJC_putc", printf_type);
 
-        TypeRef [] malloc_args = {TypeRef.int64Type()};
+        TypeRef [] malloc_args = {TypeRef.int32Type()};
         TypeRef malloc_type = TypeRef.functionType(TypeRef.int8Type().pointerType(),
                               malloc_args);
 
-        globalFns[GlobalFn.NEW_OBJECT.ordinal()] = mod.addFunction("new_object",
+        globalFns[GlobalFn.NEW_OBJECT.ordinal()] = mod.addFunction("MJC_allocObject",
                 malloc_type);
 
-        globalFns[GlobalFn.NEW_ARRAY.ordinal()] =
-            globalFns[GlobalFn.NEW_OBJECT.ordinal()];
+        TypeRef [] malloc_array_args = {TypeRef.int32Type(), TypeRef.int32Type()};
+        TypeRef malloc_array_type = TypeRef.functionType(
+                                        TypeRef.int8Type().pointerType(),
+                                        malloc_array_args);
+        globalFns[GlobalFn.NEW_ARRAY.ordinal()] = mod.addFunction("MJC_allocArray",
+                malloc_array_type);
         TypeRef program_entry_type = TypeRef.functionType(Type.VOID.llvmType(),
                                      (List)Collections.emptyList());
 
+        /*
         globalFns[GlobalFn.INIT.ordinal()] = mod.addFunction("static_init",
                                              program_entry_type);
         staticInit = getGlobalFn(GlobalFn.INIT).appendBasicBlock("entry");
+        */
     }
     public void llvmGen(ClassType [] classes, StringLiteral [] strings,
                         String output_path, Boolean dump) {
@@ -164,7 +169,7 @@ public class LLVM {
         for (ClassType c : classes) {
             c.llvmGen(this);
         }
-
+        /*
         builder.positionBuilderAtEnd(staticInit);
         builder.buildRetVoid();
 
@@ -192,6 +197,7 @@ public class LLVM {
             System.out.println("Cannot find user main function");
         }
         builder.buildRet(Type.INT.llvmType().constInt(0, false));
+        */
 
         try {
             if (dump) {

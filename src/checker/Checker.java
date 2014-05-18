@@ -8,6 +8,7 @@ import compiler.*;
 import lexer.*;
 import syntax.*;
 import checker.*;
+
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
@@ -38,11 +39,13 @@ public class Checker {
      *  particular user interface.
      */
     static void check(Handler handler, Reader reader, String inputFile) {
+        Source fake = new JavaSource(null, "<MJCInternal>", null);
+        Position fake_pos = new SourcePosition(fake, 0, 0);
         Source      source  = new JavaSource(handler, inputFile, reader);
         MjcLexer    lexer   = new MjcLexer(handler, source);
         Parser      parser  = new Parser(handler, lexer);
         ClassType[] classes = parser.getClasses();
-        if (new Context(handler, classes).check() != null) {
+        if (new Context(fake_pos, handler, classes).check() != null) {
             System.out.println(
                 "No static errors found in \"" + inputFile + "\"");
         }

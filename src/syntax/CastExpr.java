@@ -11,7 +11,7 @@ import interp.*;
 public class CastExpr extends Expression {
     Expression needsCast;
     Type castType;
-
+    Type exprType;
     public CastExpr(Position pos, Type castType, Expression needsCast) {
         super(pos);
         this.castType = castType;
@@ -21,13 +21,21 @@ public class CastExpr extends Expression {
     public Type typeOf(Context ctxt, VarEnv env)
     throws Diagnostic {
         castType = castType.check(ctxt);
-        needsCast.typeOf(ctxt, env);
+        exprType = needsCast.typeOf(ctxt, env);
         return castType;
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
-        return l.getBuilder().buildBitCast(needsCast.llvmGen(l),
-                                           castType.llvmTypeField(), "cast");
+        if (castType.equal(Type.INT)) {
+            return l.getBuilder().buildTrunc(needsCast.llvmGen(l),
+                                             castType.llvmTypeField(), "cast");
+        } else if (castType.equal(Type.LONG)) {
+            return l.getBuilder().buildSExt(needsCast.llvmGen(l),
+                                            castType.llvmTypeField(), "cast");
+        } else {
+            return l.getBuilder().buildBitCast(needsCast.llvmGen(l),
+                                               castType.llvmTypeField(), "cast");
+        }
     }
 
     public void compileExpr(Assembly a, int free) {

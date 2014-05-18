@@ -13,18 +13,14 @@ import org.llvm.Builder;
 /** Provides a representation for "new" expressions that allocate an
  *  instance of a class.
  */
-public final class NewExpr extends StatementExpr {
+public class NewExpr extends StatementExpr {
     private Name      name;
-    //private Args      args;
     private ClassType cls;
-
-    public NewExpr(Position pos, Name name /*, Args args */) {
+    public NewExpr(Position pos, Name name) {
         super(pos);
         this.name = name;
-        //this.args = args;
         this.cls  = null;
     }
-
     /** Check this expression and return an object that describes its
      *  type (or throw an exception if an unrecoverable error occurs).
      */
@@ -41,8 +37,10 @@ public final class NewExpr extends StatementExpr {
      */
     public void compileExpr(Assembly a, int free) {
         a.spillAll(free);
-        a.emit("pushl", a.vtAddr(cls));
-        a.call(a.name("new_object"), free, a.WORDSIZE);
+        a.emit("movl", a.vtAddr(cls), a.reg(free));
+        a.emit("pushl", a.indirect(0, a.reg(free)));
+        a.call(a.name("MJC_allocObject"), free, a.WORDSIZE);
+        a.emit("movl", a.vtAddr(cls), a.indirect(0, "%eax"));
         a.unspillAll(free);
     }
 
@@ -54,7 +52,9 @@ public final class NewExpr extends StatementExpr {
 
     public org.llvm.Value llvmGen(LLVM l) {
         Builder b = l.getBuilder();
-        org.llvm.Value [] args = {cls.llvmType().sizeOf()};
+        org.llvm.Value size = b.buildTrunc(cls.llvmType().sizeOf(), Type.INT.llvmType(),
+                                           "cast");
+        org.llvm.Value [] args = {size};
         org.llvm.Value mem = b.buildCall(l.getGlobalFn(LLVM.GlobalFn.NEW_OBJECT),
                                          "new_obj", args);
         org.llvm.Value res = b.buildBitCast(mem, cls.llvmType().pointerType(), "cast");

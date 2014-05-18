@@ -6,6 +6,9 @@ package checker;
 
 import compiler.*;
 import syntax.*;
+import checker.*;
+
+import java.util.ArrayList;
 
 /** Provides a representation for contexts used during type checking.
  */
@@ -14,12 +17,18 @@ public final class Context extends Phase {
     private ClassType   currClass;
     private MethEnv     currMethod;
     private int         localBytes;
+    private Position pos;
+    private ClassType staticClass;
 
-    public Context(Handler handler, ClassType[] classes) {
+    public Context(Position pos, Handler handler, ClassType[] classes) {
         super(handler);
         this.classes = classes;
+        this.pos = pos;
     }
 
+    public ClassType [] getClasses() {
+        return classes;
+    }
     /** Look for the definition of a class by its name.
      */
     public ClassType findClass(String name) {
@@ -93,6 +102,41 @@ public final class Context extends Phase {
                 }
             }
             classes[i].checkClass(this);
+        }
+
+        if (staticClass == null) {
+            Id method_id = new Id(pos, "init");
+            Id class_id = new Id(pos, "MJCStatic");
+            Modifiers m = new Modifiers(pos);
+            m.set(Modifiers.PUBLIC | Modifiers.STATIC);
+
+            ArrayList<Statement> static_body = new ArrayList<Statement>();
+            for (int i = classes.length - 1; i >= 0; i--) {
+                if (classes[i].getFields() != null) {
+                    for (FieldEnv f : classes[i].getFields()) {
+                        Statement s = f.staticInit();
+                        if (s != null) {
+                            static_body.add(s);
+                        }
+                    }
+                }
+            }
+
+            MethDecl d = new MethDecl(false, m, Type.VOID, method_id,
+                                      null, new Block(pos, static_body.toArray(new Statement[0])));
+
+            staticClass = new ClassType(m, class_id, null, d);
+            ClassType [] new_classes = new ClassType[classes.length + 1];
+            int x = 0;
+            for (ClassType c : classes) {
+                new_classes[x] = c;
+                x++;
+            }
+            new_classes[classes.length] = staticClass;
+            this.classes = new_classes;
+            staticClass.checkClass(this);
+        } else {
+            System.out.println("Static Initialization Class Already Exists");
         }
         return noFailures();
     }

@@ -3,6 +3,9 @@
 #include <stdint.h>
 #include <string.h>
 
+extern void Main_main();
+extern void MJCStatic_init();
+
 /* forward declaration(s) */
 void gc();
 uintptr_t forward(uintptr_t p);
@@ -143,7 +146,7 @@ void printheap(space *h)
 ******************************************************************/
 /* Object and field operations */
 
-uintptr_t *new_object(size_t size) {
+uintptr_t *MJC_allocObject(size_t size) {
 
   // initialize heap on first use
   // TODO: allow user to dynamically set heap size
@@ -163,10 +166,13 @@ uintptr_t *new_object(size_t size) {
   return obj;
 }
 
+void MJC_putc(char c) {
+    printf("%c", c);
+}
 /* Array operations */
 
-uintptr_t *new_array(int32_t size) {
-
+uintptr_t *MJC_allocArray(int32_t elements, int32_t element_size) {
+    int32_t size = elements * element_size;
   if (size < 0)
     exit(-1);
 
@@ -318,3 +324,12 @@ void load_string(int n, int * length, char * src, char * dst) {
 void printc(char c) {
     printf("%c", c);
 }
+
+int main() {
+    //    printf("Starting:\n");
+    MJCStatic_init();
+    Main_main();
+    //    printf("Finishing (%d words allocated).\n",freeHeap);
+    return 0;
+}
+

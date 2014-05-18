@@ -31,7 +31,7 @@ import java.util.ArrayList;
 %token <Position>       '&' '|' '^' CAND COR '!'       // logic
 
 // Keywords:
-%token <Position>       BOOLEAN CLASS ELSE EXTENDS IF INT CHAR NEW 
+%token <Position>       BOOLEAN CLASS ELSE EXTENDS IF INT CHAR PTR NEW 
 %token <Position>       RETURN STATIC SUPER THIS VOID WHILE DO
 %token <Position>       ABSTRACT PUBLIC PRIVATE PROTECTED
 
@@ -89,12 +89,15 @@ decl    : modifiers type vardecls ';'
                                 { checkFieldModifiers($1);
                                   $$ = new FieldDecl($1, $2,
                                                        VarDecls.reverse($3)); }
+        | modifiers IDENT '(' formals ')' body 
+                                { checkMethodModifiers($1, $6);
+                                  $$ = new MethDecl(true, $1, Type.VOID, $2, $4, $6); }
         | modifiers VOID IDENT '(' formals ')' body
                                 { checkMethodModifiers($1, $7);
-                                  $$ = new MethDecl($1, Type.VOID, $3, $5, $7); }
+                                  $$ = new MethDecl(false, $1, Type.VOID, $3, $5, $7); }
         | modifiers type IDENT '(' formals ')' body
                                 { checkMethodModifiers($1, $7);
-                                  $$ = new MethDecl($1, $2,   $3, $5, $7); }
+                                  $$ = new MethDecl(false, $1, $2,   $3, $5, $7); }
         ;
 modifiers
 	: pos			{ $$ = new Modifiers($1); }
@@ -114,6 +117,7 @@ type    : d_type                { $$ = $1; }
 d_type  : INT                   { $$ = Type.INT; }
         | BOOLEAN               { $$ = Type.BOOLEAN; }
         | CHAR                  { $$ = Type.CHAR; }
+        | PTR                   { $$ = Type.PTR; }
         | name                  { $$ = new NameType($1); }
         ;
 name    : IDENT			{ $$ = new Name($1); }
@@ -219,8 +223,9 @@ literal : INTLIT
         | FALSE                 { $$ = new BooleanLiteral($1, false); }
         | NULL                  { $$ = new NullLiteral($1); }
         ;
-new     : NEW name '(' ')'      { $$ = new NewExpr($1, $2); }
-        | NEW d_type '[' expr ']' { $$ = new NewArrayExpr($1, $2, $4); }
+new     : NEW name '(' args ')'   { $$ = new ConstructorInvocation($2, $4); }
+        | NEW d_type '[' expr ']' { Name n = new Name(new Id(lexer.getPos(), $2.toString() + "[]"));
+                                    $$ = new ConstructorInvocation(n, new Args($4, null));}
         ;
 field	: primary '.' IDENT	{ $$ = new ObjectAccess($1, $3); }
         | SUPER '.' IDENT       { $$ = new SuperAccess($3); }

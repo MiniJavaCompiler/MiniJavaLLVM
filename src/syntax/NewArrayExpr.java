@@ -14,18 +14,21 @@ import org.llvm.TypeRef;
 /** Provides a representation for "new" expressions that allocate an
  *  instance of a class.
  */
-public final class NewArrayExpr extends StatementExpr {
+public final class NewArrayExpr extends NewExpr {
     private Type elementType;
-    private Name name;
     private ClassType  cls;
     private Expression size;
+    private Name name;
+    public static Name buildArrayExprName(Position pos, Type elementType) {
+        return new Name(new Id(pos, elementType.toString() + "[]"));
+    }
 
     public NewArrayExpr(Position pos, Type elementType, Expression size) {
-        super(pos);
-        this.elementType = elementType;
-        this.name = new Name(new Id(pos, elementType.toString() + "[]"));
+        super(pos, buildArrayExprName(pos, elementType));
         this.size = size;
-        this.cls  = null;
+        this.cls = cls;
+        this.name = buildArrayExprName(pos, elementType);
+        this.elementType = elementType;
     }
 
     /** Check this expression and return an object that describes its
@@ -35,53 +38,6 @@ public final class NewArrayExpr extends StatementExpr {
         if (size.typeOf(ctxt, env) != Type.INT) {
             throw new Failure(pos, "Array size must be of Type INT");
         }
-        cls = name.asClass(ctxt);
-        if (cls == null) {
-            throw new Failure(pos, "Undefined name " + name);
-        }
-        return cls;
-    }
-
-    /** Generate code to evaluate this expression and
-     *  leave the result in the specified free variable.
-     */
-    public void compileExpr(Assembly a, int free) {
-        throw new RuntimeException("Unimplemented");
-    }
-
-    /** Evaluate this expression.
-     */
-    public Value eval(State st) {
-        throw new RuntimeException("Unimplemented");
-    }
-
-    public org.llvm.Value llvmGen(LLVM l) {
-        Builder b = l.getBuilder();
-        org.llvm.Value [] obj_args = {cls.llvmType().sizeOf()};
-        org.llvm.Value mem = b.buildCall(l.getGlobalFn(LLVM.GlobalFn.NEW_OBJECT),
-                                         "new_obj", obj_args);
-        org.llvm.Value class_obj = b.buildBitCast(mem, cls.llvmType().pointerType(),
-                                   "cast");
-
-        org.llvm.Value arr_len = size.llvmGen(l);
-        org.llvm.Value element_size = b.buildTruncOrBitCast(cls.llvmType().sizeOf(),
-                                      TypeRef.int32Type(), "size");
-        org.llvm.Value mult = b.buildMul(arr_len, element_size, "mul");
-        org.llvm.Value [] args = {mult};
-        org.llvm.Value array = b.buildCall(l.getGlobalFn(LLVM.GlobalFn.NEW_ARRAY),
-                                           "new_arr", obj_args);
-
-        org.llvm.Value vtable = b.buildStructGEP(class_obj, 0, "vtable");
-        b.buildStore(cls.getVtableLoc(), vtable);
-
-        org.llvm.Value len = b.buildStructGEP(class_obj,
-                                              cls.findField("length").getFieldIndex(), "length");
-        b.buildStore(arr_len, len);
-
-        org.llvm.Value actual_arr = b.buildStructGEP(class_obj,
-                                    cls.findField("array").getFieldIndex(), "array");
-        b.buildStore(array, actual_arr);
-
-        return class_obj;
+        return super.typeOf(ctxt, env);
     }
 }

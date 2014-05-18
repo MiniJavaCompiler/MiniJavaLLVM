@@ -1,8 +1,11 @@
 class Main {
     static void main() {
+        MJC.putc('x');        
         System.out.println("Test");
+        
         char [] test = new char[3];
-        test[0] = 'p';
+        test[0] = 'p';        
+        
         test[1] = 'q'; 
         test[2] = '\n';
         String s = String.makeStringChar(test);

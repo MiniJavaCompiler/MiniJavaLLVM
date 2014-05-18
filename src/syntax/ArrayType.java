@@ -8,6 +8,7 @@ import checker.*;
 import compiler.*;
 import codegen.*;
 import interp.*;
+import syntax.*;
 
 import java.util.Arrays;
 import org.llvm.TypeRef;
@@ -20,17 +21,6 @@ import org.llvm.binding.LLVMLibrary.LLVMLinkage;
  */
 public final class ArrayType extends ClassType {
     private Type elementType;
-    static private Decls buildArrayDecls(Id id, Type elementType) {
-        Modifiers m = new Modifiers(id.getPos());
-        m.set(Modifiers.PUBLIC);
-        VarDecls v = new VarDecls(new Id(id.getPos(), "length"));
-        VarDecls v2 = new VarDecls(new Id(id.getPos(), "array"));
-        Decls d = new FieldDecl(m, Type.INT, v);
-        Decls d2 = new FieldDecl(m, Type.NULL, v2);
-        d.link(d2);
-        return d;
-
-    }
     public Type getElementType() {
         return elementType;
     }
@@ -44,12 +34,40 @@ public final class ArrayType extends ClassType {
         super(mods,
               buildArrayName(id),
               buildArrayExtends(id),
-              buildArrayDecls(id, elementType));
+              null);
+
         this.elementType = elementType;
+
+        Position pos = id.getPos();
+        Modifiers m = new Modifiers(id.getPos());
+        m.set(Modifiers.PUBLIC);
+        Modifiers m2 = new Modifiers(id.getPos());
+        m2.set(Modifiers.PRIVATE);
+        Id length = new Id(id.getPos(), "length");
+        Id array = new Id(id.getPos(), "array");
+        Id size = new Id(id.getPos(), "size");
+        VarDecls v = new VarDecls(length);
+        VarDecls v2 = new VarDecls(array);
+        Decls d = new FieldDecl(m, Type.INT, v);
+        Decls d2 = new FieldDecl(m2, Type.PTR, v2);
+
+        Statement [] body = {
+            new ExprStmt(pos, new AssignExpr(pos, new ObjectAccess(new This(pos), length), new NameAccess(new Name(size)))),
+            new ExprStmt(pos, new AssignExpr(pos, new ObjectAccess(new This(pos), array),
+            new AllocArrayInvocation(pos, this, new NameAccess(new Name(size)))))
+        };
+
+        Decls d3 = new MethDecl(true, m, Type.VOID, buildArrayName(id),
+                                new Formals(Type.INT, size),
+                                new Block(pos, body));
+
+        d.link(d2);
+        d2.link(d3);
+
+        this.decls = d;
     }
 
     public ArrayType isArray() {
         return this;
     }
-
 }

@@ -8,6 +8,7 @@ import checker.*;
 import compiler.*;
 import codegen.*;
 import interp.*;
+import syntax.*;
 
 import java.util.Arrays;
 import org.llvm.TypeRef;
@@ -23,13 +24,14 @@ public class ClassType extends Type {
     private Modifiers mods;
     private Id        id;
     private Type      extendsType;
-    private Decls     decls;
+    protected Decls     decls;
     private FieldEnv  fields;
     private MethEnv   methods;
     private int       width;    // # bytes for objects of this class
     private int       vfuns;    // # entries in vtable
     private MethEnv[] vtable;   // virtual function table for this class
 
+    private MethEnv constructor;
     private TypeRef llvmType;
     private TypeRef llvmVtable;
     private org.llvm.Value llvmVtableLoc;
@@ -157,6 +159,23 @@ public class ClassType extends Type {
             for (; decls != null; decls = decls.getNext()) {
                 decls.addToClass(ctxt, this);
             }
+            MethEnv menv = methods;
+            boolean has_constructor = false;
+            for (; menv != null; menv = menv.getNext()) {
+                if (menv.isConstructor()) {
+                    has_constructor = true;
+                }
+            }
+
+            if (!has_constructor) {
+                /* if no constructor, add a default with nothing to it */
+                Position pos = getPos();
+                Modifiers m = new Modifiers(pos);
+                m.set(Modifiers.PUBLIC);
+                MethDecl new_cons = new MethDecl(true, m, this, getId(), null, new Block(pos,
+                                                 new Statement[0]));
+                new_cons.addToClass(ctxt, this);
+            }
 
             // Finally, build vtable
             vtable = new MethEnv[vfuns];
@@ -218,7 +237,8 @@ public class ClassType extends Type {
 
     /** Add a new method to this class.
      */
-    public void addMethod(Context ctxt, Modifiers mods, Id id, Type type,
+    public void addMethod(Context ctxt, Boolean is_constructor, Modifiers mods,
+                          Id id, Type type,
                           VarEnv params, Statement body) {
         if (MethEnv.find(id.getName(), methods) != null) {
             ctxt.report(new Failure(id.getPos(),
@@ -240,7 +260,7 @@ public class ClassType extends Type {
                     slot = vfuns++;
                 }
             }
-            methods = new MethEnv(mods, type, id, params, body,
+            methods = new MethEnv(is_constructor, mods, type, id, params, body,
                                   this, slot, size, methods);
         }
     }
@@ -337,10 +357,11 @@ public class ClassType extends Type {
             for (FieldEnv f : fields) {
                 if (f.isStatic()) {
                     org.llvm.Value v = l.getModule().addGlobal(f.llvmTypeField(),
-                                       f.getOwner() + "." + f.getName());
-                    l.setNamedValue(f.getOwner() + "." + f.getName(), v);
-                    /* initializer will be set later in llvmgen */
+                                       f.getOwner() + "_" + f.getName());
+                    l.setNamedValue(f.getOwner() + "_" + f.getName(), v);
                     f.setStaticField(v);
+                    /* basic initialization will suffice for now */
+                    v.setInitializer(f.llvmTypeField().constNull());
                 }
             }
         }
@@ -370,6 +391,7 @@ public class ClassType extends Type {
     }
 
     public void llvmGen(LLVM l) {
+        /*
         l.getBuilder().positionBuilderAtEnd(l.getStaticInit());
         if (fields != null) {
             for (FieldEnv f : fields) {
@@ -382,6 +404,7 @@ public class ClassType extends Type {
                 }
             }
         }
+        */
 
         if (methods != null) {
             for (MethEnv m : methods) {

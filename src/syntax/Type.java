@@ -22,6 +22,7 @@ public abstract class Type {
     public static final Type VOID    = new PrimitiveType("void");
     public static final Type STRING  = new PrimitiveType("str_lit");
     public static final Type CHAR    = new PrimitiveType("char");
+    public static final Type PTR     = new PrimitiveType("ptr");
 
     public static Type [] getArrayPrimitives() {
         Type [] prims = {Type.INT, Type.LONG, Type.FLOAT, Type.DOUBLE, Type.BOOLEAN, Type.CHAR};
@@ -75,6 +76,8 @@ public abstract class Type {
     public int size() {
         return Assembly.WORDSIZE;
     }
+
+    abstract public int getWidth();
 
     public static boolean mixedNull(Type l_t, Type r_t) {
         if (l_t.equal(Type.NULL) && !r_t.equal(Type.NULL)) {
