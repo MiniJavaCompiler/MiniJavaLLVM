@@ -330,12 +330,6 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
                 System.out.print(st.getFrame(8).getChar());
                 return Value.NULL;
             }
-            /*
-            } else if (getName().equals("allocObject")) {
-            return new ObjValue(st.getFrame(8));
-            } else if (getName().equals("allocArray")) {
-            return new ArrayValue(st.getFrame(4).getInt(), st.getFrame(8).getInt());
-            }*/
         }
         Interp.abort("Cannot execute method " + getName()
                      + " in class " + owner);

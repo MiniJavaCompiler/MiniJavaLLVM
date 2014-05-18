@@ -34,9 +34,8 @@ public abstract class Value {
      *  if this value does not represent an object.
      */
     public ObjValue getObj() {
-        throw new RuntimeException("Not Obj " + this.getClass().toString());
-        //Interp.abort("Type error: value is not an object");
-        //return null;
+        Interp.abort("Type error: value is not an object");
+        return null;
     }
 
     /** Convert this value into an ArrayValue, or fail with an error message

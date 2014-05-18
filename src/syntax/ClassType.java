@@ -228,8 +228,8 @@ public class ClassType extends Type {
             fields = field;
         } else {
             FieldEnv cur = fields;
-            while (fields.getNext() != null) {
-                cur = fields.getNext();
+            while (cur.getNext() != null) {
+                cur = cur.getNext();
             }
             cur.setNext(field);
         }

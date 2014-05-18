@@ -147,24 +147,7 @@ public class Assembly {
             }
         }
     }
-    /*
-    public void staticInit(ClassType [] classes) {
 
-    emitLabel("static_init");
-    if (classes != null) {
-        for(ClassType c : classes) {
-            FieldEnv fields = c.getFields();
-            if (fields != null) {
-                for (FieldEnv f: fields) {
-                    f.staticInit(this);
-                }
-            }
-        }
-    }
-    emit("ret");
-
-    }
-    */
     public int vtOffset(int slot) {
         return WORDSIZE * (slot + 1);
     }
