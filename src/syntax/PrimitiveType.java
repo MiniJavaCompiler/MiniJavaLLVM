@@ -49,14 +49,23 @@ public final class PrimitiveType extends Type {
             return TypeRef.int1Type();
         } else if (this.equal(Type.NULL)) {
             /* this should really be the type it's going to be assigned to */
-            return TypeRef.int32Type().pointerType();
+            return TypeRef.int8Type().pointerType();
         } else if (this.equal(Type.VOID)) {
             return TypeRef.voidType();
+        } else if (this.equal(Type.STRING)) {
+            return TypeRef.int8Type().pointerType();
+        } else if (this.equal(Type.CHAR)) {
+            return TypeRef.int8Type();
+        } else if (this.equal(Type.PTR)) {
+            return TypeRef.int8Type().pointerType();
         } else {
             throw new RuntimeException("Unknown LLVM Primitive Type: " + name);
         }
     }
 
+    public int getWidth() {
+        return Assembly.WORDSIZE;
+    }
     public org.llvm.Value defaultValue() {
         if (this.equal(Type.NULL)) {
             return llvmType().constPointerNull();

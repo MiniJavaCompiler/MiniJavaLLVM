@@ -72,7 +72,6 @@ public abstract class Invocation extends StatementExpr {
                                      org.llvm.Value this_ptr) {
         /* static methods will provide null for this_ptr */
         ArrayList<org.llvm.Value> func_args = new ArrayList<org.llvm.Value>();
-        //TypeRef [] formals = menv.llvmType().getParamTypes();
 
         int i = 0;
         if (this_ptr != null) {
@@ -93,7 +92,6 @@ public abstract class Invocation extends StatementExpr {
         if (menv.getType() == Type.VOID) {
             name = "";
         }
-
         return l.getBuilder().buildCall(function, name, func_args);
     }
 }

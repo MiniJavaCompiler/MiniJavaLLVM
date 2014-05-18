@@ -1,19 +1,13 @@
 // Small program for testing garbage collector:
-//
-
-class System {
-    static void out(int x);
-}
+//   Test two objects with gc
 
 class TestObjOne {
      int x;
-     int y;
      int z;
 }
 
 class TestObjTwo {
      int a;
-     int b;
      int c;
 }
 
@@ -40,8 +34,8 @@ class Main {
           ot.a = 42;
 	  x = x + 1;
         }
-        System.out(oo.x);
-        System.out(ot.a);
+        System.out.println(Integer.toString(oo.x));
+        System.out.println(Integer.toString(ot.a));
     }
 }
 

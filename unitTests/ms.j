@@ -1,14 +1,13 @@
 // Small program for testing garbage collector:
 //
-
-class System {
-    static void out(int x);
+class Expr {
+    int eval() {
+        return 0;  // should never be called
+    }
 }
-
 class TestObj {
      int x;
      int y;
-     int z;
 }
 
 class Main {
@@ -21,14 +20,14 @@ class Main {
 	o.x = 42;
 
 	x = 0;
-        loops = 1000;
+        loops = 1000000;
  	while (x < loops)
         {
 	  o = new TestObj();
           o.x = x;
 	  x = x + 1;
         }
-        System.out(o.x);
+        System.out.println(Integer.toString(o.x));
     }
 }
 

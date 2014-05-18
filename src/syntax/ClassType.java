@@ -8,27 +8,30 @@ import checker.*;
 import compiler.*;
 import codegen.*;
 import interp.*;
+import syntax.*;
 
 import java.util.Arrays;
 import org.llvm.TypeRef;
 import java.util.ArrayList;
 import org.llvm.Builder;
+import java.util.Hashtable;
 
 import org.llvm.binding.LLVMLibrary.LLVMLinkage;
 
 /** Provides a representation for class types.
  */
-public final class ClassType extends Type {
+public class ClassType extends Type {
     private Modifiers mods;
     private Id        id;
     private Type      extendsType;
-    private Decls     decls;
+    protected Decls     decls;
     private FieldEnv  fields;
     private MethEnv   methods;
     private int       width;    // # bytes for objects of this class
     private int       vfuns;    // # entries in vtable
     private MethEnv[] vtable;   // virtual function table for this class
 
+    private MethEnv constructor;
     private TypeRef llvmType;
     private TypeRef llvmVtable;
     private org.llvm.Value llvmVtableLoc;
@@ -37,7 +40,12 @@ public final class ClassType extends Type {
     public ClassType(Modifiers mods, Id id, Type extendsType, Decls decls) {
         this.mods        = mods;
         this.id          = id;
-        this.extendsType = extendsType;
+        this.extendsType = null;
+        if (extendsType != null) {
+            this.extendsType = extendsType;
+        } else if (!id.getName().equals("Object")) {
+            this.extendsType = new NameType(new Name(new Id(id.getPos(), "Object")));
+        }
         this.decls       = decls;
         this.llvmType = null;
         this.llvmVtable = null;
@@ -151,6 +159,23 @@ public final class ClassType extends Type {
             for (; decls != null; decls = decls.getNext()) {
                 decls.addToClass(ctxt, this);
             }
+            MethEnv menv = methods;
+            boolean has_constructor = false;
+            for (; menv != null; menv = menv.getNext()) {
+                if (menv.isConstructor()) {
+                    has_constructor = true;
+                }
+            }
+
+            if (!has_constructor) {
+                /* if no constructor, add a default with nothing to it */
+                Position pos = getPos();
+                Modifiers m = new Modifiers(pos);
+                m.set(Modifiers.PUBLIC);
+                MethDecl new_cons = new MethDecl(true, m, this, getId(), null, new Block(pos,
+                                                 new Statement[0]));
+                new_cons.addToClass(ctxt, this);
+            }
 
             // Finally, build vtable
             vtable = new MethEnv[vfuns];
@@ -186,21 +211,34 @@ public final class ClassType extends Type {
 
     /** Add a new field to this class.
      */
-    public void addField(Context ctxt, Modifiers mods, Id id, Type type) {
+    public void addField(Context ctxt, Modifiers mods, Id id, Type type,
+                         Expression init_expr) {
+        FieldEnv field = null;
         if (FieldEnv.find(id.getName(), fields) != null) {
             ctxt.report(new Failure(id.getPos(),
                                     "Multiple definitions for field " + id));
         } else if (mods.isStatic()) {
-            fields = new FieldEnv(mods, id, type, this, -1,  0, fields);
+            field = new FieldEnv(mods, id, type, this, -1,  0, null, init_expr);
         } else {
-            fields = new FieldEnv(mods, id, type, this, fieldCount++, width, fields);
+            field = new FieldEnv(mods, id, type, this, fieldCount++, width, null,
+                                 init_expr);
             width += type.size();
+        }
+        if (fields == null) {
+            fields = field;
+        } else {
+            FieldEnv cur = fields;
+            while (fields.getNext() != null) {
+                cur = fields.getNext();
+            }
+            cur.setNext(field);
         }
     }
 
     /** Add a new method to this class.
      */
-    public void addMethod(Context ctxt, Modifiers mods, Id id, Type type,
+    public void addMethod(Context ctxt, Boolean is_constructor, Modifiers mods,
+                          Id id, Type type,
                           VarEnv params, Statement body) {
         if (MethEnv.find(id.getName(), methods) != null) {
             ctxt.report(new Failure(id.getPos(),
@@ -222,7 +260,7 @@ public final class ClassType extends Type {
                     slot = vfuns++;
                 }
             }
-            methods = new MethEnv(mods, type, id, params, body,
+            methods = new MethEnv(is_constructor, mods, type, id, params, body,
                                   this, slot, size, methods);
         }
     }
@@ -265,8 +303,35 @@ public final class ClassType extends Type {
         a.emitVTable(this, width, vtable);
     }
 
-    private TypeRef [] llvmFields() {
-        return llvmType().getStructElementTypes();
+    private ArrayList llvmFields() {
+        ArrayList<TypeRef> llvm_fields = new ArrayList<TypeRef>();
+
+        if (extendsType != null) {
+            llvm_fields.addAll(((ClassType)extendsType).llvmFields());
+            /* remove the vtable entry for the parent type */
+            llvm_fields.remove(0);
+        } else {
+            llvm_fields = new ArrayList<TypeRef>();
+        }
+        /* insert vtable entry for current */
+        llvm_fields.add(0, getLLVMVtable().pointerType());
+
+        if (fields != null) {
+            for (FieldEnv f : fields) {
+                TypeRef t;
+                if (f.getType() == this) {
+                    t = llvmType().pointerType();
+                } else {
+                    t = f.llvmType();
+                    if (f.getType().isClass() != null) {
+                        t = t.pointerType();
+                    }
+                }
+                llvm_fields.add(t);
+            }
+        }
+
+        return llvm_fields;
     }
 
     public void llvmGenTypes(LLVM l) {
@@ -279,46 +344,33 @@ public final class ClassType extends Type {
 
         ArrayList<org.llvm.Value> vtable_inits = new ArrayList<org.llvm.Value>();
         for (MethEnv m : vtable) {
-            vtable_inits.add(m.getFunctionVal());
+            vtable_inits.add(m.getFunctionVal(l));
         }
 
         llvmVtableLoc = l.getModule().addGlobal(getLLVMVtable(),
                                                 id.getName() + "_vtable_loc");
-        
+
         llvmVtableLoc.setInitializer(org.llvm.Value.constNamedStruct(getLLVMVtable(),
                                      vtable_inits.toArray(new org.llvm.Value[0])));
+
+        if (fields != null) {
+            for (FieldEnv f : fields) {
+                if (f.isStatic()) {
+                    org.llvm.Value v = l.getModule().addGlobal(f.llvmTypeField(),
+                                       f.getOwner() + "_" + f.getName());
+                    l.setNamedValue(f.getOwner() + "_" + f.getName(), v);
+                    f.setStaticField(v);
+                    /* basic initialization will suffice for now */
+                    v.setInitializer(f.llvmTypeField().constNull());
+                }
+            }
+        }
     }
 
     public TypeRef llvmType() {
         if (llvmType == null) {
             llvmType = TypeRef.structTypeNamed(id.getName());
-            ArrayList<TypeRef> llvm_fields;
-            if (extendsType != null) {
-                TypeRef [] fields = ((ClassType)extendsType).llvmFields();
-                /* remove the vtable entry for the parent type */
-                llvm_fields = new ArrayList(Arrays.asList(fields));
-                llvm_fields.remove(0);
-            } else {
-                llvm_fields = new ArrayList<TypeRef>();
-            }
-            /* insert vtable entry for current */
-            llvm_fields.add(0, getLLVMVtable().pointerType());
-
-            if (fields != null) {
-                for (FieldEnv f : fields) {
-                    TypeRef t;
-                    if (f.getType() == this) {
-                        t = llvmType.pointerType();
-                    } else {
-                        t = f.llvmType();
-                        if (f.getType().isClass() != null) {
-                            t = t.pointerType();
-                        }
-                    }
-                    llvm_fields.add(t);
-                }
-            }
-            TypeRef.structSetBody(llvmType, llvm_fields, false);
+            TypeRef.structSetBody(llvmType, llvmFields(), false);
         }
         return llvmType;
     }
@@ -339,33 +391,19 @@ public final class ClassType extends Type {
     }
 
     public void llvmGen(LLVM l) {
+        /*
+        l.getBuilder().positionBuilderAtEnd(l.getStaticInit());
         if (fields != null) {
-            Builder b = l.getBuilder();
-            l.getBuilder().positionBuilderAtEnd(l.getStaticInit());
             for (FieldEnv f : fields) {
                 if (f.isStatic()) {
-                    System.out.println("static field name: " + f.getName());
-                    org.llvm.Value v = l.getModule().addGlobal(f.llvmType(),
-                                       f.getOwner() + "." + f.getName());
-                    
-                    l.setNamedValue(f.getOwner() + "." + f.getName(), v);
-                    
-                    //
-                    // Problems with initializers.  The following are two approaches for setting 
-                    // the global initializer. 
-                    //
-                    // Global variable initializer type does not match global variable type!
-                    // %Hint* @TestObj.h
-                    //
-                    // For the line below.  Using zeroinitializer instead of null (almost) works (using 2nd example)
-                    // @TestObj.h = global %Hint null
-                    // v.setInitializer(f.getType().defaultValue());
-                    // This approach uses zeroinitializer.  --LVVM output still complains but the llvm-as will take the
-                    // assembly listing and compile it without complaint?
-                    //org.llvm.Value init = TypeRef.structTypeNamed(f.getName()).constNull();
-                    //v.setInitializer(init);
-                    
+                    org.llvm.Value v = f.getStaticField();
+                    v.setInitializer(f.llvmTypeField().constNull());
+                    if (f.getInitExpr() != null) {
+                        l.getBuilder().buildStore(f.getInitExpr().llvmGen(l), v);
+                    }
+
                     // set the gcroot for this var for later garbage collection
+                    //System.out.println("static field name: " + f.getName());
                     //org.llvm.Value res = b.buildBitCast(l.getNamedValue(f.getOwner() + "." + f.getName()), TypeRef.int8Type().pointerType().pointerType(), "gctmp");
                     //org.llvm.Value meta = TypeRef.int8Type().pointerType().constNull();  // TODO: replace with type data
                     //org.llvm.Value [] args = {res, meta};
@@ -373,6 +411,7 @@ public final class ClassType extends Type {
                 }
             }
         }
+        */
 
         if (methods != null) {
             for (MethEnv m : methods) {
@@ -397,5 +436,22 @@ public final class ClassType extends Type {
         org.llvm.Value v = llvmType().pointerType().constPointerNull();
         v.setValueName("null");
         return v;
+    }
+
+    public org.llvm.Value globalInitValue(LLVM l,
+                                          Hashtable<String, org.llvm.Value> args) {
+        ArrayList<org.llvm.Value> field_defaults = new ArrayList<org.llvm.Value>();
+        field_defaults.add(llvmVtableLoc);
+
+        if (fields != null) {
+            for (FieldEnv f : fields) {
+                if (!f.isStatic()) {
+                    field_defaults.add(args.get(f.getName()));
+                }
+            }
+        }
+
+        return org.llvm.Value.constNamedStruct(llvmType(),
+                                               field_defaults.toArray(new org.llvm.Value[0]));
     }
 }

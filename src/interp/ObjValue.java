@@ -27,6 +27,9 @@ public class ObjValue extends Value {
         return this;
     }
 
+    public ArrayValue getArray() {
+        return null;
+    }
     /** Describes the mapping from bytes in compiled object positions
      *  to field numbers in ObjValues.
      */
@@ -49,7 +52,8 @@ public class ObjValue extends Value {
         checkNull();
         Value val = fields[b2f(offset)];
         if (val == null) {
-            Interp.abort("Attempt to use uninitialized field!");
+            Interp.abort("Attempt to use uninitialized field in "
+                         + cls.getId().getName() + " (offset " + offset + ")");
         }
         return val;
     }

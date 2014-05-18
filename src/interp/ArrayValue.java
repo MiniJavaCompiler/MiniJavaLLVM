@@ -4,15 +4,20 @@
 
 package interp;
 
+import checker.*;
+import syntax.*;
+
 /** Provides a representation for array values.
  */
-class ArrayValue {
+public class ArrayValue extends ObjValue {
     private Value[] array;
-
     /** Construct an array of the specified size.
      */
-    public ArrayValue(int size) {
+    public ArrayValue(int size, ClassType type) {
+        super(type, type.getWidth());
         this.array = new Value[size];
+        setField(type.findField("length").getOffset(), new IntValue(size));
+        setField(type.findField("array").getOffset(), this);
     }
 
     /** Convert this value into an ArrayValue, or fail with an error message

@@ -3,7 +3,12 @@
 #include <stdint.h>
 #include <string.h>
 
+
 //#define DEBUG
+
+extern void Main_main();
+extern void MJCStatic_init();
+
 
 /* forward declaration(s) */
 void gc_copy();
@@ -153,7 +158,7 @@ void printheap(space *h)
 ******************************************************************/
 /* Object and field operations */
 
-uintptr_t *new_object(size_t size) {
+uintptr_t *MJC_allocObject(size_t size) {
 
   // initialize heap on first use
   // TODO: allow user to dynamically set heap size
@@ -176,16 +181,20 @@ uintptr_t *new_object(size_t size) {
   return obj;
 }
 
+void MJC_putc(char c) {
+    printf("%c", c);
+}
+
 /* Array operations */
 
-uintptr_t *new_array(int32_t size) {
+uintptr_t *MJC_allocArray(int32_t elements, int32_t element_size) {
+    int32_t size = elements * element_size;
 
   if (size < 0) {
     die_w_msg("Negative array size request");
   }
 
   // initialize heap on first use
-  // TODO: allow user to dynamically set heap size
   if (!heap) {
     initialize_heap(DEF_HEAP_SIZE);
   }
@@ -317,4 +326,21 @@ uintptr_t *forward(uintptr_t *p) {
   }
 }
 
+/* This is just copying a c_string into a Java char array */
+void load_string(int n, int * length, char * src, char * dst) {
+    *length = n;
+    strncpy(dst, src, n);
+}
+
+void printc(char c) {
+    printf("%c", c);
+}
+
+int main() {
+    //    printf("Starting:\n");
+    MJCStatic_init();
+    Main_main();
+    //    printf("Finishing (%d words allocated).\n",freeHeap);
+    return 0;
+}
 

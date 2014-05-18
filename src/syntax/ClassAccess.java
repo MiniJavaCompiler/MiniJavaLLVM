@@ -59,12 +59,10 @@ public final class ClassAccess extends FieldAccess {
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
-        org.llvm.Value v = l.getNamedValue(env.getOwner() + "." + env.getName());
-        return l.getBuilder().buildLoad(v, env.getOwner() + "." + env.getName());
+        return l.getBuilder().buildLoad(env.llvmField(l, null), env.getName());
     }
 
     public org.llvm.Value llvmSave(LLVM l, org.llvm.Value r) {
-        org.llvm.Value field = l.getNamedValue(env.getOwner() + "." + env.getName());
-        return l.getBuilder().buildStore(r, field);
+        return l.getBuilder().buildStore(r, env.llvmField(l, null));
     }
 }

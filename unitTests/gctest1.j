@@ -1,14 +1,9 @@
 // Small program for testing garbage collector:
-//
-
-class System {
-    static void out(int x);
-}
+//    Test basic object construction and gc relocation
 
 class TestObj {
      int x;
      int y;
-     int z;
 }
 
 class Main {
@@ -28,7 +23,7 @@ class Main {
           o.x = x;
 	  x = x + 1;
         }
-        System.out(o.x);
+        System.out.println(Integer.toString(o.x));
     }
 }
 

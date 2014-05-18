@@ -11,7 +11,6 @@ import checker.*;
 public class FieldDecl extends Decls {
     private Type     type;
     private VarDecls vardecls;
-
     public FieldDecl(Modifiers mods, Type type, VarDecls vardecls) {
         super(mods);
         this.type     = type;
@@ -24,7 +23,7 @@ public class FieldDecl extends Decls {
         type = type.check(ctxt);
         if (type != null) {
             for (VarDecls vs = vardecls; vs != null; vs = vs.getNext()) {
-                cls.addField(ctxt, mods, vs.getId(), type);
+                cls.addField(ctxt, mods, vs.getId(), type, vs.getInitExpr());
             }
         }
     }

@@ -1,13 +1,8 @@
 // Small program for testing garbage collector:
-//
-
-class System {
-    static void out(int x);
-}
+//   gc test for object containing another object
 
 class TestObjOne {
      int x;
-     int y;
      int z;
 }
 
@@ -30,7 +25,7 @@ class Main {
         ot.too.z = 42;
 
 	x = 0;
-        loops = 1000;
+        loops = 100000;
  	while (x < loops)
         {
 	  oo = new TestObjOne();
@@ -40,8 +35,8 @@ class Main {
           ot.too.z = 42;
 	  x = x + 1;
         }
-        System.out(oo.x);
-        System.out(ot.too.z);
+        System.out.println(Integer.toString(oo.x));
+        System.out.println(Integer.toString(ot.too.z));
     }
 }
 

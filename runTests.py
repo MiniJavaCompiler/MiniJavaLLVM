@@ -149,8 +149,9 @@ class Test:
 
         if self.bad:
             self.compare_files = [CompareFile([mjc_file], testname + ".mjc.ref")]
-            compile_test.run(self.verbose) # we don't actually care if this passes, must match ref
-            self.passed = (self.missingRefs() == 0
+             # we don't actually care if this passes, must match ref
+            self.passed = (compile_test.run(self.verbose) != 0 
+                           and self.missingRefs() == 0
                            and self.compareRefs())
             link_test.run(self.verbose)    # ditto
 

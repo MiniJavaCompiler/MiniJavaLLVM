@@ -46,6 +46,10 @@ public class Name {
         }
     }
 
+    public Id getId() {
+        return id;
+    }
+
     /** Lookup name as a class.
      */
     public ClassType asClass(Context ctxt) {

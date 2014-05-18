@@ -11,7 +11,7 @@ import interp.*;
 
 /** Represents an access to a method by an as yet unresolved name.
  */
-public final class NameInvocation extends Invocation {
+public class NameInvocation extends Invocation {
     private Name       name;
     private Invocation resolved;
 

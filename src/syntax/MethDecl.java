@@ -13,15 +13,22 @@ public class MethDecl extends Decls {
     private Type type;
     private Id id;
     private Formals formals;
-    private Statement body;
-    public MethDecl(Modifiers mods,
+    private Block body;
+    private Boolean is_constructor;
+    public MethDecl(Boolean is_constructor,
+                    Modifiers mods,
                     Type type, Id id, Formals formals,
-                    Statement body) {
+                    Block body) {
         super(mods);
         this.type    = type;
         this.id      = id;
         this.formals = formals;
         this.body    = body;
+        this.is_constructor = is_constructor;
+
+        if (is_constructor) {
+            this.body.appendStatement(new Return(id.getPos(), new This(id.getPos())));
+        }
     }
 
     /** Add a declared item to a specified class.
@@ -41,6 +48,9 @@ public class MethDecl extends Decls {
             }
             params = new VarEnv(paramId, paramType, params);
         }
-        cls.addMethod(ctxt, mods, id, type, params, body);
+        if (is_constructor) {
+            type = cls;
+        }
+        cls.addMethod(ctxt, is_constructor, mods, id, type, params, body);
     }
 }

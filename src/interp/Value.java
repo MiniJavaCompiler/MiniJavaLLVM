@@ -17,6 +17,11 @@ public abstract class Value {
         return 0;
     }
 
+    public String getString() {
+        Interp.abort("Type error: value is not a string");
+        return "";
+    }
+
     /** Convert this value into a Boolean, or fail with an error message
      *  if this value does not represent a Boolean.
      */
@@ -29,8 +34,9 @@ public abstract class Value {
      *  if this value does not represent an object.
      */
     public ObjValue getObj() {
-        Interp.abort("Type error: value is not an object");
-        return null;
+        throw new RuntimeException("Not Obj " + this.getClass().toString());
+        //Interp.abort("Type error: value is not an object");
+        //return null;
     }
 
     /** Convert this value into an ArrayValue, or fail with an error message
@@ -39,5 +45,9 @@ public abstract class Value {
     public ArrayValue getArray() {
         Interp.abort("Type error: value is not an array");
         return null;
+    }
+    public char getChar() {
+        Interp.abort("Type error: value is not an char");
+        return 'X';
     }
 }

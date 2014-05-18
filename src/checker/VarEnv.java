@@ -4,10 +4,6 @@
 
 package checker;
 
-import org.llvm.BasicBlock;
-import org.llvm.Builder;
-import org.llvm.TypeRef;
-
 import compiler.*;
 import syntax.*;
 import codegen.*;
@@ -124,9 +120,8 @@ public final class VarEnv extends Env {
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
-        Builder b = l.getBuilder();
         org.llvm.Value v = l.getNamedValue(getName());
-        return b.buildLoad(v, getName());
+        return l.getBuilder().buildLoad(v, getName());
     }
 
     public org.llvm.Value llvmSave(LLVM l, org.llvm.Value r) {

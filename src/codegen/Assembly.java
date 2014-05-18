@@ -8,6 +8,7 @@ import syntax.ClassType;
 import checker.FieldEnv;
 import checker.MethEnv;
 
+import syntax.StringLiteral;
 import java.io.PrintWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -66,9 +67,16 @@ public class Assembly {
     }
 
     public String name(String n) {
+        n = n.replaceAll("\\[", "_lb_");
+        n = n.replaceAll("\\]", "_rb_");
         return LINUX ? n : ("_" + n);
     }
 
+    public String strValue(String n) {
+        n = n.replaceAll("\n", "\\n");
+        n = n.replaceAll("\t", "\\t");
+        return n;
+    }
     public String mangle(String prefix, String suffix) {
         return name(prefix + "_" + suffix);
     }
@@ -139,7 +147,24 @@ public class Assembly {
             }
         }
     }
+    /*
+    public void staticInit(ClassType [] classes) {
 
+    emitLabel("static_init");
+    if (classes != null) {
+        for(ClassType c : classes) {
+            FieldEnv fields = c.getFields();
+            if (fields != null) {
+                for (FieldEnv f: fields) {
+                    f.staticInit(this);
+                }
+            }
+        }
+    }
+    emit("ret");
+
+    }
+    */
     public int vtOffset(int slot) {
         return WORDSIZE * (slot + 1);
     }
@@ -194,9 +219,36 @@ public class Assembly {
         return (FRAMEHEAD + sizeParams) - WORDSIZE;
     }
 
-    public void emitStart(String filename) {
+
+    public void emitStart(String filename, ClassType [] classes,
+                          StringLiteral [] strings) {
         emit(".file",  "\"" + filename + "\"");
-        emit(".globl", mangle("Main", "main"));
+        emit(".globl", mangle("Main", "main"), mangle("MJCStatic", "init"));
+        emit(".data");
+
+        int n = 0;
+        for (StringLiteral s : strings) {
+            emitLabel(name("str" + n));
+            for (int x = 0; x < s.getString().length(); x++) {
+                emit(".long", Integer.toString((int)s.getString().charAt(x)));
+            }
+
+            emitLabel(name("chrlit" + n));
+            emit(".long", name("char[]_0"));
+            emit(".long", "" + s.getString().length());
+            emit(".long", name("str" + n));
+
+            String x86name = name("strlit" + n);
+            emitLabel(x86name);
+            emit(".long", name("String_0"));
+            emit(".long", name("chrlit" + n));
+            s.setX86Name(x86name);
+            n++;
+        }
+    }
+
+    public String stringName(StringLiteral s) {
+        return "$" + s.getX86Name();
     }
 
     public void emitPrologue(String fname, int localBytes) {

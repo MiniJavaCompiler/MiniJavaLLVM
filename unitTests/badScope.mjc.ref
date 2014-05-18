@@ -1,0 +1,3 @@
+ERROR: "unitTests/badScope.j", line 8
+Repeated definition for variable p
+

@@ -41,11 +41,17 @@ public class Interp {
                               Handler handler) {
         Source      source  = new JavaSource(handler, description, reader);
         MjcLexer    lexer   = new MjcLexer(handler, source);
+        Source fake = new JavaSource(null, "<MJCInternal>", null);
+        Position fake_pos = new SourcePosition(fake, 0, 0);
         Parser      parser  = new Parser(handler, lexer);
         ClassType[] classes = parser.getClasses();
-        MethEnv     main    = new Context(handler, classes).check();
+        Context     context = new Context(fake_pos, handler, classes);
+        MethEnv     main    = context.check();
+        MethEnv init = context.findClass("MJCStatic").findMethod("init");
         if (main != null) {
-            new State().call(main);
+            State s = new State();
+            s.call(init);
+            s.call(main);
         }
     }
 

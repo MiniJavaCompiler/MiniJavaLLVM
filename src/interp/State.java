@@ -52,7 +52,7 @@ public class State {
     public Value getFrame(int offset) {
         Value val = stack[b2p(offset)];
         if (val == null) {
-            Interp.abort("Attempt to use uninitialized variable!");
+            Interp.abort("Attempt to use uninitialized variable from the stack!");
         }
         return val;
     }
