@@ -32,13 +32,10 @@ public class LLVM {
         NEW_ARRAY,
         PUTC,
         GCROOT,
-        //        INIT,
     };
     private Builder builder;
     private Module module;
     private Value function;
-    //private BasicBlock staticInit;
-    //private Value staticInitFn;
 
     private Hashtable<String, Value> namedValues;
     private Value [] globalFns;
@@ -51,11 +48,6 @@ public class LLVM {
     public Value getGlobalFn(GlobalFn g) {
         return globalFns[g.ordinal()];
     }
-    /*
-    public BasicBlock getStaticInit() {
-        return staticInit;
-    }
-    */
     public Value getNamedValue(String s) {
         Value v = namedValues.get(s);
         return v;
@@ -118,12 +110,6 @@ public class LLVM {
         
         TypeRef program_entry_type = TypeRef.functionType(Type.VOID.llvmType(),
                                      (List)Collections.emptyList());
-
-        /*
-        globalFns[GlobalFn.INIT.ordinal()] = mod.addFunction("static_init",
-                                             program_entry_type);
-        staticInit = getGlobalFn(GlobalFn.INIT).appendBasicBlock("entry");
-        */
     }
     public void llvmGen(ClassType [] classes, StringLiteral [] strings,
                         String output_path, Boolean dump) {
@@ -179,35 +165,6 @@ public class LLVM {
         for (ClassType c : classes) {
             c.llvmGen(this);
         }
-        /*
-        builder.positionBuilderAtEnd(staticInit);
-        builder.buildRetVoid();
-
-        Value main = mod.addFunction("main", main_entry_type);
-        BasicBlock main_block = main.appendBasicBlock("entry");
-
-        builder.positionBuilderAtEnd(main_block);
-        builder.buildCall(getGlobalFn(GlobalFn.INIT), "",
-                          (List)Collections.emptyList());
-        Value userMain = null;
-        Boolean found = false;
-        for (ClassType c : classes) {
-            if (c.getMethods() != null) {
-                for (MethEnv m : c.getMethods()) {
-                    if (m.isMain()) {
-                        userMain = m.getFunctionVal(this);
-                        found = true;
-                    }
-                }
-            }
-        }
-        if (found) {
-            builder.buildCall(userMain, "", (List)Collections.emptyList());
-        } else {
-            System.out.println("Cannot find user main function");
-        }
-        builder.buildRet(Type.INT.llvmType().constInt(0, false));
-        */
 
         try {
             if (dump) {

@@ -23,7 +23,6 @@ class IntExpr extends Expr {
 class AddExpr extends Expr {
     Expr left;
     Expr right;
-
     static AddExpr make(Expr l, Expr r) {
         AddExpr e = new AddExpr();
         e.left  = l;
