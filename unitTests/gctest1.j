@@ -4,6 +4,7 @@
 class TestObj {
      int x;
      int y;
+     int z;
 }
 
 class Main {
