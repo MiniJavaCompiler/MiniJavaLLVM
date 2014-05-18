@@ -126,11 +126,6 @@ public final class VarEnv extends Env {
     public org.llvm.Value llvmGen(LLVM l) {
         Builder b = l.getBuilder();
         org.llvm.Value v = l.getNamedValue(getName());
-
-        //org.llvm.Value res = b.buildBitCast(v, TypeRef.int8Type().pointerType(), "gcrootcast");
-        //org.llvm.Value [] args = {res, null};
-        //org.llvm.Value gc = b.buildCall(l.getGCRoot(), "gcroot", args);
-        //b.insertIntoBuilder(gc);
         return b.buildLoad(v, getName());
     }
 

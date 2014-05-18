@@ -75,6 +75,14 @@ public class LocalVarDecl extends Statement {
             org.llvm.Value v = b.buildAlloca(t, vs.getId().getName());
             l.setNamedValue(vs.getId().getName(), v);
             b.buildStore(type.defaultValue(), v);
+            
+            // set the gcroot for this var for later garbage collection (if it's a pointer)
+            if (type.isClass() != null) {
+            	org.llvm.Value res = b.buildBitCast(v, TypeRef.int8Type().pointerType().pointerType(), "gctmp");
+            	org.llvm.Value meta = TypeRef.int8Type().pointerType().constNull();  // TODO: replace with type data
+            	org.llvm.Value [] args = {res, meta};
+            	org.llvm.Value gc = b.buildCall(l.getGCRoot(), "", args);  
+            }
         }
     }
 

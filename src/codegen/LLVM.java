@@ -106,11 +106,10 @@ public class LLVM {
         malloc = mod.addFunction("new_object", malloc_type);
         malloc.setFunctionCallConv(LLVMCallConv.LLVMCCallConv);
 
-
-        TypeRef [] gcroot_args = {TypeRef.int8Type().pointerType()};
+        TypeRef [] gcroot_args = {TypeRef.int8Type().pointerType().pointerType(), TypeRef.int8Type().pointerType()};
         TypeRef gcroot_type = TypeRef.functionType(TypeRef.voidType(), gcroot_args);
         gcroot = mod.addFunction("llvm.gcroot", gcroot_type);
-        gcroot.setFunctionCallConv(LLVMCallConv.LLVMAnyRegCallConv);
+        gcroot.setFunctionCallConv(LLVMCallConv.LLVMCCallConv);
         
         
         TypeRef program_entry_type = TypeRef.functionType(Type.VOID.llvmType(),

@@ -11,6 +11,8 @@ import interp.*;
 import util.*;
 import java.lang.Iterable;
 import java.util.Iterator;
+
+import org.llvm.TypeRef;
 /** Provides a representation for object field environments.
  */
 public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,

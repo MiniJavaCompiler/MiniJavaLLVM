@@ -3,9 +3,13 @@
 #include <stdint.h>
 #include <string.h>
 
+//#define DEBUG
+
 /* forward declaration(s) */
-void gc();
-uintptr_t forward(uintptr_t p);
+void gc_copy();
+uintptr_t *forward(uintptr_t *p);
+void die_w_msg(char *m) { printf("FATAL: %s\n", m); exit(-1); }
+
 
 #ifndef bool
 typedef int bool;
@@ -18,10 +22,18 @@ enum bool { false, true };
     [length]
     [data] <- alloc pointer 'a' points to data
 */
-#define DEF_HEAP_SIZE   2000
+#define DEF_HEAP_SIZE   500     // heap size in words (4k bytes)
 #define OBJ_HEADER_SIZE 2
 static const char *ARRAY_HEADER_TYPE = "ARRAY";
 static const char *OBJECT_HEADER_TYPE = "CLASSOBJ";
+
+
+
+/* Notes (Mark Anderson Smith)
+ *  LLVM type structure list on LLVM site: 
+ *      http://llvm.org/docs/GarbageCollection.html
+ *  Notes on the data structures included for reference
+*/
 
 /// @brief The map for a single function's stack frame.  One of these is
 ///        compiled as constant data into the executable for each function.
@@ -37,16 +49,21 @@ typedef struct {
 /// @brief A link in the dynamic shadow stack.  One of these is embedded in
 ///        the stack frame of each function on the call stack.
 typedef struct {
-  struct StackEntry *Next;    //< Link to next stack entry (the caller's).
-  const FrameMap *Map; //< Pointer to constant FrameMap.
-  void *Roots[0];      //< Stack roots (in-place array).
+  struct StackEntry *Next;           //< Link to next stack entry (the caller's).
+  const FrameMap *Map;        //< Pointer to constant FrameMap.
+  void *Roots[0];             //< Stack roots (in-place array).
 } StackEntry;
+
 
 /// @brief The head of the singly-linked list of StackEntries.  Functions push
 ///        and pop onto this in their prologue and epilogue.
 ///
 /// Since there is only a global list, this technique is not threadsafe.
-StackEntry *llvm_gc_root_chain;
+extern StackEntry *llvm_gc_root_chain;
+
+/*
+ * End of LLVM references
+ */
 
 
 /* Heap allocation */
@@ -59,8 +76,8 @@ typedef struct space {          /* allocation space data              */
 /* allocate and initialize descriptor structure and storage for a space */
 space *initspace(size_t words) {
   space *s = malloc(sizeof(space));
-  // TODO: replace with appropriate exception
-  if (!s) exit(-1);
+  if (!s) die_w_msg("insufficient memory to init heap");
+
   s->start = malloc(words*sizeof(uintptr_t));
   s->end = s->start + words;
   s->avail = s->start;
@@ -70,9 +87,6 @@ space *initspace(size_t words) {
 /* initialize semi-space for copy-collection */
 int tospace = 1;         // index of the copy-to space, from space is always 'heap'
 space *tofrom_heap[2];   // storage of double heap space
-uintptr_t *froot;        // TODO: replace with llvm_root objects
-uintptr_t **lroot_ptr;
-char **roottypes;
 
 /* set heap pointer                           */
 space *heap = 0;             // pointer to current half heap
@@ -84,9 +98,6 @@ space *heap = 0;             // pointer to current half heap
 
 /* initialize the heap 
  * heap_size is total desired size (in words) 
- * first_root points to first entry in array of roots
- * last_root_ptr points to pointer to last entry in array of roots
- * root_types points to first entry in parallel array of type descriptors (same length as root array)
  */
 void initialize_heap(size_t heap_words) {
   tofrom_heap[0] = initspace(heap_words);
@@ -109,14 +120,13 @@ uintptr_t *heapalloc(size_t words) {
   //#endif
 
   if (heap->end - heap->avail < words) {
-    gc();  // garbage collect and switch heap to alt heap space
+    gc_copy();  // garbage collect and switch heap to alt heap space
     if (heap->end - heap->avail < words) {
       #ifdef DEBUG
       printf("heap end: %zu, heap avail: %zu\n", (uintptr_t)heap->end, (uintptr_t)heap->avail);
       #endif
       
-      // TODO: replace with appropriate exception 
-      exit(-1);
+      die_w_msg("out of heap space");
     }
   }
   p = heap->avail;
@@ -151,6 +161,9 @@ uintptr_t *new_object(size_t size) {
     initialize_heap(DEF_HEAP_SIZE);
   }
 
+  // size request was # bytes - convert to words
+  size = size / sizeof(uintptr_t);
+
   uintptr_t *obj = heapalloc(size+OBJ_HEADER_SIZE) + OBJ_HEADER_SIZE;
 
   // store a class type into the header for later use
@@ -167,8 +180,9 @@ uintptr_t *new_object(size_t size) {
 
 uintptr_t *new_array(int32_t size) {
 
-  if (size < 0)
-    exit(-1);
+  if (size < 0) {
+    die_w_msg("Negative array size request");
+  }
 
   // initialize heap on first use
   // TODO: allow user to dynamically set heap size
@@ -178,6 +192,7 @@ uintptr_t *new_array(int32_t size) {
 
   // array header includes type and size
   uintptr_t *a = heapalloc(size+OBJ_HEADER_SIZE) + OBJ_HEADER_SIZE;
+
   // store the marker "ARRAY" to indicate an array object
   a[-2] = (uintptr_t)(ARRAY_HEADER_TYPE);
   a[-1] = size;
@@ -210,9 +225,7 @@ bool is_heap_pointer(uintptr_t *p) {
 }
 
 bool is_object_type(char *type) {
-  if (!type) return false;       // null
-  if (*type == 'L') return true; // object type
-  return (0 == strcmp(type, "[I"));     // int array type
+  return true;
 }
 
 /****************************************************************** 
@@ -220,11 +233,11 @@ bool is_object_type(char *type) {
 *  Basic copying collection (cheney algorithm)
 *
 ******************************************************************/
-void gc() {
+void gc_copy() {
 
   #ifdef DEBUG
   printf("gc: initiated with tospace=%d\n", tospace);
-  printf("    first root=%zu, last root=%zu\n", (uintptr_t)froot, (uintptr_t)*lroot_ptr);
+  printf("    llvm root chain=%zu\n", (uintptr_t)llvm_gc_root_chain);
   printf("    heap start=%zu, heap pos=%zu\n", (uintptr_t)heap->start, (uintptr_t)heap->avail);
   printf("    tospace=%zu\n", (uintptr_t)tofrom_heap[tospace]->start);
   #endif
@@ -234,20 +247,15 @@ void gc() {
   //printheap(heap);
 
   // forward roots
-  uintptr_t *rpos = froot; 
-  char **rtypes = roottypes;
-  while (rpos < *lroot_ptr) {
-    if (is_object_type(*rtypes)) {
+  for (StackEntry *rootpos =  llvm_gc_root_chain; rootpos != NULL; rootpos = (StackEntry*)rootpos->Next) {
 
+    for (int i = 0; i < llvm_gc_root_chain->Map->NumRoots; i++) {
       #ifdef DEBUG
-      printf("gc: forwarding root object %s at %zu\n", *rtypes, (uintptr_t)*rpos);
+      printf("gc: forwarding root object %s at %zu\n", "llvm", (uintptr_t)rootpos->Roots[0]);
       #endif
-      
-      *rpos = forward(*rpos);
-     
+    
+      rootpos->Roots[i] = forward((uintptr_t*)rootpos->Roots[i]);
     }
-    rpos++;
-    rtypes++;
   }
 
   uintptr_t *free = tofrom_heap[tospace]->avail;
@@ -261,7 +269,7 @@ void gc() {
       #endif 
 
       // forward the object pointed to by scan
-      *scan = forward(*scan);
+      *scan = (uintptr_t)forward((void *)(*scan));
 
       // update free
       free = tofrom_heap[tospace]->avail;
@@ -284,13 +292,13 @@ void gc() {
   tospace = 1 - tospace;
 }
 
-uintptr_t forward(uintptr_t p) {
-  uintptr_t *fwdptr = (uintptr_t*)(p) - OBJ_HEADER_SIZE;  // forward pointer start at offset -2
-  size_t size = *((uintptr_t*)(p) - 1) + OBJ_HEADER_SIZE; // size pointer is value at offset -1
+uintptr_t *forward(uintptr_t *p) {
+  uintptr_t *fwdptr = (p) - OBJ_HEADER_SIZE;  // forward pointer start at offset -2
+  size_t size = *((p) - 1) + OBJ_HEADER_SIZE; // size pointer is value at offset -1
 
   /* check if object/array is already in the tospace */
   if (fwdptr >= tofrom_heap[tospace]->start && fwdptr < tofrom_heap[tospace]->end) {
-    return (uintptr_t)fwdptr;
+    return fwdptr;
   }
   else {
     // copy data
@@ -305,7 +313,7 @@ uintptr_t forward(uintptr_t p) {
     // reset available space
     tofrom_heap[tospace]->avail += size;
 
-    return (uintptr_t)fwdptr;
+    return fwdptr;
   }
 }
 

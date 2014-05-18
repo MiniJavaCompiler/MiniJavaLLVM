@@ -284,6 +284,7 @@ public final class ClassType extends Type {
 
         llvmVtableLoc = l.getModule().addGlobal(getLLVMVtable(),
                                                 id.getName() + "_vtable_loc");
+        
         llvmVtableLoc.setInitializer(org.llvm.Value.constNamedStruct(getLLVMVtable(),
                                      vtable_inits.toArray(new org.llvm.Value[0])));
     }
@@ -342,11 +343,33 @@ public final class ClassType extends Type {
             Builder b = l.getBuilder();
             l.getBuilder().positionBuilderAtEnd(l.getStaticInit());
             for (FieldEnv f : fields) {
-                if (f.getFieldIndex() == -1) {
+                if (f.isStatic()) {
+                    System.out.println("static field name: " + f.getName());
                     org.llvm.Value v = l.getModule().addGlobal(f.llvmType(),
                                        f.getOwner() + "." + f.getName());
+                    
                     l.setNamedValue(f.getOwner() + "." + f.getName(), v);
-                    v.setInitializer(f.getType().defaultValue());
+                    
+                    //
+                    // Problems with initializers.  The following are two approaches for setting 
+                    // the global initializer. 
+                    //
+                    // Global variable initializer type does not match global variable type!
+                    // %Hint* @TestObj.h
+                    //
+                    // For the line below.  Using zeroinitializer instead of null (almost) works (using 2nd example)
+                    // @TestObj.h = global %Hint null
+                    // v.setInitializer(f.getType().defaultValue());
+                    // This approach uses zeroinitializer.  --LVVM output still complains but the llvm-as will take the
+                    // assembly listing and compile it without complaint?
+                    //org.llvm.Value init = TypeRef.structTypeNamed(f.getName()).constNull();
+                    //v.setInitializer(init);
+                    
+                    // set the gcroot for this var for later garbage collection
+                    //org.llvm.Value res = b.buildBitCast(l.getNamedValue(f.getOwner() + "." + f.getName()), TypeRef.int8Type().pointerType().pointerType(), "gctmp");
+                    //org.llvm.Value meta = TypeRef.int8Type().pointerType().constNull();  // TODO: replace with type data
+                    //org.llvm.Value [] args = {res, meta};
+                    //org.llvm.Value gc = b.buildCall(l.getGCRoot(), "", args);     
                 }
             }
         }
