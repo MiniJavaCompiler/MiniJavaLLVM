@@ -29,7 +29,7 @@ enum bool { false, true };
 */
 #define DEF_HEAP_SIZE   500     // heap size in words (4k bytes)
 #define OBJ_HEADER_SIZE 2
-static const char *ARRAY_HEADER_TYPE = "ARRAY";
+static const char *ARRAY_HEADER_TYPE = "ARRAYOBJ";
 static const char *OBJECT_HEADER_TYPE = "CLASSOBJ";
 
 
@@ -145,7 +145,18 @@ void printheap(space *h)
   uintptr_t *pos = h->start;
   printf("current heap (start: %zu, avail: %zu)\n", (uintptr_t)h->start, (uintptr_t)h->avail);
   while (pos < h->avail) {
-    printf("    heap @ %zu = %zu\n", (uintptr_t)pos, *pos);
+    #ifdef DEBUG
+      if((uintptr_t)OBJECT_HEADER_TYPE==(uintptr_t)(*pos) 
+      || (uintptr_t)ARRAY_HEADER_TYPE == (uintptr_t)(*pos)) {
+        printf("    heap @ %zu = %s\n", (uintptr_t)pos, (char*)*pos);
+      }
+      else {
+        printf("    heap @ %zu = %zu\n", (uintptr_t)pos, *pos);
+      }
+    #else
+      printf("    heap @ %zu = %zu\n", (uintptr_t)pos, *pos);
+    #endif
+   
     pos++;
   }
 }
@@ -188,7 +199,7 @@ void MJC_putc(char c) {
 /* Array operations */
 
 uintptr_t *MJC_allocArray(int32_t elements, int32_t element_size) {
-    int32_t size = elements * element_size;
+  int32_t size = elements * element_size;
 
   if (size < 0) {
     die_w_msg("Negative array size request");
@@ -208,6 +219,8 @@ uintptr_t *MJC_allocArray(int32_t elements, int32_t element_size) {
   int i;
   for (i = 0; i < size; i++)
     a[i] = 0;
+
+  //printheap(heap);
   return a;
 }
 
@@ -230,12 +243,13 @@ bool is_heap_pointer(uintptr_t *p) {
   // is this pointing back into the old heap? 
   // and is the object pointed to a class obj?
   return ((p >= heap->start && p < heap->avail) 
-	  && ((uintptr_t)OBJECT_HEADER_TYPE == (uintptr_t)*(p-2)));
+	  && ((uintptr_t)OBJECT_HEADER_TYPE == (uintptr_t)*(p-2)
+                 || (uintptr_t)ARRAY_HEADER_TYPE == (uintptr_t)*(p-2)));
 }
 
-bool is_object_type(char *type) {
-  return true;
-}
+//bool is_object_type(char *type) {
+//  return true;//
+//}
 
 /****************************************************************** 
 *
@@ -246,7 +260,10 @@ void gc_copy() {
 
   #ifdef DEBUG
   printf("gc: initiated with tospace=%d\n", tospace);
-  printf("    llvm root chain=%zu\n", (uintptr_t)llvm_gc_root_chain);
+  printf("    llvm root chain=%zu, num roots=%d, num meta=%d\n", 
+                     (uintptr_t)llvm_gc_root_chain, 
+                     llvm_gc_root_chain->Map->NumRoots,
+                     llvm_gc_root_chain->Map->NumMeta);
   printf("    heap start=%zu, heap pos=%zu\n", (uintptr_t)heap->start, (uintptr_t)heap->avail);
   printf("    tospace=%zu\n", (uintptr_t)tofrom_heap[tospace]->start);
   #endif
@@ -260,7 +277,7 @@ void gc_copy() {
 
     for (int i = 0; i < llvm_gc_root_chain->Map->NumRoots; i++) {
       #ifdef DEBUG
-      printf("gc: forwarding root object %s at %zu\n", "llvm", (uintptr_t)rootpos->Roots[0]);
+      printf("gc: forwarding root object %s at %zu\n", "llvm", (uintptr_t)rootpos->Roots[i]);
       #endif
     
       rootpos->Roots[i] = forward((uintptr_t*)rootpos->Roots[i]);

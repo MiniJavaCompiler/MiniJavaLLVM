@@ -96,7 +96,7 @@ public class LocalVarDecl extends Statement {
             l.setNamedValue(vs.getId().getName(), v);
 
             // set the gcroot for this var for later garbage collection (if it's a pointer)
-            if (type.isClass() != null) {
+            if (type.isClass() != null || type.isArray() != null) {
             	org.llvm.Value res = b.buildBitCast(v, TypeRef.int8Type().pointerType().pointerType(), "gctmp");
             	org.llvm.Value meta = TypeRef.int8Type().pointerType().constNull();  // TODO: replace with type data
             	org.llvm.Value [] args = {res, meta};
