@@ -251,6 +251,7 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
                 org.llvm.Value v = l.getBuilder().buildAlloca(f.getParam(n).typeOf(), "this");
                 l.getBuilder().buildStore(f.getParam(n), v);
                 l.setNamedValue("this", v);
+                l.markGCRoot(v, owner);
                 n++;
             }
             for (VarEnv p = params; p != null; p = p.getNext()) {
@@ -258,6 +259,7 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
                                    p.getName());
                 l.getBuilder().buildStore(f.getParam(n), v);
                 l.setNamedValue(p.getName(), v);
+                l.markGCRoot(v, p.getType());
                 n++;
             }
             body.llvmGen(l);

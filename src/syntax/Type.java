@@ -79,12 +79,15 @@ public abstract class Type {
 
     abstract public int getWidth();
 
-    public static boolean mixedNull(Type l_t, Type r_t) {
-        if (l_t.equal(Type.NULL) && !r_t.equal(Type.NULL)) {
-            return true;
-        } else if (!l_t.equal(Type.NULL) && r_t.equal(Type.NULL)) {
-            return true;
+    public static Type mixedClass(Type l_t, Type r_t) {
+        if (l_t.equal(r_t)) {
+            return null;
+        } else if (l_t.isSuperOf(r_t)) {
+            return l_t;
+        } else if (r_t.isSuperOf(l_t)) {
+            return r_t;
+        } else {
+            return null;
         }
-        return false;
     }
 }

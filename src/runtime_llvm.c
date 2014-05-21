@@ -8,7 +8,7 @@
 
 extern void Main_main();
 extern void MJCStatic_init();
-
+extern void MJCStatic_roots();
 
 /* forward declaration(s) */
 void gc_copy();
@@ -355,6 +355,7 @@ void printc(char c) {
 
 int main() {
     //    printf("Starting:\n");
+    MJCStatic_roots();
     MJCStatic_init();
     Main_main();
     //    printf("Finishing (%d words allocated).\n",freeHeap);

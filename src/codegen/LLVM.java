@@ -105,12 +105,25 @@ public class LLVM {
         TypeRef [] gcroot_args = {TypeRef.int8Type().pointerType().pointerType(), TypeRef.int8Type().pointerType()};
         TypeRef gcroot_type = TypeRef.functionType(TypeRef.voidType(), gcroot_args);
         globalFns[GlobalFn.GCROOT.ordinal()] = mod.addFunction("llvm.gcroot",
-        		gcroot_type);        
-       
-        
+                                               gcroot_type);
+
+
         TypeRef program_entry_type = TypeRef.functionType(Type.VOID.llvmType(),
                                      (List)Collections.emptyList());
     }
+
+    public void markGCRoot(Value v, Type type) {
+        Builder b = getBuilder();
+        if (type.isClass() != null || type.isArray() != null) {
+            org.llvm.Value res = b.buildBitCast(v,
+                                                TypeRef.int8Type().pointerType().pointerType(), "gctmp");
+            org.llvm.Value meta =
+                TypeRef.int8Type().pointerType().constNull();  // TODO: replace with type data
+            org.llvm.Value [] args = {res, meta};
+            org.llvm.Value gc = b.buildCall(getGlobalFn(LLVM.GlobalFn.GCROOT), "", args);
+        }
+    }
+
     public void llvmGen(ClassType [] classes, StringLiteral [] strings,
                         String output_path, Boolean dump) {
         Module mod = Module.createWithName("llvm_module");
@@ -119,7 +132,6 @@ public class LLVM {
 
         TypeRef main_entry_type = TypeRef.functionType(Type.INT.llvmType(),
                                   (List)Collections.emptyList());
-
 
         ClassType string = null;
         ClassType char_arr = null;
@@ -161,6 +173,27 @@ public class LLVM {
             strliteral++;
             l.setLLVMString(str);
         }
+
+        //add statics to gcroot
+        org.llvm.Value static_gcroots = mod.addFunction("MJCStatic_roots",
+                                        TypeRef.functionType(Type.VOID.llvmType(), (List)Collections.emptyList()));
+        BasicBlock entry = static_gcroots.appendBasicBlock("entry");
+        builder.positionBuilderAtEnd(entry);
+
+        for (ClassType c : classes) {
+            if (c.getFields() != null) {
+                for (FieldEnv f : c.getFields()) {
+                    if (f.isStatic()) {
+                        org.llvm.Value v = f.getStaticField();
+                        Type type = f.getType();
+                        // CALL SOME GLOBAL ROOT REGISTRATION
+                        // LLVM explicitly states they don't handle global roots
+                        // with this method.
+                    }
+                }
+            }
+        }
+        builder.buildRetVoid();
 
         for (ClassType c : classes) {
             c.llvmGen(this);
