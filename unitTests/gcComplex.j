@@ -35,6 +35,6 @@ class Main
             cleanup(0, prev);            
             i = i + 1;
         }
-        System.out.println("Completed Successfully\n");
+        System.out.println("Completed Successfully");
     }
 }
