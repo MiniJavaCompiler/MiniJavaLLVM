@@ -391,21 +391,6 @@ public class ClassType extends Type {
     }
 
     public void llvmGen(LLVM l) {
-        /*
-        l.getBuilder().positionBuilderAtEnd(l.getStaticInit());
-        if (fields != null) {
-            for (FieldEnv f : fields) {
-                if (f.isStatic()) {
-                    org.llvm.Value v = f.getStaticField();
-                    v.setInitializer(f.llvmTypeField().constNull());
-                    if (f.getInitExpr() != null) {
-                        l.getBuilder().buildStore(f.getInitExpr().llvmGen(l), v);
-                    }
-                }
-            }
-        }
-        */
-
         if (methods != null) {
             for (MethEnv m : methods) {
                 m.llvmGenMethod(l);

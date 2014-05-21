@@ -27,16 +27,17 @@ public abstract class RelOpExpr extends BinaryOp {
         try {
             Type lt = left.typeOf(ctxt, env);
             Type rt = right.typeOf(ctxt, env);
-            if (!lt.equal(rt)) {
+            Type cast = null;
+            if (!lt.isSuperOf(rt) && !rt.isSuperOf(lt)) {
                 ctxt.report(new Failure(pos,
                 "Operands should have the same type, but the " +
                 " left operand has type " + lt +
                 " and the right operand has type " + rt));
-            } else if (Type.mixedNull(lt, rt)) {
-                if (lt == Type.NULL) {
-                    left = new CastExpr(pos, rt, left);
+            } else if ((cast = Type.mixedClass(lt, rt)) != null) {
+                if (rt.equal(cast)) {
+                    left = new CastExpr(pos, cast, left);
                 } else {
-                    right = new CastExpr(pos, lt, right);
+                    right = new CastExpr(pos, cast, right);
                 }
             }
         } catch (Diagnostic d) {
