@@ -1,12 +1,13 @@
+class Small {
+    int small;
+    int [] ary;
+    public Small(int s) {
+        this.small = s;
+        this.ary = new int[s];
+    }
+}
+
 class Main {
-    static public class Small {
-        int small;
-        int [] ary;
-        public Small(int s) {
-            this.small = s;
-            this.ary = new int[s];
-        }
-    };
     public static void fill_array(int i, int [] ary) {
         int x = 0;
         while (x < ary.length) {
@@ -17,13 +18,13 @@ class Main {
     public static void print_array(int [] ary) {
         int x = 0;
         while (x < ary.length) {
-            System.out.print(ary[x]);
+            System.out.print(Integer.toString(ary[x]));
             System.out.print(" ");
             x = x + 1;
         }
         System.out.print("\n");
     }
-    public static void main(String argv[]) {
+    public static void main() {
         int mem = 10;
         /* this should keep allocated more than
            the possible memory space.
@@ -57,6 +58,6 @@ class Main {
             print_array(x5);
             i = i + 1;
         }
-        System.out.print("Finished Successfully\n");
+        System.out.println("Finished Successfully");
     }
 }

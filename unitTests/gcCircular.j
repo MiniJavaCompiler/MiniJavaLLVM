@@ -37,6 +37,6 @@ class Main
             int [] garbageq = new int [17];        
             i = i + 1;
         }
-        System.out.print("Finished Successfully\n");
+        System.out.println("Finished Successfully");
     }
 }
