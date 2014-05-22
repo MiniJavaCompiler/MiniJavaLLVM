@@ -393,6 +393,7 @@ public class ClassType extends Type {
     }
 
     public void llvmGen(LLVM l) {
+
         /*
         if (fields != null) {
             for (FieldEnv f : fields) {
@@ -405,12 +406,12 @@ public class ClassType extends Type {
                     org.llvm.Value meta = TypeRef.int8Type().pointerType().constNull();  // TODO: replace with type data
                     org.llvm.Value [] args = {res, meta};
                     org.llvm.Value gc = l.getBuilder().buildCall(l.getGlobalFn(LLVM.GlobalFn.GCROOT), "", args);
-                    //l.getBuilder().buildRet(v);
                 }
             }
            
         }
         */
+
         if (methods != null) {
             for (MethEnv m : methods) {
                 m.llvmGenMethod(l);

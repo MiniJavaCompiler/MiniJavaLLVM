@@ -94,14 +94,7 @@ public class LocalVarDecl extends Statement {
             /* we only get away with setting the named values for all new frame items because
                MJC doesn't support multiple decls with the same name in the same scope */
             l.setNamedValue(vs.getId().getName(), v);
-
-            // set the gcroot for this var for later garbage collection (if it's a pointer)
-            if (type.isClass() != null || type.isArray() != null) {
-            	org.llvm.Value res = b.buildBitCast(v, TypeRef.int8Type().pointerType().pointerType(), "gctmp");
-            	org.llvm.Value meta = TypeRef.int8Type().pointerType().constNull();  // TODO: replace with type data
-            	org.llvm.Value [] args = {res, meta};
-            	org.llvm.Value gc = b.buildCall(l.getGlobalFn(LLVM.GlobalFn.GCROOT), "", args);  
-            }
+            l.markGCRoot(v, type);
         }
         block.llvmGen(l);
     }
