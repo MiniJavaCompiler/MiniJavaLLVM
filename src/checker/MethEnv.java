@@ -22,6 +22,7 @@ import org.llvm.Module;
 import org.llvm.PassManager;
 import org.llvm.Target;
 import org.llvm.TypeRef;
+import org.llvm.Dwarf;
 
 import org.llvm.binding.LLVMLibrary.LLVMCallConv;
 import org.llvm.binding.LLVMLibrary.LLVMIntPredicate;
@@ -241,6 +242,51 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
     public void llvmGenMethod(LLVM l) {
         org.llvm.Value f = functionVal;
         if (body != null) {
+            org.llvm.Value func_type = org.llvm.Value.MDNode(
+            new org.llvm.Value[] {
+                Dwarf.DW_TAG.DW_TAG_subroutine_type.value(),     // Tag (see below)
+                new org.llvm.Value(null), // Source directory (including trailing slash) & file pair (may be null)
+                org.llvm.Value.MDString(""),      // Reference to Context
+                org.llvm.Value.MDString(""),        // Name (may be "" for anonymous types)
+                TypeRef.int32Type().constInt(0, false),      // Line number where defined (may be 0)
+                TypeRef.int64Type().constInt(0, false),      // Size in bits
+                TypeRef.int64Type().constInt(0, false),      // Alignment in bits
+                TypeRef.int64Type().constInt(0, false),      // Offset in bits
+                TypeRef.int32Type().constInt(0, false),      // Flags
+                new org.llvm.Value(null), // Reference to type derived from
+                org.llvm.Value.MDNode(new org.llvm.Value[]{new org.llvm.Value(null)}), // Reference to array of member descriptors
+                TypeRef.int32Type().constInt(0, false), // Runtime languages
+                new org.llvm.Value(null), // Base type containing the vtable pointer for this type
+                new org.llvm.Value(null), // Template parameters
+                new org.llvm.Value(null)   // A unique identifier for type uniquing purpose (may be null)
+            });
+            org.llvm.Value md = org.llvm.Value.MDNode(
+            new org.llvm.Value[] {
+                Dwarf.DW_TAG.DW_TAG_subprogram.value(), // Tag = 46 (DW_TAG_subprogram)
+                l.getFile(), // Source directory (including trailing slash) & file pair
+                l.getMetaContext(), // Reference to context descriptor
+                org.llvm.Value.MDString(getName()), //Name
+                org.llvm.Value.MDString(owner + "." + getName()), // Display name (fully qualified C++ name)
+                org.llvm.Value.MDString(getName()), // MIPS linkage name (for C++)
+                TypeRef.int32Type().constInt(id.getPos().getRow(), false),      // Line number where defined
+                func_type, // Reference to type descriptor
+                TypeRef.int1Type().constInt(/*isStatic() ? 1 :*/ 0, false), // True if the global is local to compile unit (static)
+                TypeRef.int1Type().constInt(1, false),       //True if the global is defined in the compile unit (not extern)
+                TypeRef.int32Type().constInt(0, false),      // Virtuality, e.g. dwarf::DW_VIRTUALITY__virtual
+                TypeRef.int32Type().constInt(0, false),      // Index into a virtual function
+                new org.llvm.Value(null), // indicates which base type contains the vtable pointer for the
+                // derived class
+                TypeRef.int32Type().constInt(0, false),      // Flags - Artificial, Private, Protected, Explicit, Prototyped.
+                TypeRef.int1Type().constInt(0, false),       // isOptimized
+                f , // Pointer to LLVM function
+                new org.llvm.Value(null), // Lists function template parameters
+                new org.llvm.Value(null), // Function declaration descriptor
+                org.llvm.Value.MDNode(new org.llvm.Value[]{Type.INT.llvmMetaData()}), // List of function variables
+                TypeRef.int32Type().constInt(body.getPos().getRow(), false) // Line number where the scope of the subprogram begins
+
+            });
+            l.enterContext(md);
+            l.addSubProgram(md);
             f.setGC("shadow-stack");
             l.setFunction(f);
             BasicBlock entry = f.appendBasicBlock("entry");
@@ -268,6 +314,7 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
             } else {
                 l.getBuilder().buildRet(type.llvmTypeField().constNull());
             }
+            l.exitContext();
         }
     }
 

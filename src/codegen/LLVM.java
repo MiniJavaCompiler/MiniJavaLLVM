@@ -11,16 +11,20 @@ import org.llvm.Context;
 import org.llvm.PassManager;
 import org.llvm.Target;
 import org.llvm.TypeRef;
-import org.llvm.Value;
+import org.llvm.Dwarf;
 
 import org.llvm.binding.LLVMLibrary.LLVMCallConv;
 import org.llvm.binding.LLVMLibrary.LLVMIntPredicate;
+import org.llvm.binding.LLVMLibrary.LLVMAttribute;
 
 import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import java.io.File;
+import java.util.Stack;
 
 import compiler.*;
 import checker.*;
@@ -32,6 +36,7 @@ public class LLVM {
         NEW_ARRAY,
         PUTC,
         GCROOT,
+        DBG_DECLARE,
     };
     private Builder builder;
     private Module module;
@@ -39,10 +44,36 @@ public class LLVM {
 
     private Hashtable<String, Value> namedValues;
     private Value [] globalFns;
+    private String inputFile;
 
-    public LLVM() {
+    private Stack<Value> lexicalScope;
+    private int scopeCount;
+    private Value filePair;
+    private Value llvmContext;
+    private Value file;
+
+    private ArrayList<Value> subprograms;
+    public LLVM(String inputfile) {
         namedValues = new Hashtable<String, Value>();
         globalFns = new Value[GlobalFn.values().length];
+        inputFile = inputfile;
+        lexicalScope = new Stack<Value>();
+        scopeCount = 0;
+        subprograms = new ArrayList<Value>();
+
+        File f = new File(inputFile).getAbsoluteFile();
+        this.filePair = Value.MDNode(
+        new Value[] {
+            Value.MDString(f.getName()),
+            Value.MDString(f.getParent())
+        });
+
+        this.file = Value.MDNode(
+        new Value[] {
+            Dwarf.DW_TAG.DW_TAG_file_type.value(),
+            this.filePair //Source directory (including trailing slash) & file pair
+        });
+        enterContext(this.file);
     }
 
     public Value getGlobalFn(GlobalFn g) {
@@ -79,6 +110,39 @@ public class LLVM {
         this.module = module;
     }
 
+    public void enterContext(Value v) {
+        /* pushing an already created context */
+        lexicalScope.push(v);
+    }
+
+    public Value getFile() {
+        return filePair;
+    }
+    public void addSubProgram(Value v) {
+        subprograms.add(v);
+    }
+    public void enterContext(Position pos) {
+        int tempScope = scopeCount;
+        /* lexical block does not match description from webpage, missing a field */
+        Value [] compile_unit_data =  {
+            TypeRef.int32Type().constInt(11, false), //Tag = 11 (DW_TAG_lexical_block)
+            filePair, //Source directory (including trailing slash) & file pair
+            lexicalScope.peek(), //Reference to context descriptor
+            TypeRef.int32Type().constInt(pos.getRow(), false),      //Line number
+            TypeRef.int32Type().constInt(pos.getColumn(), false),     //Column number
+            //TypeRef.int32Type().constInt(0, false),     // DWARF path discriminator value
+            TypeRef.int32Type().constInt(tempScope, false),      // Unique ID to identify blocks from a template function
+        };
+        lexicalScope.push(Value.MDNode(compile_unit_data));
+        scopeCount++;
+    }
+    public Value getMetaContext() {
+        return lexicalScope.peek();
+    }
+    public void exitContext() {
+        lexicalScope.pop();
+    }
+
     public void buildGlobalFns(Module mod) {
         TypeRef [] args = {Type.CHAR.llvmType()};
         TypeRef printf_type = TypeRef.functionType(TypeRef.voidType(), false,
@@ -100,15 +164,39 @@ public class LLVM {
         globalFns[GlobalFn.NEW_ARRAY.ordinal()] = mod.addFunction("MJC_allocArray",
                 malloc_array_type);
 
-
         TypeRef [] gcroot_args = {TypeRef.int8Type().pointerType().pointerType(), TypeRef.int8Type().pointerType()};
         TypeRef gcroot_type = TypeRef.functionType(TypeRef.voidType(), gcroot_args);
         globalFns[GlobalFn.GCROOT.ordinal()] = mod.addFunction("llvm.gcroot",
                                                gcroot_type);
 
+        globalFns[GlobalFn.GCROOT.ordinal()].addFunctionAttr(
+            LLVMAttribute.LLVMNoUnwindAttribute);
+
+        TypeRef metadata = Value.MDNode(new Value[] {TypeRef.int32Type().constNull()}).typeOf();
+        TypeRef [] debug_declare_args = {metadata, metadata};
+        TypeRef debug_declare_type = TypeRef.functionType(TypeRef.voidType(),
+                                     debug_declare_args);
+
+
+        globalFns[GlobalFn.DBG_DECLARE.ordinal()] = mod.addFunction("llvm.dbg.declare",
+                debug_declare_type);
+
+        globalFns[GlobalFn.DBG_DECLARE.ordinal()].addFunctionAttr(
+            LLVMAttribute.LLVMNoUnwindAttribute);
 
         TypeRef program_entry_type = TypeRef.functionType(Type.VOID.llvmType(),
                                      (List)Collections.emptyList());
+    }
+    public Value setLLVMMetaData(Position pos, Value instr) {
+        Value meta = Value.MDNode(
+        new Value[] {
+            TypeRef.int32Type().constInt(pos.getRow(), false),
+            TypeRef.int32Type().constInt(pos.getColumn(), false),
+            getMetaContext(),
+            new org.llvm.Value(null),
+        });
+        instr.setMetadata(0 /*kind ? */, meta);
+        return instr;
     }
 
     public void markGCRoot(Value v, Type type) {
@@ -122,10 +210,72 @@ public class LLVM {
             org.llvm.Value gc = b.buildCall(getGlobalFn(LLVM.GlobalFn.GCROOT), "", args);
         }
     }
+    public void compileUnitDescriptor(Module mod) {
+        //Value empty = Value.MDNode(new Value[]{TypeRef.int32Type().constInt(0, false)});
+        Value empty = new Value(null);
+        Value [] compile_unit_data =  {
+            Dwarf.DW_TAG.DW_TAG_compile_unit.value(),
+            filePair,        // Source directory (including trailing slash) & file pair
+            Dwarf.DW_LANG.DW_LANG_Java.value(),      // DWARF language identifier (ex. DW_LANG_C89)
+            Value.MDString("MiniJava Compiler"),     // Producer (ex. "4.0.1 LLVM (LLVM research group)")
+            TypeRef.int1Type().constInt(0, false),   // True if this is optimized.
+            Value.MDString(""),                      // Flags
+            TypeRef.int32Type().constInt(0, false),  // Runtime version
+            empty,    // List of enums types
+            empty,    // List of retained types
+            Value.MDNode(subprograms.toArray(new Value[0])),    // List of subprograms
+            empty,    // List of global variables
+            empty,    // List of imported entities
+            Value.MDString("")                  // Split debug filename
+        };
+        mod.addNamedMetaData("llvm.dbg.cu", Value.MDNode(compile_unit_data));
+        mod.addNamedMetaData("llvm.module.flags", Value.MDNode(
+                                 new Value[] {TypeRef.int32Type().constInt(2, false),
+                                              Value.MDString("Dwarf Version"),
+                                              TypeRef.int32Type().constInt(4, false)
+                                             }));
+        mod.addNamedMetaData("llvm.module.flags", Value.MDNode(
+                                 new Value[] {TypeRef.int32Type().constInt(1, false),
+                                              Value.MDString("Debug Info Version"),
+                                              TypeRef.int32Type().constInt(1, false)
+                                             }));
 
+    }
+
+    public void localVar(Position pos, int arg_num, VarDecls v, Value val) {
+        Value tag;
+        Value line_info;
+        if (arg_num > 0) {
+            tag = Dwarf.DW_TAG.DW_TAG_arg_variable.value();
+            // 24 bit - Line number where defined
+            // 8 bit - Argument number. 1 indicates 1st argument.
+            line_info = TypeRef.int32Type().constInt(v.getId().getPos().getRow() << 8 |
+                        arg_num, false);
+        } else {
+            tag = Dwarf.DW_TAG.DW_TAG_auto_variable.value();
+            line_info = TypeRef.int32Type().constInt(v.getId().getPos().getRow(), false);
+        }
+        Value node = Value.MDNode(new Value[] {
+            tag,      // Tag
+            lexicalScope.peek(), // Context
+            Value.MDString(v.getId().getName()), // Name
+            filePair, // Reference to file where defined
+            line_info,
+            Type.INT.llvmMetaData(), // Reference to the type descriptor
+            TypeRef.int32Type().constInt(0, false),      // flags
+            new org.llvm.Value(null),
+        });
+        Value [] args = new Value[] {
+            Value.MDNode(new Value[]{val}), node
+        };
+        Value dbg = getBuilder().buildCall(getGlobalFn(LLVM.GlobalFn.DBG_DECLARE), "",
+                                           args);
+        setLLVMMetaData(pos, dbg);
+    }
     public void llvmGen(ClassType [] classes, StringLiteral [] strings,
                         String output_path, Boolean dump) {
         Module mod = Module.createWithName("llvm_module");
+
         setModule(mod);
         buildGlobalFns(mod);
 
@@ -157,7 +307,7 @@ public class LLVM {
             org.llvm.Value v = mod.addGlobal(char_arr.llvmType(), "#chr" + strliteral);
             Hashtable<String, org.llvm.Value> args = new
             Hashtable<String, org.llvm.Value>();
-            args.put("array", lit);
+            args.put("array", lit_ptr);
             args.put("length", Type.INT.llvmType().constInt(l.getString().length(), false));
             v.setInitializer(char_arr.globalInitValue(this, args));
 
@@ -197,6 +347,8 @@ public class LLVM {
         for (ClassType c : classes) {
             c.llvmGen(this);
         }
+
+        compileUnitDescriptor(mod);
 
         try {
             if (dump) {

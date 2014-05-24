@@ -50,7 +50,7 @@ typedef struct {
 ///        and pop onto this in their prologue and epilogue.
 ///
 /// Since there is only a global list, this technique is not threadsafe.
-StackEntry *llvm_gc_root_chain;
+extern StackEntry *llvm_gc_root_chain;
 
 
 /* Heap allocation */

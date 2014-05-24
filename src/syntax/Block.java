@@ -85,8 +85,10 @@ public final class Block extends Statement {
     }
 
     public void llvmGen(LLVM l) {
+        l.enterContext(pos);
         for (Statement ss : stmts) {
             ss.llvmGen(l);
         }
+        l.exitContext();
     }
 }

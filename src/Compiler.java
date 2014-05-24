@@ -55,7 +55,7 @@ public class Compiler {
                 errors++;
             }
             if (!cmd.hasOption("x") && !cmd.hasOption("l") && !cmd.hasOption("L")
-                && !cmd.hasOption("I")) {
+                    && !cmd.hasOption("I")) {
                 System.out.println("--x86|--llvm|--LLVM|--interp required for some sort of output.");
                 System.out.println("--help for more info.");
                 errors++;
@@ -75,7 +75,10 @@ public class Compiler {
      *  particular user interface.
      */
     static void compile(String inputFile, CommandLine cmd) {
-        String [] input_files = {inputFile, "src/Runtime.j"};
+        String [] input_files = {
+            inputFile,
+            "src/Runtime.j"
+        };
         ArrayList<ClassType> class_list = new ArrayList<ClassType>();
         ArrayList<StringLiteral> string_list = new ArrayList<StringLiteral>();
         Source fake = new JavaSource(null, "<MJCInternal>", null);
@@ -122,7 +125,7 @@ public class Compiler {
                 }
             }
             if (cmd.hasOption("L") || cmd.hasOption("l")) {
-                LLVM llvm = new LLVM();
+                LLVM llvm = new LLVM(inputFile);
                 llvm.llvmGen(classes, strings, cmd.getOptionValue("L"), cmd.hasOption("l"));
             }
             if (cmd.hasOption("I")) {

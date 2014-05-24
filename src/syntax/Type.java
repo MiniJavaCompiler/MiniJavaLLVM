@@ -37,6 +37,9 @@ public abstract class Type {
 
     public abstract TypeRef llvmType();
 
+    public org.llvm.Value llvmMetaData() {
+        throw new RuntimeException("Unimplemented");
+    }
     public TypeRef llvmTypeField() {
         if (this instanceof PrimitiveType) {
             return llvmType();
