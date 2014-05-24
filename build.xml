@@ -63,11 +63,11 @@
       </targetfiles>
       <sequential>
         <exec executable="clang" failonerror="true">
-          <arg value="-emit-llvm" />
           <arg value="src/runtime_llvm.c" />
           <arg value="-c" />
+          <arg value="-g" />
           <arg value="-o" />
-          <arg value="${dir.runtime}/runtime_llvm.bc"/>
+          <arg value="${dir.runtime}/runtime_llvm.o"/>
         </exec>
       </sequential>
     </outofdate>

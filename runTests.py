@@ -8,7 +8,7 @@ import sys
 import shutil
 
 BUILDDIR = "build/test/"
-RUNTIMEFILE = "build/runtime/runtime_llvm.bc"
+RUNTIMEFILE = "build/runtime/runtime_llvm.o"
 TESTDIR = "unitTests/"
 
 class CompareFile:
@@ -65,7 +65,10 @@ class CompareFile:
 class RunTest:
     def __init__(self, output, cmd):
         self.__cmd = cmd;
-        self.__output = BUILDDIR + output
+        if output[0] == '/':
+            self.__output = output
+        else:
+            self.__output = BUILDDIR + output
 
     def run(self, verbose):
         tmp_file = open(self.__output, 'w');
@@ -112,12 +115,17 @@ class Test:
         testdir = os.path.dirname(self.testfile)
 
         testname = self.testname
+        llvm_object = testname + ".o"
         bitcode_file = testname + ".bc"        
         x86_asm_file = testname + ".s"
         x86_compiled = testname
+        llvm_exec = testname + ".llvm"
+
         gcc_file = testname + ".gcc.out"
         mjc_file = testname + ".mjc.out"
         llvm_link_file = testname + ".llvmlink.out"
+
+        ignored = "/dev/null"
 
         llvm_file = testname + ".llvm.out"
         x86_file = testname + ".x86.out"
@@ -141,11 +149,8 @@ class Test:
                                            "--LLVM", BUILDDIR + bitcode_file,
                                            "--x86", BUILDDIR + x86_asm_file])
 
-        link_test = RunTest(llvm_link_file, ["llvm-link", 
-                                             BUILDDIR + bitcode_file, 
-                                             RUNTIMEFILE,
-                                             "-o",
-                                             BUILDDIR + bitcode_file])
+        
+
 
         if self.bad:
             self.compare_files = [CompareFile([mjc_file], testname + ".mjc.ref")]
@@ -153,7 +158,6 @@ class Test:
             self.passed = (compile_test.run(self.verbose) != 0 
                            and self.missingRefs() == 0
                            and self.compareRefs())
-            link_test.run(self.verbose)    # ditto
 
             return
         
@@ -162,16 +166,27 @@ class Test:
             CompareFile([out], "".join(os.path.splitext(out)[:-1]) + ".ref")
             for out in out_files]
 
-        all_tests = [compile_test, link_test,
-            RunTest(llvm_file, ["lli", BUILDDIR + bitcode_file]),
-            RunTest(interp_file, ["java",
-                                  "-jar", "build/jar/mjc.jar",
-                                  "-I",
-                                  "-i", self.testfile]),
-            RunTest(gcc_file, ["gcc", "-m32", "src/runtime_x86.c",
-                               BUILDDIR + x86_asm_file,
-                               "-o", BUILDDIR + x86_compiled]),
-            RunTest(x86_file, ["./" + BUILDDIR + x86_compiled])
+        all_tests = [compile_test,
+                     RunTest(llvm_link_file, ["llc", 
+                                              BUILDDIR + bitcode_file, 
+                                             "-filetype=obj",
+                                              "-O0",
+                                             "-o",
+                                             BUILDDIR + llvm_object]),
+                     RunTest(ignored, ["gcc",
+                                       "-lc", 
+                                       BUILDDIR + llvm_object,
+                                       RUNTIMEFILE,
+                                       "-o", BUILDDIR + llvm_exec]),
+                     RunTest(llvm_file, ["./" + BUILDDIR + llvm_exec]),
+                     RunTest(interp_file, ["java",
+                                           "-jar", "build/jar/mjc.jar",
+                                           "-I",
+                                           "-i", self.testfile]),
+                     RunTest(gcc_file, ["gcc", "-m32", "src/runtime_x86.c",
+                                        BUILDDIR + x86_asm_file,
+                                        "-o", BUILDDIR + x86_compiled]),
+                     RunTest(x86_file, ["./" + BUILDDIR + x86_compiled])
         ]
 
         for test in all_tests:

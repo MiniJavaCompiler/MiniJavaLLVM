@@ -319,6 +319,9 @@ void gc_copy() {
 }
 
 uintptr_t *forward(uintptr_t *p) {
+  if (!p) {
+    return NULL;
+  }
   uintptr_t *fwdptr = (p) - OBJ_HEADER_SIZE;  // forward pointer start at offset -2
   size_t size = *((p) - 1) + OBJ_HEADER_SIZE; // size pointer is value at offset -1
 
