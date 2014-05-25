@@ -38,6 +38,10 @@ enum bool { false, true };
 */
 #define DEF_HEAP_SIZE   500     // heap size in words (4k bytes)
 #define OBJ_HEADER_SIZE 2
+#define OBJ_HEADER_TYPE_OFFSET   2
+#define OBJ_HEADER_FWDPTR_OFFSET 1
+#define OBJ_HEADER_SIZE_OFFSET   1
+#define OBJ_HEADER_SIZE_OFFSET_FROM_TYPE 1
 static const char *ARRAY_HEADER_TYPE = "ARRAYOBJ";
 static const char *OBJECT_HEADER_TYPE = "CLASSOBJ";
 static const char *OBJECT_FORWARDED = "FORWARDOBJ";
@@ -113,9 +117,8 @@ space *initspace(size_t words) {
 }
 
 /* initialize semi-space for copy-collection */
-int tospace =
-  1;         // index of the copy-to space, from space is always 'heap'
-space *tofrom_heap[2];   // storage of double heap space
+int tospace =  1;        
+space *tofrom_heap[2];   
 
 /* set heap pointer                           */
 space *heap = 0;             // pointer to current half heap
@@ -192,7 +195,7 @@ void verify_heap(space *h) {
     // beginning of block should be flagged as a header type
     if ((uintptr_t)OBJECT_HEADER_TYPE == (uintptr_t)(*pos)
         || (uintptr_t)ARRAY_HEADER_TYPE == (uintptr_t)(*pos)) {
-      end_block = pos + *(pos + 1) + OBJ_HEADER_SIZE;
+      end_block = pos + *(pos + OBJ_HEADER_SIZE_OFFSET_FROM_TYPE) + OBJ_HEADER_SIZE;
       pos++;
       while (pos < end_block) {
         // inside alloc block there should not be another header
@@ -259,8 +262,8 @@ uintptr_t *MJC_allocObject(size_t size) {
   uintptr_t *obj = heapalloc(size + OBJ_HEADER_SIZE) + OBJ_HEADER_SIZE;
 
   // store a class type into the header for later use
-  obj[-2] = (uintptr_t)(OBJECT_HEADER_TYPE);
-  obj[-1] = size;
+  obj[-OBJ_HEADER_TYPE_OFFSET] = (uintptr_t)(OBJECT_HEADER_TYPE);
+  obj[-OBJ_HEADER_SIZE_OFFSET] = size;
   int i;
   for (i = 0; i < size; i++) {
     obj[i] = 0;
@@ -302,8 +305,8 @@ uintptr_t *MJC_allocArray(int32_t elements, int32_t element_size) {
   uintptr_t *a = heapalloc(size + OBJ_HEADER_SIZE) + OBJ_HEADER_SIZE;
 
   // store the marker "ARRAY" to indicate an array object
-  a[-2] = (uintptr_t)(ARRAY_HEADER_TYPE);
-  a[-1] = size;
+  a[-OBJ_HEADER_TYPE_OFFSET] = (uintptr_t)(ARRAY_HEADER_TYPE);
+  a[-OBJ_HEADER_SIZE_OFFSET] = size;
   int i;
   for (i = 0; i < size; i++) {
     a[i] = 0;
@@ -314,7 +317,7 @@ uintptr_t *MJC_allocArray(int32_t elements, int32_t element_size) {
 }
 
 int32_t array_length(uintptr_t *a) {
-  return (int32_t)(*(a - 1));
+  return (int32_t)(*(a - OBJ_HEADER_SIZE_OFFSET));
 }
 
 char * MJC_arrayIndex(char *a, int32_t index) {
@@ -326,14 +329,14 @@ bool is_heap_pointer(uintptr_t *p) {
   // is this pointing back into the old heap?
   // and is the object pointed to a class obj?
   return (p >= heap->start && p < heap->avail
-          && ((uintptr_t)OBJECT_HEADER_TYPE == (uintptr_t)(*(p - OBJ_HEADER_SIZE))
-              || (uintptr_t)ARRAY_HEADER_TYPE == (uintptr_t)(*(p - OBJ_HEADER_SIZE))
-              || (uintptr_t)OBJECT_FORWARDED == (uintptr_t)(*(p - OBJ_HEADER_SIZE))));
+          && ((uintptr_t)OBJECT_HEADER_TYPE == (uintptr_t)(*(p - OBJ_HEADER_TYPE_OFFSET))
+              || (uintptr_t)ARRAY_HEADER_TYPE == (uintptr_t)(*(p - OBJ_HEADER_TYPE_OFFSET))
+              || (uintptr_t)OBJECT_FORWARDED == (uintptr_t)(*(p - OBJ_HEADER_TYPE_OFFSET))));
 }
 
 /* gc uses during scan phase to determine if this pointer has already been forwarded */
 bool is_fwd_pointer(uintptr_t *p) {
-  return ((uintptr_t)OBJECT_FORWARDED == (uintptr_t) * (p - OBJ_HEADER_SIZE));
+  return ((uintptr_t)OBJECT_FORWARDED == (uintptr_t) * (p - OBJ_HEADER_TYPE_OFFSET));
 }
 
 void gc_printroots() {
@@ -421,16 +424,7 @@ void gc_copy() {
   while (scan < free) {
 
     if (is_heap_pointer((uintptr_t*)*scan)) {
-      //if (is_fwd_pointer((uintptr_t*)*scan)) {
-      // scan object was already forwarded by another scan
-      // update to the new location which is stored in the 'size' location
-      //  *scan = *(scan+1);
 
-      //  #ifdef DEBUG_GC
-      //  printf("gc: scanned object prev forwarded - updating to %zu\n", (uintptr_t)*scan);
-      //  #endif
-      //}
-      //else {
 #ifdef DEBUG_GC
       printf("gc: forwarding scanned object at %zu\n", (uintptr_t)*scan);
 #endif
@@ -440,8 +434,6 @@ void gc_copy() {
 
       // update free
       free = tofrom_heap[tospace]->avail;
-      //}
-
     }
 
     scan++;
@@ -478,11 +470,15 @@ uintptr_t *forward(uintptr_t *p) {
     return fwdptr;
   } else if (*fwdptr == (uintptr_t)OBJECT_FORWARDED) {
     uintptr_t * fwd_addr =
-      (uintptr_t*) * ((p) - 1); // forwarded pointer location
+      (uintptr_t*) * ((p) - OBJ_HEADER_FWDPTR_OFFSET); // forwarded pointer location
+#ifdef DEBUG_GC
+    printf("gc: scanned object previously forwarded - updating to %zu\n", (uintptr_t)fwd_addr);
+#endif
+
     return fwd_addr;
   } else {
     size_t size =
-      *((p) - 1) + OBJ_HEADER_SIZE; // size pointer is value at offset -1
+      *((p) - OBJ_HEADER_SIZE_OFFSET) + OBJ_HEADER_SIZE; // size pointer is value at offset -1
     // copy data
 #ifdef DEBUG_GC
     printf("  memcpy %zu to %zu, size=%zu\n", (uintptr_t)fwdptr,
@@ -491,8 +487,8 @@ uintptr_t *forward(uintptr_t *p) {
     memcpy(tofrom_heap[tospace]->avail, fwdptr, size * sizeof(uintptr_t));
 
     // mark the object as forwarded and it's new location
-    *fwdptr = (uintptr_t)OBJECT_FORWARDED;
-    *(fwdptr + 1) = (uintptr_t)(tofrom_heap[tospace]->avail + OBJ_HEADER_SIZE);
+    *(p - OBJ_HEADER_TYPE_OFFSET) = (uintptr_t)OBJECT_FORWARDED;
+    *(p - OBJ_HEADER_FWDPTR_OFFSET) = (uintptr_t)(tofrom_heap[tospace]->avail + OBJ_HEADER_SIZE);
 
     // reset fwd pointer to it's new location
     fwdptr = tofrom_heap[tospace]->avail + OBJ_HEADER_SIZE;
