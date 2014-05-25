@@ -207,31 +207,6 @@ public class Assembly {
                           StringLiteral [] strings) {
         emit(".file",  "\"" + filename + "\"");
         emit(".globl", mangle("Main", "main"), mangle("MJCStatic", "init"));
-        emit(".data");
-
-        int n = 0;
-        for (StringLiteral s : strings) {
-            emitLabel(name("str" + n));
-            for (int x = 0; x < s.getString().length(); x++) {
-                emit(".long", Integer.toString((int)s.getString().charAt(x)));
-            }
-
-            emitLabel(name("chrlit" + n));
-            emit(".long", name("char[]_0"));
-            emit(".long", "" + s.getString().length());
-            emit(".long", name("str" + n));
-
-            String x86name = name("strlit" + n);
-            emitLabel(x86name);
-            emit(".long", name("String_0"));
-            emit(".long", name("chrlit" + n));
-            s.setX86Name(x86name);
-            n++;
-        }
-    }
-
-    public String stringName(StringLiteral s) {
-        return "$" + s.getX86Name();
     }
 
     public void emitPrologue(String fname, int localBytes) {

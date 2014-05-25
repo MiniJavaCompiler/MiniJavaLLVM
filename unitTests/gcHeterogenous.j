@@ -28,9 +28,9 @@ class Main {
         int mem = 10;
         /* this should keep allocated more than
            the possible memory space.
-           Some are nulled, but garbage collection 
+           Some are nulled, but garbage collection
            is the only reason it should non memory
-           error. */         
+           error. */
         int i = 0;
         while (i < mem) {
             int [] x0 = new int [7];

@@ -6,8 +6,7 @@ class List {
         this.next = next;
     }
 }
-class Main
-{
+class Main {
     public static void cleanup(List node) {
         if (node.next != null) {
             cleanup(node.next);
@@ -21,7 +20,7 @@ class Main
             int [] garbage2 = new int [7];
             int j;
             while (j < 100) {
-                //both of these cycles should disappear 
+                //both of these cycles should disappear
                 // after this loop and never fill up all of memory.
                 List self_cycle = new List(null);
                 int [] garbagex = new int [13];
@@ -33,8 +32,8 @@ class Main
                 int [] garbagez = new int [37];
                 circle_2.next = circle_1;
                 j = j + 1;
-            } 
-            int [] garbageq = new int [17];        
+            }
+            int [] garbageq = new int [17];
             i = i + 1;
         }
         System.out.println("Finished Successfully");

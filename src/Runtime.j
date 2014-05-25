@@ -2,12 +2,13 @@ class MJC {
     static void putc(char s);
     static CPOINTER allocObject(int bytes);
     static CPOINTER allocArray(int bytes, int len);
+    static CPOINTER arrayIndex(CPOINTER array, int index);
 }
 
 /* If you modify Object or String and add new fields, MJC
    will not properly create new string literal objects */
 class Object {
-    public String toString() { 
+    public String toString() {
         return "<SomeObject>";
     }
 }
@@ -24,7 +25,7 @@ class String {
         s.string = new char[c.length];
         x = 0;
         while (x < c.length) {
-            s.string[x] = c[x];           
+            s.string[x] = c[x];
             x = x + 1;
         }
         return s;
@@ -123,7 +124,7 @@ class Integer {
             size = size + 1;
         }
         char [] number = new char[size];
-        
+
         int x = size - 1;
         num = pos;
         while (x > 0 || x == 0) {

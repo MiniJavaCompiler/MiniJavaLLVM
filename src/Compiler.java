@@ -104,7 +104,7 @@ public class Compiler {
         ClassType [] classes = class_list.toArray(new ClassType[0]);
         StringLiteral [] strings = string_list.toArray(new StringLiteral[0]);
         MethEnv main = null;
-        Context context = new Context(fake_pos, handler, classes);
+        Context context = new Context(fake_pos, handler, classes, strings);
         if ((main = context.check()) != null) {
             classes = context.getClasses();
             if (cmd.hasOption("x")) {

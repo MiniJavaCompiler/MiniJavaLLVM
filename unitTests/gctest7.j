@@ -16,19 +16,19 @@ class Main {
         p[3] = 10;
         p[4] = 3;
 
-	x = 0;
+        x = 0;
         loops = 1000;
- 	while (x < loops)
-        {
-	  o = new int[10];
-	  x = x + 1;
-          o[x%10] = x;
+        while (x < loops) {
+            o = new int[10];
+            x = x + 1;
+            o[x % 10] = x;
         }
         o[0] = 42;
         o[9] = 8;
         System.out.println(Integer.toString(o[0]));
         System.out.println(Integer.toString(o[9]));
         System.out.println(Integer.toString(p[0]));
-        System.out.println(Integer.toString(p[4]));    }
+        System.out.println(Integer.toString(p[4]));
+    }
 }
 

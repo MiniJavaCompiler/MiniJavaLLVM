@@ -32,7 +32,8 @@ public class LLVM {
         NEW_ARRAY,
         PUTC,
         GCROOT,
-        GCGBLROOT
+        GCGBLROOT,
+        ARRAY_INDEX,
     };
     private Builder builder;
     private Module module;
@@ -103,16 +104,21 @@ public class LLVM {
                 malloc_array_type);
 
 
-        TypeRef [] gcglobalroot_args = {TypeRef.int8Type().pointerType()};
-        TypeRef gcglobalroot_type = TypeRef.functionType(TypeRef.voidType(), gcglobalroot_args);
+        TypeRef [] gcglobalroot_args = {Type.PTR.llvmType()};
+        TypeRef gcglobalroot_type = TypeRef.functionType(TypeRef.voidType(),
+                                    gcglobalroot_args);
         globalFns[GlobalFn.GCGBLROOT.ordinal()] = mod.addFunction("MJC_globalRoot",
-                                               gcglobalroot_type);
-        
-        TypeRef [] gcroot_args = {TypeRef.int8Type().pointerType().pointerType(), TypeRef.int8Type().pointerType()};
+                gcglobalroot_type);
+
+        TypeRef [] index_args = {Type.PTR.llvmType(), Type.INT.llvmType()};
+        TypeRef index_type = TypeRef.functionType(Type.PTR.llvmType(), index_args);
+        globalFns[GlobalFn.ARRAY_INDEX.ordinal()] = mod.addFunction("MJC_arrayIndex",
+                index_type);
+
+        TypeRef [] gcroot_args = {Type.PTR.llvmType().pointerType(), Type.PTR.llvmType()};
         TypeRef gcroot_type = TypeRef.functionType(TypeRef.voidType(), gcroot_args);
         globalFns[GlobalFn.GCROOT.ordinal()] = mod.addFunction("llvm.gcroot",
                                                gcroot_type);
-
 
         TypeRef program_entry_type = TypeRef.functionType(Type.VOID.llvmType(),
                                      (List)Collections.emptyList());
@@ -153,33 +159,6 @@ public class LLVM {
 
         Builder builder = Builder.createBuilderInContext(Context.getModuleContext(mod));
         setBuilder(builder);
-
-        int strliteral = 0;
-        for (StringLiteral l : strings) {
-            org.llvm.Value lit = mod.addGlobal(Type.CHAR.llvmType().arrayType(
-                                                   l.getString().length() + 1), "#litstr" + strliteral);
-            lit.setInitializer(Value.constString(l.getString()));
-            org.llvm.Value [] indices = {Type.INT.llvmType().constInt(0, false), Type.INT.llvmType().constInt(0, false)};
-            org.llvm.Value lit_ptr = builder.buildInBoundsGEP(lit, "format", indices);
-            org.llvm.Value v = mod.addGlobal(char_arr.llvmType(), "#chr" + strliteral);
-            Hashtable<String, org.llvm.Value> args = new
-            Hashtable<String, org.llvm.Value>();
-            args.put("array", lit);
-            args.put("length", Type.INT.llvmType().constInt(l.getString().length(), false));
-            v.setInitializer(char_arr.globalInitValue(this, args));
-
-            org.llvm.Value str = mod.addGlobal(string.llvmType(),
-                                               "#str" + strliteral);
-
-            Hashtable<String, org.llvm.Value> str_args = new
-            Hashtable<String, org.llvm.Value>();
-            str_args.put("string", v);
-
-            str.setInitializer(string.globalInitValue(this, str_args));
-            strliteral++;
-            l.setLLVMString(str);
-        }
-
         //add statics to gcroot
         org.llvm.Value static_gcroots = mod.addFunction("MJCStatic_roots",
                                         TypeRef.functionType(Type.VOID.llvmType(), (List)Collections.emptyList()));
@@ -197,7 +176,7 @@ public class LLVM {
                         // with this method.
                         Builder b = getBuilder();
                         org.llvm.Value res = b.buildBitCast(v,
-                                TypeRef.int8Type().pointerType(), "gcgbltmp");
+                                                            TypeRef.int8Type().pointerType(), "gcgbltmp");
                         org.llvm.Value [] args = {res};
                         org.llvm.Value gc = b.buildCall(getGlobalFn(LLVM.GlobalFn.GCGBLROOT), "", args);
                     }

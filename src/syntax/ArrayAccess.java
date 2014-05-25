@@ -91,12 +91,12 @@ public final class ArrayAccess extends FieldAccess {
                                         object.llvmGen(l),
                                         array_class.findField("array").getFieldIndex(), "array");
         org.llvm.Value array = l.getBuilder().buildLoad(array_addr, "array");
-        org.llvm.Value cast = l.getBuilder().buildBitCast(array,
-                              array_class.getElementType().llvmTypeField().pointerType(), "cast");
-        org.llvm.Value [] indices = {index.llvmGen(l)};
-        org.llvm.Value elem_addr = l.getBuilder().buildInBoundsGEP(cast, "array",
-                                   indices);
-        return l.getBuilder().buildLoad(elem_addr, "elem");
+        org.llvm.Value [] indices = {array, index.llvmGen(l)};
+        org.llvm.Value elem_addr = l.getBuilder().buildCall(l.getGlobalFn(
+                                       LLVM.GlobalFn.ARRAY_INDEX), "addr", indices);
+        org.llvm.Value elem = l.getBuilder().buildBitCast(elem_addr,
+                              array_class.getElementType().llvmTypeField().pointerType(), "elem");
+        return l.getBuilder().buildLoad(elem, "elem");
     }
 
     public org.llvm.Value llvmSave(LLVM l, org.llvm.Value r) {
@@ -104,12 +104,13 @@ public final class ArrayAccess extends FieldAccess {
                                         object.llvmGen(l),
                                         array_class.findField("array").getFieldIndex(), "array");
         org.llvm.Value array = l.getBuilder().buildLoad(array_addr, "array");
-        org.llvm.Value cast = l.getBuilder().buildBitCast(array,
-                              array_class.getElementType().llvmTypeField().pointerType(), "cast");
-        org.llvm.Value [] indices = {index.llvmGen(l)};
-        org.llvm.Value elem_addr = l.getBuilder().buildInBoundsGEP(cast, "array",
-                                   indices);
-        l.getBuilder().buildStore(r, elem_addr);
+        org.llvm.Value [] indices = {array, index.llvmGen(l)};
+        org.llvm.Value elem_addr = l.getBuilder().buildCall(l.getGlobalFn(
+                                       LLVM.GlobalFn.ARRAY_INDEX), "addr", indices);
+        org.llvm.Value elem = l.getBuilder().buildBitCast(elem_addr,
+                              array_class.getElementType().llvmTypeField().pointerType(), "elem");
+
+        l.getBuilder().buildStore(r, elem);
         return r;
     }
 }

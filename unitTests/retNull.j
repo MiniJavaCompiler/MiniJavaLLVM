@@ -1,12 +1,12 @@
 class Expr {
-      static Expr retnull() {
-             return null;
-      }
+    static Expr retnull() {
+        return null;
+    }
 }
 
-class Main {    
+class Main {
     static void main() {
-           Expr.retnull();
+        Expr.retnull();
     }
 }
 

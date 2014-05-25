@@ -1,9 +1,9 @@
 class Blob {
-      int y;
+    int y;
 }
 
 class TestObj {
-     static Blob b;
+    static Blob b;
 }
 
 class Main {

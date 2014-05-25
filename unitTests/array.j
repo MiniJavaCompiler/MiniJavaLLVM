@@ -3,7 +3,7 @@ class Main {
         System.out.println("Test");
         char [] test = new char[3];
         test[0] = 'p';
-        test[1] = 'q'; 
+        test[1] = 'q';
         test[2] = '\n';
         String s = String.makeStringChar(test);
         System.out.print(s);

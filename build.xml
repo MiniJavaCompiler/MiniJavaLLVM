@@ -33,6 +33,11 @@
       <arg value="filter.java_code.clean" />
       <arg value="astyle --options=${basedir}/.javastyle &lt; %f" />
     </exec>
+    <exec executable="git">
+      <arg value="config" />
+      <arg value="filter.c_code.clean" />
+      <arg value="astyle --options=${basedir}/.cstyle &lt; %f" />
+    </exec>
   </target>
   <target name="ubuntu_depends">
     <exec executable="sudo">

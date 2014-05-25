@@ -259,7 +259,6 @@ public class MjcLexer extends SourceLexer implements Tokens {
                                "Unterminated string literal"));
         }
         nextChar(); // consume closing "
-
         semantic = new StringLiteral(getPos(), b.toString());
         return token = STRING;
     }

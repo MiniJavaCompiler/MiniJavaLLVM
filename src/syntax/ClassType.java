@@ -360,9 +360,9 @@ public class ClassType extends Type {
                                        f.getOwner() + "_" + f.getName());
                     l.setNamedValue(f.getOwner() + "_" + f.getName(), v);
                     f.setStaticField(v);
-                    
+
                     /* basic initialization will suffice for now */
-                    v.setInitializer(f.llvmTypeField().constNull());    
+                    v.setInitializer(f.llvmTypeField().constNull());
 
                 }
             }
@@ -408,7 +408,7 @@ public class ClassType extends Type {
                     org.llvm.Value gc = l.getBuilder().buildCall(l.getGlobalFn(LLVM.GlobalFn.GCROOT), "", args);
                 }
             }
-           
+
         }
         */
 

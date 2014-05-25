@@ -2,13 +2,13 @@
 //    Test class with static fields
 
 class TestObj {
-      int x;
-      int y;
-      int z;
+    int x;
+    int y;
+    int z;
 }
 
 class Stat {
-      static TestObj stc; 
+    static TestObj stc;
 }
 
 class Main {
@@ -18,13 +18,12 @@ class Main {
         Stat.stc = new TestObj();
         Stat.stc.x = 5;
 
-	x = 0;
+        x = 0;
         loops = 1000;
- 	while (x < loops)
-        {
-	  Stat.stc = new TestObj();
-	  x = x + 1;
-          Stat.stc.x = x;
+        while (x < loops) {
+            Stat.stc = new TestObj();
+            x = x + 1;
+            Stat.stc.x = x;
         }
 
         Stat.stc.x = 42;

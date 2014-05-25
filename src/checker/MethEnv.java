@@ -202,8 +202,10 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
                     functionVal = l.getGlobalFn(LLVM.GlobalFn.NEW_OBJECT);
                 } else if (functionName.equals("MJC_allocArray")) {
                     functionVal = l.getGlobalFn(LLVM.GlobalFn.NEW_ARRAY);
+                } else if (functionName.equals("MJC_arrayIndex")) {
+                    functionVal = l.getGlobalFn(LLVM.GlobalFn.ARRAY_INDEX);
                 } else {
-                    throw new RuntimeException("Unknown Global Function");
+                    throw new RuntimeException("Unknown Global Function " + functionName);
                 }
             } else {
                 org.llvm.Value f = l.getModule().addFunction(functionName, llvmType());
