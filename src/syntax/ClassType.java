@@ -393,25 +393,6 @@ public class ClassType extends Type {
     }
 
     public void llvmGen(LLVM l) {
-
-        /*
-        if (fields != null) {
-            for (FieldEnv f : fields) {
-                if (f.isStatic()) {
-                    //org.llvm.Value v = f.getStaticField();
-                    org.llvm.Value v = l.getBuilder().buildAlloca(llvmTypeField(), getId().getName());
-                    // set the gcroot for this var for later garbage collection
-                    System.out.println("static field name: " + f.getName());
-                    org.llvm.Value res = l.getBuilder().buildBitCast(v, TypeRef.int8Type().pointerType().pointerType(), "gctmp");
-                    org.llvm.Value meta = TypeRef.int8Type().pointerType().constNull();  // TODO: replace with type data
-                    org.llvm.Value [] args = {res, meta};
-                    org.llvm.Value gc = l.getBuilder().buildCall(l.getGlobalFn(LLVM.GlobalFn.GCROOT), "", args);
-                }
-            }
-
-        }
-        */
-
         if (methods != null) {
             for (MethEnv m : methods) {
                 m.llvmGenMethod(l);
