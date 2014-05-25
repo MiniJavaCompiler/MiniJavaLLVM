@@ -12,6 +12,11 @@ void System_out(int x) {
 int freeHeap = 0;
 int heap[HEAPLEN];
 
+void MJC_globalRoot(void *root) {
+  // not used as no gc for x86
+  return;
+}
+
 int* MJC_allocObject(int size) {
     int* newObj = heap+freeHeap;
     if (size+freeHeap >= HEAPLEN) {
