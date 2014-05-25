@@ -11,30 +11,31 @@ import interp.*;
 public class CastExpr extends Expression {
     Expression needsCast;
     Type castType;
-
+    Type exprType;
     public CastExpr(Position pos, Type castType, Expression needsCast) {
         super(pos);
         this.castType = castType;
         this.needsCast = needsCast;
     }
 
-    /** Type check this expression in places where it is used as a statement.
-     *  We override this method in Invocation to deal with methods that
-     *  return void.
-     */
-    void checkExpr(Context ctxt, VarEnv env) throws Diagnostic {
-        typeOf(ctxt, env);
-    }
-
     public Type typeOf(Context ctxt, VarEnv env)
     throws Diagnostic {
-        needsCast.typeOf(ctxt, env);
+        castType = castType.check(ctxt);
+        exprType = needsCast.typeOf(ctxt, env);
         return castType;
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
-        return l.getBuilder().buildBitCast(needsCast.llvmGen(l),
-                                           castType.llvmType().pointerType(), "cast");
+        if (castType.equal(Type.INT)) {
+            return l.getBuilder().buildTrunc(needsCast.llvmGen(l),
+                                             castType.llvmTypeField(), "cast");
+        } else if (castType.equal(Type.LONG)) {
+            return l.getBuilder().buildSExt(needsCast.llvmGen(l),
+                                            castType.llvmTypeField(), "cast");
+        } else {
+            return l.getBuilder().buildBitCast(needsCast.llvmGen(l),
+                                               castType.llvmTypeField(), "cast");
+        }
     }
 
     public void compileExpr(Assembly a, int free) {

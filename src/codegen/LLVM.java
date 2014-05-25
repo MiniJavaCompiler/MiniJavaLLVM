@@ -20,38 +20,40 @@ import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import compiler.*;
 import checker.*;
 import syntax.*;
 
 public class LLVM {
+    static public enum GlobalFn {
+        NEW_OBJECT,
+        NEW_ARRAY,
+        PUTC,
+        GCROOT,
+        GCGBLROOT,
+        ARRAY_INDEX,
+    };
     private Builder builder;
     private Module module;
     private Value function;
-    private BasicBlock staticInit;
-    private Value staticInitFn;
-    private Value printf;
-    private Value malloc;
 
     private Hashtable<String, Value> namedValues;
-
-    public Value getStaticInitFn() {
-        return staticInitFn;
-    }
-    public BasicBlock getStaticInit() {
-        return staticInit;
-    }
+    private Value [] globalFns;
 
     public LLVM() {
         namedValues = new Hashtable<String, Value>();
+        globalFns = new Value[GlobalFn.values().length];
     }
 
+    public Value getGlobalFn(GlobalFn g) {
+        return globalFns[g.ordinal()];
+    }
     public Value getNamedValue(String s) {
         Value v = namedValues.get(s);
         return v;
     }
-
     public void setNamedValue(String s, Value v) {
         v.setValueName(s);
         namedValues.put(s, v);
@@ -79,74 +81,113 @@ public class LLVM {
         this.module = module;
     }
 
-    public Value getPrintf() {
-        return printf;
-    }
 
-    public Value getMalloc() {
-        return malloc;
-    }
+    public void buildGlobalFns(Module mod) {
+        TypeRef [] args = {Type.CHAR.llvmType()};
+        TypeRef printf_type = TypeRef.functionType(TypeRef.voidType(), false,
+                              Arrays.asList(args));
 
-    public void llvmGen(ClassType [] classes, String output_path, Boolean dump) {
-        Module mod = Module.createWithName("llvm_module");
-        setModule(mod);
-        TypeRef [] args = {TypeRef.int8Type().pointerType(), TypeRef.int32Type()};
-        TypeRef printf_type = TypeRef.functionType(TypeRef.int32Type(), args);
-        printf = mod.addFunction("printf", printf_type);
-        printf.setFunctionCallConv(LLVMCallConv.LLVMCCallConv);
+        globalFns[GlobalFn.PUTC.ordinal()] = mod.addFunction("MJC_putc", printf_type);
 
-        TypeRef [] malloc_args = {TypeRef.int64Type()};
+        TypeRef [] malloc_args = {TypeRef.int32Type()};
         TypeRef malloc_type = TypeRef.functionType(TypeRef.int8Type().pointerType(),
                               malloc_args);
-        malloc = mod.addFunction("new_object", malloc_type);
-        malloc.setFunctionCallConv(LLVMCallConv.LLVMCCallConv);
+
+        globalFns[GlobalFn.NEW_OBJECT.ordinal()] = mod.addFunction("MJC_allocObject",
+                malloc_type);
+
+        TypeRef [] malloc_array_args = {TypeRef.int32Type(), TypeRef.int32Type()};
+        TypeRef malloc_array_type = TypeRef.functionType(
+                                        TypeRef.int8Type().pointerType(),
+                                        malloc_array_args);
+        globalFns[GlobalFn.NEW_ARRAY.ordinal()] = mod.addFunction("MJC_allocArray",
+                malloc_array_type);
+
+
+        TypeRef [] gcglobalroot_args = {Type.PTR.llvmType()};
+        TypeRef gcglobalroot_type = TypeRef.functionType(TypeRef.voidType(),
+                                    gcglobalroot_args);
+        globalFns[GlobalFn.GCGBLROOT.ordinal()] = mod.addFunction("MJC_globalRoot",
+                gcglobalroot_type);
+
+        TypeRef [] index_args = {Type.PTR.llvmType(), Type.INT.llvmType()};
+        TypeRef index_type = TypeRef.functionType(Type.PTR.llvmType(), index_args);
+        globalFns[GlobalFn.ARRAY_INDEX.ordinal()] = mod.addFunction("MJC_arrayIndex",
+                index_type);
+
+        TypeRef [] gcroot_args = {Type.PTR.llvmType().pointerType(), Type.PTR.llvmType()};
+        TypeRef gcroot_type = TypeRef.functionType(TypeRef.voidType(), gcroot_args);
+        globalFns[GlobalFn.GCROOT.ordinal()] = mod.addFunction("llvm.gcroot",
+                                               gcroot_type);
 
         TypeRef program_entry_type = TypeRef.functionType(Type.VOID.llvmType(),
                                      (List)Collections.emptyList());
+    }
 
-        staticInitFn = mod.addFunction("static_init", program_entry_type);
-        staticInit = staticInitFn.appendBasicBlock("entry");
+    public void markGCRoot(Value v, Type type) {
+        Builder b = getBuilder();
+        if (type.isClass() != null || type.isArray() != null) {
+            org.llvm.Value res = b.buildBitCast(v,
+                                                TypeRef.int8Type().pointerType().pointerType(), "gctmp");
+            org.llvm.Value meta =
+                TypeRef.int8Type().pointerType().constNull();  // TODO: replace with type data
+            org.llvm.Value [] args = {res, meta};
+            org.llvm.Value gc = b.buildCall(getGlobalFn(LLVM.GlobalFn.GCROOT), "", args);
+        }
+    }
+
+    public void llvmGen(ClassType [] classes, StringLiteral [] strings,
+                        String output_path, Boolean dump) {
+        Module mod = Module.createWithName("llvm_module");
+        setModule(mod);
+        buildGlobalFns(mod);
 
         TypeRef main_entry_type = TypeRef.functionType(Type.INT.llvmType(),
                                   (List)Collections.emptyList());
 
-
+        ClassType string = null;
+        ClassType char_arr = null;
         for (ClassType c : classes) {
             c.llvmGenTypes(this);
+            String name = c.getId().getName();
+            if (name.equals("String")) {
+                string = c;
+            } else if (name.equals("char[]")) {
+                char_arr = c;
+            }
         }
+
         Builder builder = Builder.createBuilderInContext(Context.getModuleContext(mod));
         setBuilder(builder);
+        //add statics to gcroot
+        org.llvm.Value static_gcroots = mod.addFunction("MJCStatic_roots",
+                                        TypeRef.functionType(Type.VOID.llvmType(), (List)Collections.emptyList()));
+        BasicBlock entry = static_gcroots.appendBasicBlock("entry");
+        builder.positionBuilderAtEnd(entry);
+
+        for (ClassType c : classes) {
+            if (c.getFields() != null) {
+                for (FieldEnv f : c.getFields()) {
+                    if (f.isStatic()) {
+                        org.llvm.Value v = f.getStaticField();
+                        Type type = f.getType();
+                        // CALL SOME GLOBAL ROOT REGISTRATION
+                        // LLVM explicitly states they don't handle global roots
+                        // with this method.
+                        Builder b = getBuilder();
+                        org.llvm.Value res = b.buildBitCast(v,
+                                                            TypeRef.int8Type().pointerType(), "gcgbltmp");
+                        org.llvm.Value [] args = {res};
+                        org.llvm.Value gc = b.buildCall(getGlobalFn(LLVM.GlobalFn.GCGBLROOT), "", args);
+                    }
+                }
+            }
+        }
+        builder.buildRetVoid();
 
         for (ClassType c : classes) {
             c.llvmGen(this);
         }
-
-        builder.positionBuilderAtEnd(staticInit);
-        builder.buildRetVoid();
-
-        Value main = mod.addFunction("main", main_entry_type);
-        BasicBlock main_block = main.appendBasicBlock("entry");
-
-        builder.positionBuilderAtEnd(main_block);
-        builder.buildCall(getStaticInitFn(), "", (List)Collections.emptyList());
-        Value userMain = null;
-        Boolean found = false;
-        for (ClassType c : classes) {
-	    if (null != c.getMethods()) {
-		for (MethEnv m : c.getMethods()) {
-		    if (m.isMain()) {
-			userMain = m.getFunctionVal();
-			found = true;
-		    }
-		}
-	    }
-        }
-        if (found) {
-            builder.buildCall(userMain, "", (List)Collections.emptyList());
-        } else {
-            System.out.println("Cannot find user main function");
-        }
-        builder.buildRet(Type.INT.llvmType().constInt(0, false));
 
         try {
             if (dump) {

@@ -35,7 +35,7 @@ public final class AssignExpr extends StatementExpr {
         if (!lt.isSuperOf(rt)) {
             throw new Failure(pos, "Cannot assign value of type " + rt +
             " to variable of type " + lt);
-        } else if (lt != rt) {
+        } else if (!lt.equal(rt)) {
             rhs = new CastExpr(pos, lt, rhs);
         }
 

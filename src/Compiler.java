@@ -14,6 +14,8 @@ import java.io.FileReader;
 import java.io.FileNotFoundException;
 
 import org.apache.commons.cli.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /** A top-level driver for the mini Java compiler.
  */
@@ -63,14 +65,7 @@ public class Compiler {
                 System.exit(1);
             }
             String inputFile = cmd.getOptionValue("i");
-            Handler handler = new SimpleHandler();
-            try {
-                Reader  reader = new FileReader(inputFile);
-                compile(handler, reader, inputFile, cmd);
-            } catch (FileNotFoundException e) {
-                handler.report(new Failure("Cannot open input file " +
-                                           inputFile));
-            }
+            compile(inputFile, cmd);
         } catch (ParseException exp) {
             System.out.println("Argument Error: " + exp.getMessage());
         }
@@ -79,13 +74,39 @@ public class Compiler {
     /** A method for invoking the compiler without going through any
      *  particular user interface.
      */
-    static void compile(Handler handler, Reader reader,
-                        String inputFile, CommandLine cmd) {
-        Source      source  = new JavaSource(handler, inputFile, reader);
-        MjcLexer    lexer   = new MjcLexer(handler, source);
-        syntax.Parser parser  = new syntax.Parser(handler, lexer);
-        ClassType[] classes = parser.getClasses();
-        if (new Context(handler, classes).check() != null) {
+    static void compile(String inputFile, CommandLine cmd) {
+        String [] input_files = {inputFile, "src/Runtime.j"};
+        ArrayList<ClassType> class_list = new ArrayList<ClassType>();
+        ArrayList<StringLiteral> string_list = new ArrayList<StringLiteral>();
+        Source fake = new JavaSource(null, "<MJCInternal>", null);
+        Position fake_pos = new SourcePosition(fake, 0, 0);
+        for (Type p : Type.getArrayPrimitives()) {
+            class_list.add(
+                new ArrayType(null, new Id(fake_pos, p.toString()), p));
+        }
+        Handler handler = new SimpleHandler();
+        for (String i : input_files) {
+            try {
+                Reader  reader = new FileReader(i);
+                Source      source  = new JavaSource(handler, i, reader);
+                MjcLexer    lexer   = new MjcLexer(handler, source);
+                syntax.Parser parser  = new syntax.Parser(handler, lexer);
+                if (parser.getClasses() != null) {
+                    class_list.addAll(Arrays.asList(parser.getClasses()));
+                }
+                string_list.addAll(Arrays.asList(parser.getStrings()));
+            } catch (FileNotFoundException e) {
+                handler.report(new Failure("Cannot open input file " +
+                                           i));
+            }
+        }
+
+        ClassType [] classes = class_list.toArray(new ClassType[0]);
+        StringLiteral [] strings = string_list.toArray(new StringLiteral[0]);
+        MethEnv main = null;
+        Context context = new Context(fake_pos, handler, classes, strings);
+        if ((main = context.check()) != null) {
+            classes = context.getClasses();
             if (cmd.hasOption("x")) {
                 String assemblyFile = cmd.getOptionValue("x");
                 Assembly assembly = Assembly.assembleToFile(assemblyFile);
@@ -93,7 +114,7 @@ public class Compiler {
                     handler.report(new Failure("Cannot open file " +
                                                assemblyFile + " for output"));
                 } else {
-                    assembly.emitStart(inputFile);
+                    assembly.emitStart(inputFile, classes, strings);
                     for (int i = 0; i < classes.length; i++) {
                         classes[i].compile(assembly);
                     }
@@ -102,11 +123,13 @@ public class Compiler {
             }
             if (cmd.hasOption("L") || cmd.hasOption("l")) {
                 LLVM llvm = new LLVM();
-                llvm.llvmGen(classes,  cmd.getOptionValue("L"), cmd.hasOption("l"));
+                llvm.llvmGen(classes, strings, cmd.getOptionValue("L"), cmd.hasOption("l"));
             }
             if (cmd.hasOption("I")) {
-                MethEnv main = new Context(handler, classes).check();
-                new State().call(main);
+                State s = new State();
+                MethEnv init = context.findClass("MJCStatic").findMethod("init");
+                s.call(init);
+                s.call(main);
             }
         }
     }

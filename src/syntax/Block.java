@@ -20,6 +20,14 @@ public final class Block extends Statement {
         this.stmts = stmts;
     }
 
+    public void appendStatement(Statement new_s) {
+        Statement[] new_stmts = new Statement[stmts.length + 1];
+        for (int x = 0; x < stmts.length; x++) {
+            new_stmts[x] = stmts[x];
+        }
+        new_stmts[stmts.length] = new_s;
+        stmts = new_stmts;
+    }
     /** Check whether this statement is valid and return a boolean
      *  indicating whether execution can continue at the next statement.
      */

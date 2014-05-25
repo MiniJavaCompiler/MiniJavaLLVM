@@ -12,6 +12,8 @@ import compiler.Warning;
 import compiler.Failure;
 import syntax.Id;
 import syntax.IntLiteral;
+import syntax.StringLiteral;
+import syntax.CharLiteral;
 import syntax.Tokens;
 
 /** A lexical analyzer for the mini Java compiler.
@@ -42,6 +44,12 @@ public class MjcLexer extends SourceLexer implements Tokens {
             case ')'  :
                 nextChar();
                 return token = ')';
+            case '[' :
+                nextChar();
+                return token = '[';
+            case ']':
+                nextChar();
+                return token = ']';
             case '{'  :
                 nextChar();
                 return token = '{';
@@ -118,11 +126,12 @@ public class MjcLexer extends SourceLexer implements Tokens {
             case '-'  :
                 nextChar();
                 return token = '-';
-
             case '*'  :
                 nextChar();
                 return token = '*';
-
+            case '%' :
+                nextChar();
+                return token = '%';
             case '/'  :
                 nextChar();
                 if (c == '/') {
@@ -133,7 +142,21 @@ public class MjcLexer extends SourceLexer implements Tokens {
                     return token = '/';
                 }
                 break;
-
+            case '"':
+                return string();
+            case '\'':
+                nextChar();
+                if (c == '\\') {
+                    semantic = new CharLiteral(getPos(), escapeSeq());
+                } else {
+                    semantic = new CharLiteral(getPos(), (char)c);
+                }
+                nextChar();
+                if (c != '\'') {
+                    report(new Failure("Incorrectly terminated char literal"));
+                }
+                nextChar();
+                return token = CHARLIT;
             default   :
                 if (Character.isJavaIdentifierStart((char)c)) {
                     return identifier();
@@ -193,6 +216,53 @@ public class MjcLexer extends SourceLexer implements Tokens {
         }
     }
 
+    private char escapeSeq() {
+        nextChar();
+        switch (c) {
+        case 'n':
+            return '\n';
+        case '\\':
+            return '\\';
+        case 't':
+            return '\t';
+        case '"':
+            return '\"';
+        case '\'':
+            return '\'';
+        default:
+            report(new Failure(getPos(),
+                               "Unknown string escape sequence: \\" + (char)c));
+            break;
+        }
+        return '\0';
+    }
+    private int string() {
+        int start = col;
+        StringBuilder b = new StringBuilder();
+        boolean endOfString = false;
+        do {
+            nextChar();
+            switch ((char)c) {
+            case '"':
+                endOfString = true;
+                break;
+            case '\\':
+                b.append(escapeSeq());
+                break;
+            default:
+                b.append((char)c);
+                break;
+            }
+        } while (c != EOF && !endOfString);
+        if (c == EOF) {
+            report(new Failure(getPos(),
+                               "Unterminated string literal"));
+        }
+        nextChar(); // consume closing "
+        semantic = new StringLiteral(getPos(), b.toString());
+        return token = STRING;
+    }
+
     //- Identifiers, keywords, boolean and null literals ----------------------
 
     private int identifier() {          // Assumes isJavaIdentifierStart(c)
@@ -219,6 +289,7 @@ public class MjcLexer extends SourceLexer implements Tokens {
         reserved.put("extends", new Integer(EXTENDS));
         reserved.put("if",      new Integer(IF));
         reserved.put("int",     new Integer(INT));
+        reserved.put("char",    new Integer(CHAR));
         reserved.put("new",     new Integer(NEW));
         reserved.put("return",  new Integer(RETURN));
         reserved.put("static",    new Integer(STATIC));
@@ -234,6 +305,7 @@ public class MjcLexer extends SourceLexer implements Tokens {
         reserved.put("null",    new Integer(NULL));
         reserved.put("true",    new Integer(TRUE));
         reserved.put("false",   new Integer(FALSE));
+        reserved.put("CPOINTER",   new Integer(PTR));
     }
 
     //- Numeric integer literals ----------------------------------------------
@@ -272,6 +344,6 @@ public class MjcLexer extends SourceLexer implements Tokens {
     }
 
     private void illegalCharacter() {
-        report(new Warning(getPos(), "Ignoring illegal character"));
+        report(new Warning(getPos(), "Ignoring illegal character '" + c + "'"));
     }
 }

@@ -18,12 +18,25 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
     private FieldEnv next;
     private int      offset;  // offset of field within object (0 for static)
     private int fieldIndex;
+    private org.llvm.Value staticField;
+    private Expression init_expr;
     public FieldEnv(Modifiers mods, Id id, Type type, ClassType owner,
-                    int fieldIndex, int offset, FieldEnv next) {
+                    int fieldIndex, int offset, FieldEnv next, Expression init_expr) {
         super(mods, id, type, owner);
         this.offset = offset;
         this.next   = next;
         this.fieldIndex = fieldIndex;
+        this.staticField = null;
+        this.init_expr = init_expr;
+    }
+    public Expression getInitExpr() {
+        return this.init_expr;
+    }
+    public void setStaticField(org.llvm.Value field) {
+        staticField = field;
+    }
+    public org.llvm.Value getStaticField() {
+        return staticField;
     }
     public Iterator<FieldEnv> iterator() {
         return new ListIterator<FieldEnv>(this);
@@ -43,6 +56,11 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
     public FieldEnv getNext() {
         return next;
     }
+
+    public FieldEnv setNext(FieldEnv e) {
+        next = e;
+        return this;
+    }
     /** Look for the entry corresponding to a particular identifier
      *  in a given environment.
      */
@@ -56,9 +74,21 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
     /** Check a list of field definitions.
      */
     public static void checkFields(Context ctxt, FieldEnv env) {
-        // No action required here!
+        if (env != null) {
+            for (FieldEnv f : env) {
+                try {
+                    if (!f.isStatic() && f.getInitExpr() != null) {
+                        ctxt.report(new Failure("Non-static members cannot have initializers."));
+                    } else if (f.isStatic() && f.getInitExpr() != null
+                               && !f.getType().isSuperOf(f.getInitExpr().typeOf(ctxt, null))) {
+                        ctxt.report(new Failure("Type of static member initialization does not match"));
+                    }
+                } catch (Diagnostic d) {
+                    ctxt.report(d);
+                }
+            }
+        }
     }
-
     /** Construct a printable description of this environment entry for
      *  use in error diagnostics.
      */
@@ -84,8 +114,24 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
         }
     }
 
+    public Statement staticInit() {
+        if (isStatic()) {
+            Expression init = init_expr;
+            Position pos = id.getPos();
+            if (init == null) {
+                init = new NullLiteral(pos);
+            }
+            return new ExprStmt(pos, new AssignExpr(pos, new ClassAccess(this), init));
+        }
+        return null;
+    }
+
     public org.llvm.TypeRef llvmType() {
         return type.llvmType();
+    }
+
+    public org.llvm.TypeRef llvmTypeField() {
+        return type.llvmTypeField();
     }
 
     /** Generate code to load the value of a field from an object whose
@@ -123,7 +169,7 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
     public Value getField(ObjValue obj) {
         if (isStatic()) {
             if (val == null) {
-                Interp.abort("Attempt to use uninitialized static variable!");
+                Interp.abort("Attempt to use uninitialized static variable! " + id.getName());
             }
             return val;
         } else {
@@ -140,6 +186,10 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
     }
 
     public org.llvm.Value llvmField(LLVM l, org.llvm.Value object) {
-        return l.getBuilder().buildStructGEP(object, offset, id.getName());
+        if (isStatic()) {
+            return staticField;
+        } else {
+            return l.getBuilder().buildStructGEP(object, offset, id.getName());
+        }
     }
 }

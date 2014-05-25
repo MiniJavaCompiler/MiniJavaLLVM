@@ -1,10 +1,5 @@
 // Here is a small program for the Mini Java compiler:
 //
-
-class System {
-    static void out(int x);
-}
-
 class Expr {
     int eval() {
         return 0;  // should never be called
@@ -28,10 +23,8 @@ class IntExpr extends Expr {
 class AddExpr extends Expr {
     Expr left;
     Expr right;
-
     static AddExpr make(Expr l, Expr r) {
-        AddExpr e;
-        e       = new AddExpr();
+        AddExpr e = new AddExpr();
         e.left  = l;
         e.right = r;
         return e;
@@ -46,8 +39,8 @@ class Main {
     static void main() {
         Expr e;
         e = AddExpr.make(IntExpr.make(1), IntExpr.make(2));
-        e = AddExpr.make(e,e);
-        System.out(e.eval());
+        e = AddExpr.make(e, e);
+        System.out.println(Integer.toString(e.eval()));
     }
 }
 

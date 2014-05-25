@@ -33,6 +33,11 @@
       <arg value="filter.java_code.clean" />
       <arg value="astyle --options=${basedir}/.javastyle &lt; %f" />
     </exec>
+    <exec executable="git">
+      <arg value="config" />
+      <arg value="filter.c_code.clean" />
+      <arg value="astyle --options=${basedir}/.cstyle &lt; %f" />
+    </exec>
   </target>
   <target name="ubuntu_depends">
     <exec executable="sudo">
@@ -56,18 +61,18 @@
     <mkdir dir="${dir.runtime}"/>
     <outofdate>
       <sourcefiles>
-        <pathelement path="src/runtime.c"/>
+        <pathelement path="src/runtime_llvm.c"/>
       </sourcefiles>
       <targetfiles>
-        <pathelement path="${dir.runtime}/runtime.bc"/>
+        <pathelement path="${dir.runtime}/runtime_llvm.bc"/>
       </targetfiles>
       <sequential>
         <exec executable="clang" failonerror="true">
-          <arg value="-emit-llvm" />
-          <arg value="src/runtime.c" />
+          <arg value="src/runtime_llvm.c" />
           <arg value="-c" />
+          <arg value="-g" />
           <arg value="-o" />
-          <arg value="${dir.runtime}/runtime.bc"/>
+          <arg value="${dir.runtime}/runtime_llvm.o"/>
         </exec>
       </sequential>
     </outofdate>

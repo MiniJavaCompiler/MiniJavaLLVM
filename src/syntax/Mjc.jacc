@@ -27,11 +27,11 @@ import java.util.ArrayList;
 // Operators:
 %token <Position>       '>' '<' EQEQ NEQ               // relational
 %token <Position>       '='                            // assignment
-%token <Position>       '+' '-' '*' '/'                // arithmetic
+%token <Position>       '+' '-' '*' '/' '%'            // arithmetic
 %token <Position>       '&' '|' '^' CAND COR '!'       // logic
 
 // Keywords:
-%token <Position>       BOOLEAN CLASS ELSE EXTENDS IF INT NEW 
+%token <Position>       BOOLEAN CLASS ELSE EXTENDS IF INT CHAR PTR NEW 
 %token <Position>       RETURN STATIC SUPER THIS VOID WHILE DO
 %token <Position>       ABSTRACT PUBLIC PRIVATE PROTECTED
 
@@ -42,11 +42,15 @@ import java.util.ArrayList;
 // Identifiers:
 %token <Id>             IDENT
 
+//Strings
+%token <StringLiteral>  STRING
+%token <CharLiteral>    CHARLIT
+
 // Nonterminals:
 %type  <ClassType>      class
 %type  <Name>           name
-%type  <Type>           type extends
-%type  <Expression>     literal expr cOrExpr cAndExpr orExpr andExpr xorExpr
+%type  <Type>           type extends d_type
+%type  <Expression>     expr literal expr cOrExpr cAndExpr orExpr andExpr xorExpr
 %type  <Expression>     eqExpr relExpr addExpr mulExpr unary primary
 %type  <LeftHandSide>   lhs field
 %type  <Decls>          decl decls
@@ -71,7 +75,9 @@ classes : classes class         { addClass($2); }
         ;
 class   : modifiers CLASS IDENT extends '{' decls '}'
                                 { checkClassModifiers($1);
-                                  $$ = new ClassType($1, $3, $4, $6); }
+                                  ClassType c = new ClassType($1, $3, $4, $6);
+                                  addClass(new ArrayType($1, $3, c));
+                                  $$ = c; }
         ;
 extends : /* empty */           { $$ = null; }
         | EXTENDS name          { $$ = new NameType($2); }
@@ -83,12 +89,15 @@ decl    : modifiers type vardecls ';'
                                 { checkFieldModifiers($1);
                                   $$ = new FieldDecl($1, $2,
                                                        VarDecls.reverse($3)); }
+        | modifiers IDENT '(' formals ')' body 
+                                { checkMethodModifiers($1, $6);
+                                  $$ = new MethDecl(true, $1, Type.VOID, $2, $4, $6); }
         | modifiers VOID IDENT '(' formals ')' body
                                 { checkMethodModifiers($1, $7);
-                                  $$ = new MethDecl($1, Type.VOID, $3, $5, $7); }
+                                  $$ = new MethDecl(false, $1, Type.VOID, $3, $5, $7); }
         | modifiers type IDENT '(' formals ')' body
                                 { checkMethodModifiers($1, $7);
-                                  $$ = new MethDecl($1, $2,   $3, $5, $7); }
+                                  $$ = new MethDecl(false, $1, $2,   $3, $5, $7); }
         ;
 modifiers
 	: pos			{ $$ = new Modifiers($1); }
@@ -100,8 +109,15 @@ modifiers
 	;
 pos     : /* empty */           { $$ = lexer.getPos(); }
         ;
-type    : INT                   { $$ = Type.INT; }
+
+type    : d_type                { $$ = $1; }
+        | d_type '[' ']'        { Id array = new Id(lexer.getPos(), $1.toString() + "[]");
+                                  $$ = new NameType(new Name(array)); }
+        ;
+d_type  : INT                   { $$ = Type.INT; }
         | BOOLEAN               { $$ = Type.BOOLEAN; }
+        | CHAR                  { $$ = Type.CHAR; }
+        | PTR                   { $$ = Type.PTR; }
         | name                  { $$ = new NameType($1); }
         ;
 name    : IDENT			{ $$ = new Name($1); }
@@ -111,6 +127,7 @@ vardecls: vardecls ',' vardecl  { $$ = $3.link($1); }
         | vardecl
         ;
 vardecl : IDENT                 { $$ = new VarDecls($1); }
+        | IDENT '=' expr        { $$ = new VarDecls($1, $3); }
         ;
 formals : formals1              { $$ = $1; }
         | /* empty */           { $$ = null; }
@@ -179,10 +196,12 @@ relExpr : relExpr '<' addExpr   { $$ = new LessThanExpr($2, $1, $3); }
         | addExpr
         ;
 addExpr : addExpr '+' mulExpr   { $$ = new AddExpr($2, $1, $3); }
+        | addExpr '-' mulExpr   { $$ = new SubExpr($2, $1, $3); }
         | mulExpr
         ;
 mulExpr : mulExpr '*' unary     { $$ = new MulExpr($2, $1, $3); }
 	| mulExpr '/' unary     { $$ = new DivExpr($2, $1, $3); }
+	| mulExpr '%' unary     { $$ = new ModExpr($2, $1, $3); }
         | unary
         ;
 unary   : name			{ $$ = new NameAccess($1); }
@@ -198,14 +217,21 @@ primary : literal
         | call
         ;
 literal : INTLIT
+        | STRING                { addString($1); $$ = $1;}
+        | CHARLIT               { $$ = $1; }
         | TRUE                  { $$ = new BooleanLiteral($1, true); }
         | FALSE                 { $$ = new BooleanLiteral($1, false); }
         | NULL                  { $$ = new NullLiteral($1); }
         ;
-new     : NEW name '(' ')'      { $$ = new NewExpr($1, $2); }
+new     : NEW name '(' args ')'   { $$ = new ConstructorInvocation($2, $4); }
+        | NEW d_type '[' expr ']' { Name n = new Name(new Id(lexer.getPos(), $2.toString() + "[]"));
+                                    $$ = new ConstructorInvocation(n, new Args($4, null));}
         ;
 field	: primary '.' IDENT	{ $$ = new ObjectAccess($1, $3); }
         | SUPER '.' IDENT       { $$ = new SuperAccess($3); }
+        | name '[' expr ']'     { NameAccess n = new NameAccess($1);
+                                  $$ = new ArrayAccess(lexer.getPos(), n, $3); }
+        | primary '[' expr ']'  { $$ = new ArrayAccess(lexer.getPos(), $1, $3); }
         ;
 call    : name '(' args ')'     { $$ = new NameInvocation($1, $3); }
         | primary '.' IDENT '(' args ')'
@@ -225,9 +251,11 @@ args1   : args1 ',' expr        { $$ = new Args($3, $1); }
     private ClassType[] classes;
     private int         used = 0;
     private boolean     parsed = false;
+    private ArrayList<StringLiteral> string_list;
 
     public MjcParser(Handler handler, MjcLexer lexer) {
         super(handler);
+        string_list = new ArrayList<StringLiteral>();
         this.lexer = lexer;
         lexer.nextToken();
         parsed = parse();
@@ -235,6 +263,10 @@ args1   : args1 ',' expr        { $$ = new Args($3, $1); }
 
     private void yyerror(String msg) {
         report(new Failure(lexer.getPos(), msg));
+    }
+
+    private void addString(StringLiteral str) {
+            string_list.add(str);
     }
 
     private void addClass(ClassType cls) {
@@ -250,6 +282,9 @@ args1   : args1 ',' expr        { $$ = new Args($3, $1); }
         classes[used++] = cls;
     }
 
+    public StringLiteral [] getStrings() {
+           return string_list.toArray(new StringLiteral[0]);
+    }
     public ClassType[] getClasses() {
         if (parsed) {
             ClassType[] result = new ClassType[used];
@@ -261,7 +296,6 @@ args1   : args1 ',' expr        { $$ = new Args($3, $1); }
             return null;
         }
     }
-
     void setPublic(Modifiers mods) {
       dontRepeat (mods, Modifiers.PUBLIC,    "public");
       cantCombine(mods, Modifiers.PRIVATE,   "private and public");

@@ -67,7 +67,7 @@ public final class ThisInvocation extends Invocation {
         } else {
             /* static method can just use the existing function name */
             method_this = null;
-            func = menv.getFunctionVal();
+            func = menv.getFunctionVal(l);
         }
 
         return llvmInvoke(l, menv, func, method_this);

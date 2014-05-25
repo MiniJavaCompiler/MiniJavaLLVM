@@ -8,6 +8,7 @@ import syntax.ClassType;
 import checker.FieldEnv;
 import checker.MethEnv;
 
+import syntax.StringLiteral;
 import java.io.PrintWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -66,9 +67,16 @@ public class Assembly {
     }
 
     public String name(String n) {
+        n = n.replaceAll("\\[", "_lb_");
+        n = n.replaceAll("\\]", "_rb_");
         return LINUX ? n : ("_" + n);
     }
 
+    public String strValue(String n) {
+        n = n.replaceAll("\n", "\\n");
+        n = n.replaceAll("\t", "\\t");
+        return n;
+    }
     public String mangle(String prefix, String suffix) {
         return name(prefix + "_" + suffix);
     }
@@ -194,9 +202,11 @@ public class Assembly {
         return (FRAMEHEAD + sizeParams) - WORDSIZE;
     }
 
-    public void emitStart(String filename) {
+
+    public void emitStart(String filename, ClassType [] classes,
+                          StringLiteral [] strings) {
         emit(".file",  "\"" + filename + "\"");
-        emit(".globl", mangle("Main", "main"));
+        emit(".globl", mangle("Main", "main"), mangle("MJCStatic", "init"));
     }
 
     public void emitPrologue(String fname, int localBytes) {
