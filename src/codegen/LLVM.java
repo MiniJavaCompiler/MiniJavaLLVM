@@ -32,6 +32,7 @@ public class LLVM {
         NEW_ARRAY,
         PUTC,
         GCROOT,
+        GCGBLROOT
     };
     private Builder builder;
     private Module module;
@@ -102,6 +103,11 @@ public class LLVM {
                 malloc_array_type);
 
 
+        TypeRef [] gcglobalroot_args = {TypeRef.int8Type().pointerType()};
+        TypeRef gcglobalroot_type = TypeRef.functionType(TypeRef.voidType(), gcglobalroot_args);
+        globalFns[GlobalFn.GCGBLROOT.ordinal()] = mod.addFunction("MJC_globalRoot",
+                                               gcglobalroot_type);
+        
         TypeRef [] gcroot_args = {TypeRef.int8Type().pointerType().pointerType(), TypeRef.int8Type().pointerType()};
         TypeRef gcroot_type = TypeRef.functionType(TypeRef.voidType(), gcroot_args);
         globalFns[GlobalFn.GCROOT.ordinal()] = mod.addFunction("llvm.gcroot",
@@ -189,6 +195,11 @@ public class LLVM {
                         // CALL SOME GLOBAL ROOT REGISTRATION
                         // LLVM explicitly states they don't handle global roots
                         // with this method.
+                        Builder b = getBuilder();
+                        org.llvm.Value res = b.buildBitCast(v,
+                                TypeRef.int8Type().pointerType(), "gcgbltmp");
+                        org.llvm.Value [] args = {res};
+                        org.llvm.Value gc = b.buildCall(getGlobalFn(LLVM.GlobalFn.GCGBLROOT), "", args);
                     }
                 }
             }

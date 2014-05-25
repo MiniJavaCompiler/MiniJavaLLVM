@@ -4,7 +4,12 @@
 #include <string.h>
 
 
-//#define DEBUG
+//#define DEBUG_HEAP
+//#define DEBUG_GC
+//#define DEBUG_ALLOC
+//#define DEBUG_VERIFY
+#define VERIFY_HEAP
+
 
 extern void Main_main();
 extern void MJCStatic_init();
@@ -24,13 +29,14 @@ enum bool { false, true };
 /* Notes (Mark Anderson Smith)
   Modify array and object structures
     [type] <- points to global space defn of object type
-    [length]
+    [length or fwd location]
     [data] <- alloc pointer 'a' points to data
 */
 #define DEF_HEAP_SIZE   500     // heap size in words (4k bytes)
 #define OBJ_HEADER_SIZE 2
 static const char *ARRAY_HEADER_TYPE = "ARRAYOBJ";
 static const char *OBJECT_HEADER_TYPE = "CLASSOBJ";
+static const char *OBJECT_FORWARDED = "FORWARDOBJ";
 
 
 
@@ -65,6 +71,16 @@ typedef struct {
 ///
 /// Since there is only a global list, this technique is not threadsafe.
 extern StackEntry *llvm_gc_root_chain;
+   
+
+// Notes: Mark Anderson Smith
+// Since LLVM does not track global roots these must be maintained
+// as an independent linked list from the main llvm_gc_root_chain
+typedef struct {
+  uintptr_t *root;
+  struct GlobalRootEntry *next;           //< Link to next stack entry (the caller's).
+} GlobalRootEntry;
+GlobalRootEntry *MJC_gc_global_root_chain = 0;
 
 /*
  * End of LLVM references
@@ -109,7 +125,7 @@ void initialize_heap(size_t heap_words) {
   tofrom_heap[1] = initspace(heap_words);
   heap = tofrom_heap[0];  // set initial heap location
 
-  #ifdef DEBUG
+  #ifdef DEBUG_HEAP
   printf("initialize_heap called, size=%zu\n", heap_words);  
   #endif
 }
@@ -120,14 +136,15 @@ uintptr_t *heapalloc(size_t words) {
 
   // printf during heap alloc expensive/slow for large heap sizes
   // only enable when testing small heaps
-  //#ifdef DEBUG
-  //printf("heapalloc request size: %zu\n", words);
-  //#endif
+  #ifdef DEBUG_ALLOC
+  printf("heapalloc request num words: %zu\n", words);
+  #endif
 
   if (heap->end - heap->avail < words) {
     gc_copy();  // garbage collect and switch heap to alt heap space
     if (heap->end - heap->avail < words) {
-      #ifdef DEBUG
+
+      #ifdef DEBUG_HEAP
       printf("heap end: %zu, heap avail: %zu\n", (uintptr_t)heap->end, (uintptr_t)heap->avail);
       #endif
       
@@ -140,12 +157,11 @@ uintptr_t *heapalloc(size_t words) {
 }
 
 /* debug function for listing heap content   */
-void printheap(space *h)
+void print_heap(space *h)
 {
   uintptr_t *pos = h->start;
   printf("current heap (start: %zu, avail: %zu)\n", (uintptr_t)h->start, (uintptr_t)h->avail);
   while (pos < h->avail) {
-    #ifdef DEBUG
       if((uintptr_t)OBJECT_HEADER_TYPE==(uintptr_t)(*pos) 
       || (uintptr_t)ARRAY_HEADER_TYPE == (uintptr_t)(*pos)) {
         printf("    heap @ %zu = %s\n", (uintptr_t)pos, (char*)*pos);
@@ -153,12 +169,46 @@ void printheap(space *h)
       else {
         printf("    heap @ %zu = %zu\n", (uintptr_t)pos, *pos);
       }
-    #else
-      printf("    heap @ %zu = %zu\n", (uintptr_t)pos, *pos);
-    #endif
    
     pos++;
   }
+}
+
+/* perform heap verification.  Die if inconsistencies exist within the heap*/
+void verify_heap(space *h)
+{
+  uintptr_t *end_block;
+  uintptr_t *pos = h->start;
+
+  #ifdef DEBUG_VERIFY
+  printf("verify heap (start: %zu, avail: %zu)\n", (uintptr_t)h->start, (uintptr_t)h->avail);
+  #endif
+
+  while (pos < h->avail) {
+      // beginning of block should be flagged as a header type
+      if((uintptr_t)OBJECT_HEADER_TYPE==(uintptr_t)(*pos) 
+      || (uintptr_t)ARRAY_HEADER_TYPE == (uintptr_t)(*pos)) {
+        end_block = pos + *(pos+1) + OBJ_HEADER_SIZE;
+	pos++;
+	while (pos < end_block) {
+          // inside alloc block there should not be another header
+	  if((uintptr_t)OBJECT_HEADER_TYPE==(uintptr_t)(*pos) 
+	     || (uintptr_t)ARRAY_HEADER_TYPE == (uintptr_t)(*pos)) {
+            printf("heap corruption at %zu, unexpected %s\n", (uintptr_t)pos, (char*)*pos);
+	    die_w_msg("heap corruption");
+	  }
+	  pos++;
+	}
+      }
+      else {
+        printf("heap corruption at %zu, unexpected %s\n", (uintptr_t)pos, (char*)*pos);
+        die_w_msg("heap corruption");
+      }
+  }
+
+  #ifdef DEBUG_VERIFY
+  printf("verify heap: PASS\n");
+  #endif
 }
 
 
@@ -167,6 +217,26 @@ void printheap(space *h)
 *  Runtime operations for heap allocation and management
 *
 ******************************************************************/
+void MJC_globalRoot(uintptr_t *root)
+{
+  #ifdef DEBUG_GC
+  printf("MJC_globalRoot called with root %zu\n", (uintptr_t)*root);
+  #endif
+
+  // initialize heap on first use
+  if (!heap) {
+    initialize_heap(DEF_HEAP_SIZE);
+  }
+
+  // insert new roots at head of chain
+  GlobalRootEntry *nextRoot = (GlobalRootEntry*)(malloc(sizeof(GlobalRootEntry)));
+  nextRoot->root = (uintptr_t *)*root;
+  nextRoot->next = (struct GlobalRootEntry *)MJC_gc_global_root_chain;
+  MJC_gc_global_root_chain = nextRoot;
+
+  return;
+}
+
 /* Object and field operations */
 
 uintptr_t *MJC_allocObject(size_t size) {
@@ -177,8 +247,12 @@ uintptr_t *MJC_allocObject(size_t size) {
     initialize_heap(DEF_HEAP_SIZE);
   }
 
+  #ifdef DEBUG_ALLOC
+  printf("MJC alloc object size %zu\n", size);
+  #endif
+  
   // size request was # bytes - convert to words
-  size = size / sizeof(uintptr_t);
+  size = (size / sizeof(uintptr_t)) + 1;
 
   uintptr_t *obj = heapalloc(size+OBJ_HEADER_SIZE) + OBJ_HEADER_SIZE;
 
@@ -188,6 +262,7 @@ uintptr_t *MJC_allocObject(size_t size) {
   int i;
   for (i = 0; i < size; i++)
     obj[i] = 0;
+
 
   return obj;
 }
@@ -199,7 +274,8 @@ void MJC_putc(char c) {
 /* Array operations */
 
 uintptr_t *MJC_allocArray(int32_t elements, int32_t element_size) {
-  int32_t size = elements * element_size;
+  // size request was # bytes - convert to words
+  int32_t size = elements * ((element_size / sizeof(uintptr_t)) + 1);
 
   if (size < 0) {
     die_w_msg("Negative array size request");
@@ -209,7 +285,11 @@ uintptr_t *MJC_allocArray(int32_t elements, int32_t element_size) {
   if (!heap) {
     initialize_heap(DEF_HEAP_SIZE);
   }
-
+  
+  #ifdef DEBUG_ALLOC
+  printf("MJC alloc array: num elements %d, size %d\n", elements, element_size);
+  #endif
+  
   // array header includes type and size
   uintptr_t *a = heapalloc(size+OBJ_HEADER_SIZE) + OBJ_HEADER_SIZE;
 
@@ -220,7 +300,7 @@ uintptr_t *MJC_allocArray(int32_t elements, int32_t element_size) {
   for (i = 0; i < size; i++)
     a[i] = 0;
 
-  //printheap(heap);
+
   return a;
 }
 
@@ -242,14 +322,15 @@ int32_t array_load(uintptr_t *a,int32_t index) {
 bool is_heap_pointer(uintptr_t *p) {
   // is this pointing back into the old heap? 
   // and is the object pointed to a class obj?
-  return ((p >= heap->start && p < heap->avail) 
-	  && ((uintptr_t)OBJECT_HEADER_TYPE == (uintptr_t)*(p-2)
-                 || (uintptr_t)ARRAY_HEADER_TYPE == (uintptr_t)*(p-2)));
+  return ((p >= heap->start && p < heap->avail)
+	  && ((uintptr_t)OBJECT_HEADER_TYPE == (uintptr_t)*(p-OBJ_HEADER_SIZE)
+                 || (uintptr_t)ARRAY_HEADER_TYPE == (uintptr_t)*(p-OBJ_HEADER_SIZE)));
 }
 
-//bool is_object_type(char *type) {
-//  return true;//
-//}
+/* gc uses during scan phase to determine if this pointer has already been forwarded */
+bool is_fwd_pointer(uintptr_t *p) {
+  return ((uintptr_t)OBJECT_FORWARDED == (uintptr_t)*(p-OBJ_HEADER_SIZE));
+}
 
 /****************************************************************** 
 *
@@ -258,47 +339,79 @@ bool is_heap_pointer(uintptr_t *p) {
 ******************************************************************/
 void gc_copy() {
 
-  #ifdef DEBUG
+  #ifdef DEBUG_GC
   printf("gc: initiated with tospace=%d\n", tospace);
-  printf("    llvm root chain=%zu, num roots=%d, num meta=%d\n", 
-                     (uintptr_t)llvm_gc_root_chain, 
-                     llvm_gc_root_chain->Map->NumRoots,
-                     llvm_gc_root_chain->Map->NumMeta);
+  printf("    llvm root chain=%zu\n", (uintptr_t)llvm_gc_root_chain); 
+  if (llvm_gc_root_chain) printf("    llvm root chain base stack num roots = %d\n", llvm_gc_root_chain->Map->NumRoots);
   printf("    heap start=%zu, heap pos=%zu\n", (uintptr_t)heap->start, (uintptr_t)heap->avail);
   printf("    tospace=%zu\n", (uintptr_t)tofrom_heap[tospace]->start);
   #endif
 
   uintptr_t *scan = tofrom_heap[tospace]->start;
 
-  //printheap(heap);
+  #ifdef DEBUG_HEAP
+  printf("gc: before heap copy\n");
+  print_heap(heap);
+  #endif
+
+
+  // forward global roots
+  for (GlobalRootEntry *grootpos =  MJC_gc_global_root_chain; grootpos != NULL; grootpos = (GlobalRootEntry*)grootpos->next) {
+
+    if (is_heap_pointer((uintptr_t *)(grootpos->root))) {
+      #ifdef DEBUG_GC
+        printf("gc: forwarding global root object at %zu\n", (uintptr_t)(grootpos->root));
+      #endif
+
+	grootpos->root = forward((uintptr_t*)grootpos->root); 
+    }
+ 
+  }
+
 
   // forward roots
   for (StackEntry *rootpos =  llvm_gc_root_chain; rootpos != NULL; rootpos = (StackEntry*)rootpos->Next) {
 
     for (int i = 0; i < llvm_gc_root_chain->Map->NumRoots; i++) {
-      #ifdef DEBUG
-      printf("gc: forwarding root object %s at %zu\n", "llvm", (uintptr_t)rootpos->Roots[i]);
-      #endif
+
+      if (is_heap_pointer((uintptr_t *)(rootpos->Roots[i]))) {
+        #ifdef DEBUG_GC
+	printf("gc: forwarding root object at %zu\n", (uintptr_t)rootpos->Roots[i]);
+        #endif
     
-      rootpos->Roots[i] = forward((uintptr_t*)rootpos->Roots[i]);
+	rootpos->Roots[i] = forward((uintptr_t*)rootpos->Roots[i]); 
+      }
     }
   }
 
+
   uintptr_t *free = tofrom_heap[tospace]->avail;
+
 
   // scan the tospace (make sure to increment by size)
   while (scan < free) {
 
     if (is_heap_pointer((uintptr_t*)*scan)) {
-      #ifdef DEBUG
-      printf("gc: forwarding scanned object at %zu\n", (uintptr_t)*scan);
-      #endif 
+      //if (is_fwd_pointer((uintptr_t*)*scan)) {
+	// scan object was already forwarded by another scan
+	// update to the new location which is stored in the 'size' location
+      //  *scan = *(scan+1);
 
-      // forward the object pointed to by scan
-      *scan = (uintptr_t)forward((void *)(*scan));
+      //  #ifdef DEBUG_GC
+      //	printf("gc: scanned object prev forwarded - updating to %zu\n", (uintptr_t)*scan);
+      //  #endif 
+      //}
+      //else {
+        #ifdef DEBUG_GC
+	printf("gc: forwarding scanned object at %zu\n", (uintptr_t)*scan);
+        #endif 
 
-      // update free
-      free = tofrom_heap[tospace]->avail;
+	// forward the object pointed to by scan
+	*scan = (uintptr_t)forward((void *)(*scan));
+
+	// update free
+	free = tofrom_heap[tospace]->avail;
+	//}
 
     }
 
@@ -310,8 +423,13 @@ void gc_copy() {
   // reset heap to other half
   heap = tofrom_heap[tospace];
  
-  #ifdef DEBUG
-  printheap(heap);
+  #ifdef DEBUG_HEAP
+  printf("gc: after heap copy\n");
+  print_heap(heap);
+  #endif
+
+  #ifdef VERIFY_HEAP
+  verify_heap(heap);
   #endif
 
   // reset tospace index
@@ -328,10 +446,14 @@ uintptr_t *forward(uintptr_t *p) {
   }
   else {
     // copy data
-    #ifdef DEBUG
+    #ifdef DEBUG_GC
     printf("  memcpy %zu to %zu, size=%zu\n", (uintptr_t)fwdptr, (uintptr_t)tofrom_heap[tospace]->avail, size);
     #endif
     memcpy(tofrom_heap[tospace]->avail, fwdptr, size*sizeof(uintptr_t));
+
+    // mark the object as forwarded and it's new location
+    *fwdptr = (uintptr_t)OBJECT_FORWARDED;
+    *(fwdptr+1) = (uintptr_t)(tofrom_heap[tospace]->avail + OBJ_HEADER_SIZE);
 
     // reset fwd pointer to it's new location
     fwdptr = tofrom_heap[tospace]->avail + OBJ_HEADER_SIZE;
@@ -355,8 +477,8 @@ void printc(char c) {
 
 int main() {
     //    printf("Starting:\n");
-    MJCStatic_roots();
     MJCStatic_init();
+    MJCStatic_roots();
     Main_main();
     //    printf("Finishing (%d words allocated).\n",freeHeap);
     return 0;
