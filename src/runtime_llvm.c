@@ -4,7 +4,7 @@
 #include <string.h>
 
 
-//#define DEBUG_HEAP
+// #define DEBUG_HEAP
 //#define DEBUG_GC
 //#define DEBUG_ALLOC
 //#define DEBUG_VERIFY
