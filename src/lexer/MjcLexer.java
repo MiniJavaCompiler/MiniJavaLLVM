@@ -46,7 +46,12 @@ public class MjcLexer extends SourceLexer implements Tokens {
                 return token = ')';
             case '[' :
                 nextChar();
-                return token = '[';
+                if (c == ']') {
+                    nextChar();
+                    return token = ARRAY;
+                } else {
+                    return token = '[';
+                }
             case ']':
                 nextChar();
                 return token = ']';
