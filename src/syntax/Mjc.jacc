@@ -22,7 +22,7 @@ import java.util.ArrayList;
 %semantic Object
 
 // Separators:
-%token <Position>       '(' ')' '{' '}' ';' ',' '.'
+%token <Position>       '(' ')' '{' '}' ';' ',' '.' '[' ']' ARRAY
 
 // Operators:
 %token <Position>       '>' '<' EQEQ NEQ               // relational
@@ -111,7 +111,7 @@ pos     : /* empty */           { $$ = lexer.getPos(); }
         ;
 
 type    : d_type                { $$ = $1; }
-        | d_type '[' ']'        { Id array = new Id(lexer.getPos(), $1.toString() + "[]");
+        | d_type ARRAY          { Id array = new Id(lexer.getPos(), $1.toString() + "[]");
                                   $$ = new NameType(new Name(array)); }
         ;
 d_type  : INT                   { $$ = Type.INT; }
@@ -152,6 +152,7 @@ stmt    : /* empty */ ';'       { $$ = new Empty($1); }
         | RETURN ';'            { $$ = new Return($1); }
         | RETURN expr ';'       { $$ = new Return($1, $2); }
         | block
+        | type pos vardecls ';' { $$ = new LocalVarDecl($2,$1, VarDecls.reverse($3));}
         ;
 block   : '{' stmts '}'         { $$ = new Block($1, (Statement[])$2.toArray(new Statement[0])); }
         ;
@@ -161,8 +162,6 @@ exprstmt: call
         ;
 stmts   : /* empty */           { $$ = new ArrayList<Statement>(); }
         | stmts stmt            { $1.add($2); $$ = $1; }
-        | stmts type pos vardecls ';'
-                                { $1.add(new LocalVarDecl($3,$2, VarDecls.reverse($4))); $$ = $1; }
         ;
 expr    : assign
         | cOrExpr

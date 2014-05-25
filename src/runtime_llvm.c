@@ -118,8 +118,8 @@ space *initspace(size_t words) {
 }
 
 /* initialize semi-space for copy-collection */
-int tospace =  1;        
-space *tofrom_heap[2];   
+int tospace =  1;
+space *tofrom_heap[2];
 
 /* set heap pointer                           */
 space *heap = 0;             // pointer to current half heap
@@ -267,7 +267,7 @@ uintptr_t *MJC_allocObject(size_t size) {
   obj[-OBJ_HEADER_SIZE_OFFSET] = size;
 
   // initialize remaining alloc space to 0
-  memset(obj, 0, size*sizeof(uintptr_t));
+  memset(obj, 0, size * sizeof(uintptr_t));
 
   return obj;
 }
@@ -308,7 +308,7 @@ uintptr_t *MJC_allocArray(int32_t elements, int32_t element_size) {
   a[-OBJ_HEADER_SIZE_OFFSET] = size;
 
   // initialize remaining alloc space to 0
-  memset(a, 0, size*sizeof(uintptr_t));
+  memset(a, 0, size * sizeof(uintptr_t));
 
   return a;
 }
@@ -333,7 +333,8 @@ bool is_heap_pointer(uintptr_t *p) {
 
 /* gc uses during scan phase to determine if this pointer has already been forwarded */
 bool is_fwd_pointer(uintptr_t *p) {
-  return ((uintptr_t)OBJECT_FORWARDED == (uintptr_t) * (p - OBJ_HEADER_TYPE_OFFSET));
+  return ((uintptr_t)OBJECT_FORWARDED == (uintptr_t) * (p -
+          OBJ_HEADER_TYPE_OFFSET));
 }
 
 void gc_printroots() {
@@ -468,13 +469,15 @@ uintptr_t *forward(uintptr_t *p) {
     uintptr_t * fwd_addr =
       (uintptr_t*) * ((p) - OBJ_HEADER_FWDPTR_OFFSET); // forwarded pointer location
 #ifdef DEBUG_GC
-    printf("gc: scanned object previously forwarded - updating to %zu\n", (uintptr_t)fwd_addr);
+    printf("gc: scanned object previously forwarded - updating to %zu\n",
+           (uintptr_t)fwd_addr);
 #endif
 
     return fwd_addr;
   } else {
     size_t size =
-      *((p) - OBJ_HEADER_SIZE_OFFSET) + OBJ_HEADER_SIZE; // size pointer is value at offset -1
+      *((p) - OBJ_HEADER_SIZE_OFFSET) +
+      OBJ_HEADER_SIZE; // size pointer is value at offset -1
     // copy data
 #ifdef DEBUG_GC
     printf("  memcpy %zu to %zu, size=%zu\n", (uintptr_t)fwdptr,
@@ -484,7 +487,8 @@ uintptr_t *forward(uintptr_t *p) {
 
     // mark the object as forwarded and it's new location
     *(p - OBJ_HEADER_TYPE_OFFSET) = (uintptr_t)OBJECT_FORWARDED;
-    *(p - OBJ_HEADER_FWDPTR_OFFSET) = (uintptr_t)(tofrom_heap[tospace]->avail + OBJ_HEADER_SIZE);
+    *(p - OBJ_HEADER_FWDPTR_OFFSET) = (uintptr_t)(tofrom_heap[tospace]->avail +
+                                      OBJ_HEADER_SIZE);
 
     // reset fwd pointer to it's new location
     fwdptr = tofrom_heap[tospace]->avail + OBJ_HEADER_SIZE;
