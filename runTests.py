@@ -10,7 +10,8 @@ import shutil
 BUILDDIR = "build/test/"
 RUNTIMEFILE = "build/runtime/runtime_llvm.o"
 TESTDIR = "unitTests/"
-
+OPTPATH = "/home/crzysdrs/proj/llvm/Debug+Asserts/bin/opt"
+LLCPATH = "/home/crzysdrs/proj/llvm/Debug+Asserts/bin/llc"
 class CompareFile:
     def __init__(self, out, ref):
         self.__outFiles = [BUILDDIR + o for o in out]
@@ -117,6 +118,7 @@ class Test:
         testname = self.testname
         llvm_object = testname + ".o"
         bitcode_file = testname + ".bc"        
+        opt_bitcode_file = testname + ".opt.bc"
         x86_asm_file = testname + ".s"
         x86_compiled = testname
         llvm_exec = testname + ".llvm"
@@ -167,8 +169,15 @@ class Test:
             for out in out_files]
 
         all_tests = [compile_test,
-                     RunTest(llvm_link_file, ["llc", 
-                                              BUILDDIR + bitcode_file, 
+                     RunTest(ignored, [OPTPATH, "-debug-ir",
+                                       BUILDDIR + bitcode_file, 
+                                       "-o", BUILDDIR + opt_bitcode_file]),
+                     #this amusing rerun causes the debug info to be updated correctly
+                     RunTest(ignored, [OPTPATH, "-debug-ir",
+                                       BUILDDIR + opt_bitcode_file, 
+                                       "-o", BUILDDIR + opt_bitcode_file]),
+                     RunTest(llvm_link_file, [LLCPATH, 
+                                              BUILDDIR + opt_bitcode_file, 
                                              "-filetype=obj",
                                               "-O0",
                                              "-o",
@@ -192,6 +201,7 @@ class Test:
         for test in all_tests:
             if not test.run(self.verbose):
                 self.passed = False
+                return
 
         self.passed = (self.passed
                        and self.missingRefs() == 0

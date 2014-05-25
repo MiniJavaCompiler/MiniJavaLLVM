@@ -81,12 +81,13 @@ public final class PrimitiveType extends Type {
 
     public org.llvm.Value llvmMetaData() {
         if (metaData == null) {
+            Value md_null = new Value(null);
             Value [] metaDataOperands;
             if (this.equal(Type.INT)) {
                 metaDataOperands = new org.llvm.Value[] {
                     Dwarf.DW_TAG.DW_TAG_base_type.value(),        //Tag
-                    Value.MDString(""),              // File
-                    Value.MDString(""),              // Context
+                    md_null,              // File
+                    md_null,              // Context
                     Value.MDString("int"),  // Name
                     TypeRef.int32Type().constInt(0, false),  // Line number
                     TypeRef.int32Type().constInt(32, false), // Size in Bits
@@ -99,8 +100,8 @@ public final class PrimitiveType extends Type {
             } else if (this.equal(Type.LONG)) {
                 metaDataOperands = new org.llvm.Value[] {
                     Dwarf.DW_TAG.DW_TAG_base_type.value(),        //Tag
-                    Value.MDString(""),              // File
-                    Value.MDString(""),              // Context
+                    md_null,              // File
+                    md_null,              // Context
                     Value.MDString("long"),  // Name
                     TypeRef.int32Type().constInt(0, false),   // Line number
                     TypeRef.int32Type().constInt(64, false),  // Size in Bits
@@ -113,8 +114,8 @@ public final class PrimitiveType extends Type {
             } else if (this.equal(Type.FLOAT)) {
                 metaDataOperands = new org.llvm.Value[] {
                     Dwarf.DW_TAG.DW_TAG_base_type.value(),        //Tag
-                    Value.MDString(""),              // File
-                    Value.MDString(""),              // Context
+                    md_null,              // File
+                    md_null,              // Context
                     Value.MDString("float"),  // Name
                     TypeRef.int32Type().constInt(0, false),  // Line number
                     TypeRef.int32Type().constInt(32, false), // Size in Bits
@@ -126,8 +127,8 @@ public final class PrimitiveType extends Type {
             } else if (this.equal(Type.DOUBLE)) {
                 metaDataOperands = new org.llvm.Value[] {
                     Dwarf.DW_TAG.DW_TAG_base_type.value(),        //Tag
-                    Value.MDString(""),              // File
-                    Value.MDString(""),              // Context
+                    md_null,              // File
+                    md_null,              // Context
                     Value.MDString("double"),  // Name
                     TypeRef.int32Type().constInt(0, false),   // Line number
                     TypeRef.int32Type().constInt(64, false),  // Size in Bits
@@ -139,8 +140,8 @@ public final class PrimitiveType extends Type {
             } else if (this.equal(Type.BOOLEAN)) {
                 metaDataOperands = new org.llvm.Value[] {
                     Dwarf.DW_TAG.DW_TAG_base_type.value(),        //Tag
-                    Value.MDString(""),              // File
-                    Value.MDString(""),              // Context
+                    md_null,              // File
+                    md_null,              // Context
                     Value.MDString("bool"),  // Name
                     TypeRef.int32Type().constInt(0, false),             // Line number
                     TypeRef.int32Type().constInt(8, false),             // Size in Bits
@@ -159,8 +160,8 @@ public final class PrimitiveType extends Type {
             } else if (this.equal(Type.CHAR)) {
                 metaDataOperands = new org.llvm.Value[] {
                     Dwarf.DW_TAG.DW_TAG_base_type.value(),        //Tag
-                    Value.MDString(""),              // File
-                    Value.MDNode(new Value[]{TypeRef.int32Type().constInt(0, false)}),              // Context
+                    md_null,              // File
+                    md_null,
                     Value.MDString("char"),  // Name
                     TypeRef.int32Type().constInt(0, false),             // Line number
                     TypeRef.int32Type().constInt(8, false),             // Size in Bits
@@ -172,8 +173,8 @@ public final class PrimitiveType extends Type {
             } else if (this.equal(Type.PTR)) {
                 metaDataOperands = new org.llvm.Value[] {
                     Dwarf.DW_TAG.DW_TAG_pointer_type.value(),        //Tag
-                    Value.MDString(""),              // File
-                    Value.MDString(""),              // Context
+                    md_null,              // File
+                    md_null,              // Context
                     Value.MDString("cptr"),  // Name
                     TypeRef.int32Type().constInt(0, false),             // Line number
                     TypeRef.int64Type().constInt(64, false),            // Size in Bits

@@ -303,6 +303,7 @@ void gc_copy() {
 
   // reset the 'soon-to-be-old' heap position
   heap->avail = heap->start;
+  memset(heap->start, '0', (char *)heap->end - (char *)heap->start);
   // reset heap to other half
   heap = tofrom_heap[tospace];
  

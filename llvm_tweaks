@@ -1,0 +1,41 @@
+diff --git a/lib/CodeGen/AsmPrinter/DwarfUnit.cpp b/lib/CodeGen/AsmPrinter/DwarfUnit.cpp
+index 8382990..30fc7f2 100644
+--- a/lib/CodeGen/AsmPrinter/DwarfUnit.cpp
++++ b/lib/CodeGen/AsmPrinter/DwarfUnit.cpp
+@@ -1842,7 +1842,9 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
+   if (!Name.empty())
+     addString(MemberDie, dwarf::DW_AT_name, Name);
+ 
+-  addType(MemberDie, resolve(DT.getTypeDerivedFrom()));
++  if (DT.getTypeDerivedFrom()) {
++      addType(MemberDie, resolve(DT.getTypeDerivedFrom()));
++  }
+ 
+   addSourceLine(MemberDie, DT);
+ 
+diff --git a/lib/Transforms/Instrumentation/DebugIR.cpp b/lib/Transforms/Instrumentation/DebugIR.cpp
+index 18bda1a..3b4aa2a 100644
+--- a/lib/Transforms/Instrumentation/DebugIR.cpp
++++ b/lib/Transforms/Instrumentation/DebugIR.cpp
+@@ -378,7 +378,7 @@ private:
+       return DIDerivedType(nullptr);
+     else if (T->isStructTy()) {
+       N = Builder.createStructType(
+-          DIScope(LexicalBlockFileNode), T->getStructName(), DIFile(FileNode),
++          DIScope(0), T->getStructName(), DIFile(FileNode),
+           0, Layout.getTypeSizeInBits(T), Layout.getABITypeAlignment(T), 0,
+           DIType(nullptr), DIArray(nullptr)); // filled in later
+ 
+diff --git a/lib/Transforms/Instrumentation/DebugIR.h b/lib/Transforms/Instrumentation/DebugIR.h
+index 02831ed..9aa8a3d 100644
+--- a/lib/Transforms/Instrumentation/DebugIR.h
++++ b/lib/Transforms/Instrumentation/DebugIR.h
+@@ -56,7 +56,7 @@ public:
+   /// Modify input in-place; do not generate additional files, and do not hide
+   /// any debug intrinsics/metadata that might be present.
+   DebugIR()
+-      : ModulePass(ID), WriteSourceToDisk(false), HideDebugIntrinsics(false),
++      : ModulePass(ID), WriteSourceToDisk(true), HideDebugIntrinsics(false),
+         HideDebugMetadata(false), GeneratedPath(false), ParsedPath(false) {}
+ 
+   /// Run pass on M and set Path to the source file path in the output module.

@@ -125,7 +125,7 @@ public class LLVM {
         int tempScope = scopeCount;
         /* lexical block does not match description from webpage, missing a field */
         Value [] compile_unit_data =  {
-            TypeRef.int32Type().constInt(11, false), //Tag = 11 (DW_TAG_lexical_block)
+            Dwarf.DW_TAG.DW_TAG_lexical_block.value(), //Tag = 11 (DW_TAG_lexical_block)
             filePair, //Source directory (including trailing slash) & file pair
             lexicalScope.peek(), //Reference to context descriptor
             TypeRef.int32Type().constInt(pos.getRow(), false),      //Line number
@@ -243,6 +243,7 @@ public class LLVM {
     }
 
     public void localVar(Position pos, int arg_num, VarDecls v, Value val) {
+        /*
         Value tag;
         Value line_info;
         if (arg_num > 0) {
@@ -261,7 +262,7 @@ public class LLVM {
             Value.MDString(v.getId().getName()), // Name
             filePair, // Reference to file where defined
             line_info,
-            Type.INT.llvmMetaData(), // Reference to the type descriptor
+            new org.llvm.Value(null), //Type.INT.llvmMetaData(), // Reference to the type descriptor
             TypeRef.int32Type().constInt(0, false),      // flags
             new org.llvm.Value(null),
         });
@@ -271,6 +272,7 @@ public class LLVM {
         Value dbg = getBuilder().buildCall(getGlobalFn(LLVM.GlobalFn.DBG_DECLARE), "",
                                            args);
         setLLVMMetaData(pos, dbg);
+        */
     }
     public void llvmGen(ClassType [] classes, StringLiteral [] strings,
                         String output_path, Boolean dump) {
@@ -328,6 +330,51 @@ public class LLVM {
                                         TypeRef.functionType(Type.VOID.llvmType(), (List)Collections.emptyList()));
         BasicBlock entry = static_gcroots.appendBasicBlock("entry");
         builder.positionBuilderAtEnd(entry);
+        org.llvm.Value md_null = new org.llvm.Value(null);
+        org.llvm.Value func_type = org.llvm.Value.MDNode(
+        new org.llvm.Value[] {
+            Dwarf.DW_TAG.DW_TAG_subroutine_type.value(),     // Tag (see below)
+            md_null,      // Source directory (including trailing slash) & file pair (may be null)
+            md_null,      // Reference to Context
+            org.llvm.Value.MDString(""),        // Name (may be "" for anonymous types)
+            TypeRef.int32Type().constInt(0, false),      // Line number where defined (may be 0)
+            TypeRef.int64Type().constInt(0, false),      // Size in bits
+            TypeRef.int64Type().constInt(0, false),      // Alignment in bits
+            TypeRef.int64Type().constInt(0, false),      // Offset in bits
+            TypeRef.int32Type().constInt(0, false),      // Flags
+            md_null, // Reference to type derived from
+            //org.llvm.Value.MDNode(args.toArray(new org.llvm.Value[0])), // Reference to array of member descriptors
+            TypeRef.int32Type().constInt(0, false), // Runtime languages
+            md_null, // Base type containing the vtable pointer for this type
+            md_null, // Template parameters
+            md_null   // A unique identifier for type uniquing purpose (may be null)
+        });
+        org.llvm.Value md = org.llvm.Value.MDNode(
+        new org.llvm.Value[] {
+            Dwarf.DW_TAG.DW_TAG_subprogram.value(), // Tag = 46 (DW_TAG_subprogram)
+            getFile(), // Source directory (including trailing slash) & file pair
+            getMetaContext(), // Reference to context descriptor
+            org.llvm.Value.MDString("staticroots"), //Name
+            org.llvm.Value.MDString("staticroots"), // Display name (fully qualified C++ name)
+            org.llvm.Value.MDString("staticroots"), // MIPS linkage name (for C++)
+            TypeRef.int32Type().constInt(0, false),      // Line number where defined
+            func_type, // Reference to type descriptor
+            TypeRef.int1Type().constInt(/*isStatic() ? 1 :*/ 0, false), // True if the global is local to compile unit (static)
+            TypeRef.int1Type().constInt(1, false),       //True if the global is defined in the compile unit (not extern)
+            TypeRef.int32Type().constInt(0, false),      // Virtuality, e.g. dwarf::DW_VIRTUALITY__virtual
+            TypeRef.int32Type().constInt(0, false),      // Index into a virtual function
+            md_null, // indicates which base type contains the vtable pointer for the
+            // derived class
+            TypeRef.int32Type().constInt(0, false),      // Flags - Artificial, Private, Protected, Explicit, Prototyped.
+            TypeRef.int1Type().constInt(0, false),       // isOptimized
+            static_gcroots , // Pointer to LLVM function
+            new org.llvm.Value(null), // Lists function template parameters
+            new org.llvm.Value(null), // Function declaration descriptor
+            new org.llvm.Value(null), // List of function variables
+            TypeRef.int32Type().constInt(0, false) // Line number where the scope of the subprogram begins
+        });
+        enterContext(md);
+        addSubProgram(md);
 
         for (ClassType c : classes) {
             if (c.getFields() != null) {
