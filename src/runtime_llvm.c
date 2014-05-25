@@ -105,9 +105,6 @@ typedef struct space {          /* allocation space data              */
 
 
 /* allocate and initialize descriptor structure and storage for a space */
-/* Mark Anderson Smith
- * use calloc to zero-set memory so that each call to MJC_alloc does not
- * have to re-set to zero (more efficient to block-zero than iterate)   */
 space *initspace(size_t words) {
   space *s = calloc(1, sizeof(space));
   if (!s) {
@@ -269,12 +266,8 @@ uintptr_t *MJC_allocObject(size_t size) {
   obj[-OBJ_HEADER_TYPE_OFFSET] = (uintptr_t)(OBJECT_HEADER_TYPE);
   obj[-OBJ_HEADER_SIZE_OFFSET] = size;
 
-  // initialization not required as heap space is now block-zero'd
-  //int i;
-  //for (i = 0; i < size; i++) {
-  //  obj[i] = 0;
-  //}
-
+  // initialize remaining alloc space to 0
+  memset(obj, 0, size*sizeof(uintptr_t));
 
   return obj;
 }
@@ -314,11 +307,8 @@ uintptr_t *MJC_allocArray(int32_t elements, int32_t element_size) {
   a[-OBJ_HEADER_TYPE_OFFSET] = (uintptr_t)(ARRAY_HEADER_TYPE);
   a[-OBJ_HEADER_SIZE_OFFSET] = size;
 
-  // initialization not required as heap space is now block-zero'd
-  //int i;
-  //for (i = 0; i < size; i++) {
-  //  a[i] = 0;
-  //}
+  // initialize remaining alloc space to 0
+  memset(a, 0, size*sizeof(uintptr_t));
 
   return a;
 }
@@ -389,10 +379,6 @@ void gc_copy() {
   printf("gc: before heap copy\n");
   print_heap(heap);
 #endif
-
-  // zero-set destination heap.  
-  // More efficient than zero-ing memory on every allocation request
-  memset(tofrom_heap[tospace]->start, 0, DEF_HEAP_SIZE * sizeof(uintptr_t));
 
   // forward global roots
   for (GlobalRootEntry *grootpos =  MJC_gc_global_root_chain; grootpos != NULL;
