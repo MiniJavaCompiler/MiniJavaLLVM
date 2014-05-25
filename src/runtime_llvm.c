@@ -103,14 +103,18 @@ typedef struct space {          /* allocation space data              */
   uintptr_t *avail;             /* pointer to next word into which to create an object  */
 } space;
 
+
 /* allocate and initialize descriptor structure and storage for a space */
+/* Mark Anderson Smith
+ * use calloc to zero-set memory so that each call to MJC_alloc does not
+ * have to re-set to zero (more efficient to block-zero than iterate)   */
 space *initspace(size_t words) {
-  space *s = malloc(sizeof(space));
+  space *s = calloc(1, sizeof(space));
   if (!s) {
     die_w_msg("insufficient memory to init heap");
   }
 
-  s->start = malloc(words * sizeof(uintptr_t));
+  s->start = calloc(words, sizeof(uintptr_t));
   s->end = s->start + words;
   s->avail = s->start;
   return s;
@@ -264,10 +268,12 @@ uintptr_t *MJC_allocObject(size_t size) {
   // store a class type into the header for later use
   obj[-OBJ_HEADER_TYPE_OFFSET] = (uintptr_t)(OBJECT_HEADER_TYPE);
   obj[-OBJ_HEADER_SIZE_OFFSET] = size;
-  int i;
-  for (i = 0; i < size; i++) {
-    obj[i] = 0;
-  }
+
+  // initialization not required as heap space is now block-zero'd
+  //int i;
+  //for (i = 0; i < size; i++) {
+  //  obj[i] = 0;
+  //}
 
 
   return obj;
@@ -307,11 +313,12 @@ uintptr_t *MJC_allocArray(int32_t elements, int32_t element_size) {
   // store the marker "ARRAY" to indicate an array object
   a[-OBJ_HEADER_TYPE_OFFSET] = (uintptr_t)(ARRAY_HEADER_TYPE);
   a[-OBJ_HEADER_SIZE_OFFSET] = size;
-  int i;
-  for (i = 0; i < size; i++) {
-    a[i] = 0;
-  }
 
+  // initialization not required as heap space is now block-zero'd
+  //int i;
+  //for (i = 0; i < size; i++) {
+  //  a[i] = 0;
+  //}
 
   return a;
 }
@@ -383,6 +390,9 @@ void gc_copy() {
   print_heap(heap);
 #endif
 
+  // zero-set destination heap.  
+  // More efficient than zero-ing memory on every allocation request
+  memset(tofrom_heap[tospace]->start, 0, DEF_HEAP_SIZE * sizeof(uintptr_t));
 
   // forward global roots
   for (GlobalRootEntry *grootpos =  MJC_gc_global_root_chain; grootpos != NULL;
