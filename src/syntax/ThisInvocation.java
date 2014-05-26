@@ -56,7 +56,7 @@ public final class ThisInvocation extends Invocation {
         org.llvm.Value method_this;
         org.llvm.Value func;
         if (!menv.isStatic()) {
-            org.llvm.Value obj = b.buildLoad(l.getNamedValue("this"), "*this");
+            org.llvm.Value obj = l.getFunction().getParam(0);
             org.llvm.Value vtable_addr =  b.buildStructGEP(obj, 0, "vtable_lookup");
             org.llvm.Value vtable = b.buildLoad(vtable_addr, "vtable");
             org.llvm.Value func_addr = b.buildStructGEP(vtable, menv.getSlot(),

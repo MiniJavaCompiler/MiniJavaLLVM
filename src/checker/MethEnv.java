@@ -250,10 +250,7 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
             l.enterScope();
             int n = 0;
             if (!isStatic()) {
-                org.llvm.Value v = l.getBuilder().buildAlloca(f.getParam(n).typeOf(), "this");
-                l.getBuilder().buildStore(f.getParam(n), v);
-                l.setNamedValue(true, f.getParam(n).typeOf(), "this", v);
-                l.markGCRoot(v, owner);
+                /* this pointer is not mutable and therefore no allocation is needed */
                 n++;
             }
             for (VarEnv p = params; p != null; p = p.getNext()) {

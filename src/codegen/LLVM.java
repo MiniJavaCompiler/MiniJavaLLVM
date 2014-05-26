@@ -15,6 +15,7 @@ import org.llvm.Value;
 
 import org.llvm.binding.LLVMLibrary.LLVMCallConv;
 import org.llvm.binding.LLVMLibrary.LLVMIntPredicate;
+import org.llvm.binding.LLVMLibrary.LLVMAttribute;
 
 import java.util.Collections;
 import java.util.Hashtable;

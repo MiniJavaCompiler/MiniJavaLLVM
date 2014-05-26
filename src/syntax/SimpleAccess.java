@@ -73,9 +73,8 @@ public final class SimpleAccess extends FieldAccess {
     public org.llvm.Value llvmGen(LLVM l) {
         org.llvm.Value field;
         if (env.getFieldIndex() != -1) {
-            org.llvm.Value obj = l.getNamedValue("this");
-            org.llvm.Value deref = l.getBuilder().buildLoad(obj, "*this");
-            field = l.getBuilder().buildStructGEP(deref, env.getFieldIndex(),
+            org.llvm.Value obj = l.getFunction().getParam(0);
+            field = l.getBuilder().buildStructGEP(obj, env.getFieldIndex(),
                                                   env.getName());
         } else {
             field = l.getNamedValue(env.getOwner() + "." + env.getName());
@@ -86,9 +85,8 @@ public final class SimpleAccess extends FieldAccess {
     public org.llvm.Value llvmSave(LLVM l, org.llvm.Value v) {
         org.llvm.Value field;
         if (env.getFieldIndex() != -1) {
-            org.llvm.Value obj = l.getNamedValue("this");
-            org.llvm.Value deref = l.getBuilder().buildLoad(obj, "*this");
-            field = l.getBuilder().buildStructGEP(deref, env.getFieldIndex(),
+            org.llvm.Value obj = l.getFunction().getParam(0);
+            field = l.getBuilder().buildStructGEP(obj, env.getFieldIndex(),
                                                   env.getName());
         } else {
             field = l.getNamedValue(env.getOwner() + "." + env.getName());

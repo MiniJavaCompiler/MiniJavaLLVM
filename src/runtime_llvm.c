@@ -323,12 +323,6 @@ int32_t array_length(uintptr_t *a) {
 }
 
 char * MJC_arrayIndex(char *a, int32_t index) {
-  int size;
-  if (!a) {
-    die_w_msg("Array null pointer access");
-  } else if (index >= (size = array_length((uintptr_t*)a)) || index < 0) {
-    die_w_msg("Array Access out of bounds (size %d, element %d)", size, index);
-  }
   return (char *)(((uintptr_t *)a) + index);
 }
 
