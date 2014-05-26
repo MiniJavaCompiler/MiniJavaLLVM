@@ -70,4 +70,18 @@ public final class ArrayType extends ClassType {
     public ArrayType isArray() {
         return this;
     }
+
+    public boolean isSuperOf(Type t) {
+        if (t.equal(Type.NULL)) {
+            return true;
+        }
+        ArrayType that = t.isArray();
+        if (that != null) {
+            Type this_elem = elementType;
+            Type that_elem = that.getElementType();
+            return this_elem.isSuperOf(that_elem);
+        } else {
+            return false;
+        }
+    }
 }

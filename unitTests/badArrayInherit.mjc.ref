@@ -1,0 +1,3 @@
+ERROR: "unitTests/badArrayInherit.j", line 9
+Cannot initialize value of type B[] to variable of type A[]
+

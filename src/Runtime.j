@@ -5,8 +5,6 @@ class MJC {
     static CPOINTER arrayIndex(CPOINTER array, int index);
 }
 
-/* If you modify Object or String and add new fields, MJC
-   will not properly create new string literal objects */
 class Object {
     public String toString() {
         return "<SomeObject>";

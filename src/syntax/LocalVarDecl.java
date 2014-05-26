@@ -41,12 +41,16 @@ public class LocalVarDecl extends Statement {
             int size = type.size();
             for (VarDecls vs = varDecls; vs != null; vs = vs.getNext()) {
                 try {
+                    Type init = null;
+                    if (vs.getInitExpr() != null) {
+                        init = vs.getInitExpr().typeOf(ctxt, env);
+                    }
                     if (VarEnv.find(vs.getId().getName(), env) != null) {
                         ctxt.report(new Failure(pos,
                                                 "Repeated definition for variable " + vs.getId()));
-                    } else if (vs.getInitExpr() != null
-                               && !type.isSuperOf(vs.getInitExpr().typeOf(ctxt, env))) {
-                        ctxt.report(new Failure(pos, "Incorrect type for initialization expression"));
+                    } else if (init != null && !type.isSuperOf(init)) {
+                        ctxt.report(new Failure(pos, "Cannot initialize value of type " + type +
+                                                " to variable of type " + init));
                     } else {
                         frameOffset -= size;
                         VarEnv prev_env = env;
