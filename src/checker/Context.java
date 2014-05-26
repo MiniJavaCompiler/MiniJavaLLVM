@@ -158,6 +158,7 @@ public final class Context extends Phase {
                                                              "makeStringChar")),
                                                              new Args(new NameAccess(new Name(tmp_char)), null)))));
             }
+            static_body.add(new Return(pos));
 
             decls = new MethDecl(false, m, Type.VOID, method_id,
                                  null, new Block(pos, static_body.toArray(new Statement[0]))).link(decls);

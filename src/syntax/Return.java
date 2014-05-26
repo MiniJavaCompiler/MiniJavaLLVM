@@ -49,7 +49,7 @@ public final class Return extends Statement {
                 ctxt.report(new Failure(pos,
                                         "Method should not return value"));
             }
-        } else if (rt != null) {
+        } else if (rt != Type.VOID) {
             ctxt.report(new Failure(pos, "A return value is required"));
         }
 
@@ -89,10 +89,14 @@ public final class Return extends Statement {
     }
 
     public void llvmGen(LLVM l) {
-        org.llvm.Value v = result.llvmGen(l);
-        l.getBuilder().buildRet(v);
-        /* this is a small hack to allow extra instructions after a return */
-        /* without it, llvm complains that the block does not follow their desired form */
+        if (result != null) {
+            org.llvm.Value v = result.llvmGen(l);
+            l.getBuilder().buildRet(v);
+            /* this is a small hack to allow extra instructions after a return */
+            /* without it, llvm complains that the block does not follow their desired form */
+        } else {
+            l.getBuilder().buildRetVoid();
+        }
         BasicBlock new_block = l.getFunction().appendBasicBlock("after_ret");
         l.getBuilder().positionBuilderAtEnd(new_block);
     }

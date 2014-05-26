@@ -93,7 +93,8 @@ public class LocalVarDecl extends Statement {
             org.llvm.Value v = b.buildAlloca(type.llvmTypeField(), vs.getId().getName());
             /* we only get away with setting the named values for all new frame items because
                MJC doesn't support multiple decls with the same name in the same scope */
-            l.setNamedValue(vs.getId().getName(), v);
+            l.setNamedValue(type.isClass() != null, type.llvmTypeField(),
+                            vs.getId().getName(), v);
             l.markGCRoot(v, type);
         }
         block.llvmGen(l);

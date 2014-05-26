@@ -21,6 +21,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Stack;
 
 import compiler.*;
 import checker.*;
@@ -35,15 +36,48 @@ public class LLVM {
         GCGBLROOT,
         ARRAY_INDEX,
     };
+    class LocalStackVar {
+        private Value v;
+        private String name;
+        private int depth;
+        private TypeRef t;
+        private boolean needsCleanup;
+        public LocalStackVar(int depth, boolean needsCleanup, TypeRef t, String name,
+                             Value v) {
+            this.t = t;
+            this.v = v;
+            this.name = name;
+            this.depth = depth;
+            this.needsCleanup = needsCleanup;
+        }
+        public void cleanUp(LLVM l) {
+            if (needsCleanup) {
+                getBuilder().buildStore(t.constNull(), v);
+            }
+        }
+        public Value getValue() {
+            return v;
+        }
+        public int getDepth() {
+            return depth;
+        }
+        public String getName() {
+            return name;
+        }
+        public TypeRef getType() {
+            return t;
+        }
+    }
+
     private Builder builder;
     private Module module;
     private Value function;
 
-    private Hashtable<String, Value> namedValues;
+    private Stack<Hashtable<String, LocalStackVar>> localVars;
     private Value [] globalFns;
 
     public LLVM() {
-        namedValues = new Hashtable<String, Value>();
+        localVars = new Stack<Hashtable<String, LocalStackVar>>();
         globalFns = new Value[GlobalFn.values().length];
     }
 
@@ -51,17 +85,40 @@ public class LLVM {
         return globalFns[g.ordinal()];
     }
     public Value getNamedValue(String s) {
-        Value v = namedValues.get(s);
-        return v;
+        Hashtable<String, LocalStackVar> locals = localVars.peek();
+        LocalStackVar local = locals.get(s);
+        return local.getValue();
     }
-    public void setNamedValue(String s, Value v) {
+    public void setNamedValue(boolean needsCleanup, TypeRef t, String s, Value v) {
+        Hashtable<String, LocalStackVar> locals = localVars.peek();
         v.setValueName(s);
-        namedValues.put(s, v);
+        locals.put(s, new LocalStackVar(localVars.size(), needsCleanup, t, s, v));
+    }
+    public void enterScope() {
+        Hashtable<String, LocalStackVar> previous = null;
+        Hashtable<String, LocalStackVar> current = new
+        Hashtable<String, LocalStackVar>();
+        if (localVars.size() > 0) {
+            previous = localVars.peek();
+        }
+        localVars.push(current);
+        if (previous != null) {
+            for (LocalStackVar p : previous.values()) {
+                current.put(p.getName(), p);
+            }
+        }
+    }
+    public void leaveScope() {
+        for (LocalStackVar p : localVars.peek().values()) {
+            if (p.getDepth() >= localVars.size()) {
+                p.cleanUp(this);
+            }
+        }
+        localVars.pop();
     }
     public void setBuilder(Builder b) {
         builder = b;
     }
-
     public Builder getBuilder() {
         return builder;
     }
@@ -141,7 +198,8 @@ public class LLVM {
         Module mod = Module.createWithName("llvm_module");
         setModule(mod);
         buildGlobalFns(mod);
-
+        //Entering a "GLOBAL" Scope, the home of static vars.
+        enterScope();
         TypeRef main_entry_type = TypeRef.functionType(Type.INT.llvmType(),
                                   (List)Collections.emptyList());
 
@@ -189,6 +247,8 @@ public class LLVM {
             c.llvmGen(this);
         }
 
+        /* Do NOT leave the global scope */
+        //leaveScope();
         try {
             if (dump) {
                 mod.dumpModule();

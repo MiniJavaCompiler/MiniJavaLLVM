@@ -358,7 +358,8 @@ public class ClassType extends Type {
                 if (f.isStatic()) {
                     org.llvm.Value v = l.getModule().addGlobal(f.llvmTypeField(),
                                        f.getOwner() + "_" + f.getName());
-                    l.setNamedValue(f.getOwner() + "_" + f.getName(), v);
+                    l.setNamedValue(f.getType().isClass() != null, f.llvmTypeField(),
+                                    f.getOwner() + "_" + f.getName(), v);
                     f.setStaticField(v);
 
                     /* basic initialization will suffice for now */

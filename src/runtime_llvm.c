@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-
+#include <stdarg.h>
 
 // #define DEBUG_HEAP
 //#define DEBUG_GC
@@ -19,8 +19,13 @@ extern void MJCStatic_roots();
 /* forward declaration(s) */
 void gc_copy();
 uintptr_t *forward(uintptr_t *p);
-void die_w_msg(char *m) {
-  printf("FATAL: %s\n", m);
+void die_w_msg(char *m, ...) {
+  va_list argptr;
+  va_start(argptr, m);
+  printf("FATAL: ");
+  vprintf(m, argptr);
+  printf("\n");
+  va_end(argptr);
   exit(-1);
 }
 
@@ -318,6 +323,12 @@ int32_t array_length(uintptr_t *a) {
 }
 
 char * MJC_arrayIndex(char *a, int32_t index) {
+  int size;
+  if (!a) {
+    die_w_msg("Array null pointer access");
+  } else if (index >= (size = array_length((uintptr_t*)a)) || index < 0) {
+    die_w_msg("Array Access out of bounds (size %d, element %d)", size, index);
+  }
   return (char *)(((uintptr_t *)a) + index);
 }
 

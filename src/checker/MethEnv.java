@@ -247,12 +247,12 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
             l.setFunction(f);
             BasicBlock entry = f.appendBasicBlock("entry");
             l.getBuilder().positionBuilderAtEnd(entry);
-
+            l.enterScope();
             int n = 0;
             if (!isStatic()) {
                 org.llvm.Value v = l.getBuilder().buildAlloca(f.getParam(n).typeOf(), "this");
                 l.getBuilder().buildStore(f.getParam(n), v);
-                l.setNamedValue("this", v);
+                l.setNamedValue(true, f.getParam(n).typeOf(), "this", v);
                 l.markGCRoot(v, owner);
                 n++;
             }
@@ -260,11 +260,13 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
                 org.llvm.Value v = l.getBuilder().buildAlloca(f.getParam(n).typeOf(),
                                    p.getName());
                 l.getBuilder().buildStore(f.getParam(n), v);
-                l.setNamedValue(p.getName(), v);
+                l.setNamedValue(p.getType().isClass() != null, f.getParam(n).typeOf(),
+                                p.getName(), v);
                 l.markGCRoot(v, p.getType());
                 n++;
             }
             body.llvmGen(l);
+            l.leaveScope();
             if (type == Type.VOID) {
                 l.getBuilder().buildRetVoid();
             } else {
