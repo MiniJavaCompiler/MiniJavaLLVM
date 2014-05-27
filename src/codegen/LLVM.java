@@ -36,6 +36,7 @@ public class LLVM {
         GCROOT,
         GCGBLROOT,
         ARRAY_INDEX,
+        DIE,
     };
     class LocalStackVar {
         private Value v;
@@ -173,6 +174,10 @@ public class LLVM {
         globalFns[GlobalFn.ARRAY_INDEX.ordinal()] = mod.addFunction("MJC_arrayIndex",
                 index_type);
 
+        TypeRef [] die_args = {};
+        TypeRef die_type = TypeRef.functionType(Type.VOID.llvmType(), die_args);
+        globalFns[GlobalFn.DIE.ordinal()] = mod.addFunction("MJC_die", die_type);
+
         TypeRef [] gcroot_args = {Type.PTR.llvmType().pointerType(), Type.PTR.llvmType()};
         TypeRef gcroot_type = TypeRef.functionType(TypeRef.voidType(), gcroot_args);
         globalFns[GlobalFn.GCROOT.ordinal()] = mod.addFunction("llvm.gcroot",
@@ -218,11 +223,17 @@ public class LLVM {
 
         Builder builder = Builder.createBuilderInContext(Context.getModuleContext(mod));
         setBuilder(builder);
+
+        for (StringLiteral s : strings) {
+            s.emitStaticString(this);
+        }
+
         //add statics to gcroot
         org.llvm.Value static_gcroots = mod.addFunction("MJCStatic_roots",
                                         TypeRef.functionType(Type.VOID.llvmType(), (List)Collections.emptyList()));
         BasicBlock entry = static_gcroots.appendBasicBlock("entry");
         builder.positionBuilderAtEnd(entry);
+
 
         for (ClassType c : classes) {
             if (c.getFields() != null) {

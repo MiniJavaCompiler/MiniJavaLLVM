@@ -29,6 +29,9 @@ void die_w_msg(char *m, ...) {
   exit(-1);
 }
 
+void MJC_die() {
+  exit(-1);
+}
 
 #ifndef bool
 typedef int bool;
@@ -41,7 +44,7 @@ enum bool { false, true };
     [length or fwd location]
     [data] <- alloc pointer 'a' points to data
 */
-#define DEF_HEAP_SIZE   500     // heap size in words (4k bytes)
+#define DEF_HEAP_SIZE   1000     // heap size in words (4k bytes)
 #define OBJ_HEADER_SIZE 2
 #define OBJ_HEADER_TYPE_OFFSET   2
 #define OBJ_HEADER_FWDPTR_OFFSET 1

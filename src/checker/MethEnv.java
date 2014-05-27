@@ -204,6 +204,8 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
                     functionVal = l.getGlobalFn(LLVM.GlobalFn.NEW_ARRAY);
                 } else if (functionName.equals("MJC_arrayIndex")) {
                     functionVal = l.getGlobalFn(LLVM.GlobalFn.ARRAY_INDEX);
+                } else if (functionName.equals("MJC_die")) {
+                    functionVal = l.getGlobalFn(LLVM.GlobalFn.DIE);
                 } else {
                     throw new RuntimeException("Unknown Global Function " + functionName);
                 }
@@ -332,6 +334,8 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
             if (getName().equals("putc")) {
                 System.out.print(st.getFrame(8).getChar());
                 return Value.NULL;
+            } else if (getName().equals("die")) {
+                return new DieInvocation(id.getPos()).eval(st);
             }
         }
         Interp.abort("Cannot execute method " + getName()

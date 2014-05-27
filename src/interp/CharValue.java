@@ -22,4 +22,22 @@ public class CharValue extends Value {
     public char getChar() {
         return value;
     }
+    public boolean compare(COMPARE_OP op, Value v) {
+        if (v instanceof CharValue) {
+            char c = v.getChar();
+            switch (op) {
+            case OP_NE:
+                return value != c;
+            case OP_EQ:
+                return value == c;
+            case OP_LE:
+                return value < c;
+            case OP_GT:
+                return value > c;
+            }
+        } else {
+            return false;
+        }
+        return false;
+    }
 }

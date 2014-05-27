@@ -1,0 +1,1 @@
+EXCEPTION: unitTests/arrayAccess2.j:5 Array access out of bounds (index 10, length 5).

@@ -46,7 +46,7 @@ public final class CondAndExpr extends LogicOpExpr {
 
         b.positionBuilderAtEnd(tBranch);
         b.buildStore(right.llvmGen(l), cmptmp);
-        b.buildBr(tBranch);
+        b.buildBr(fBranch);
 
         b.positionBuilderAtEnd(fBranch);
         return b.buildLoad(cmptmp, "cmpres");

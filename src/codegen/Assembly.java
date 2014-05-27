@@ -67,6 +67,7 @@ public class Assembly {
     }
 
     public String name(String n) {
+        n = n.replaceAll("#", "_POUND_");
         n = n.replaceAll("\\[", "_lb_");
         n = n.replaceAll("\\]", "_rb_");
         return LINUX ? n : ("_" + n);
@@ -207,6 +208,12 @@ public class Assembly {
                           StringLiteral [] strings) {
         emit(".file",  "\"" + filename + "\"");
         emit(".globl", mangle("Main", "main"), mangle("MJCStatic", "init"));
+        emit(".data");
+        int n = 0;
+        for (StringLiteral s : strings) {
+            s.emitStaticString(this, n);
+            n++;
+        }
     }
 
     public void emitPrologue(String fname, int localBytes) {

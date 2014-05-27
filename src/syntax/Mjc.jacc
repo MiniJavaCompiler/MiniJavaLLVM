@@ -229,8 +229,8 @@ new     : NEW name '(' args ')'   { $$ = new ConstructorInvocation($2, $4); }
 field	: primary '.' IDENT	{ $$ = new ObjectAccess($1, $3); }
         | SUPER '.' IDENT       { $$ = new SuperAccess($3); }
         | name '[' expr ']'     { NameAccess n = new NameAccess($1);
-                                  $$ = new ArrayAccess(lexer.getPos(), n, $3); }
-        | primary '[' expr ']'  { $$ = new ArrayAccess(lexer.getPos(), $1, $3); }
+                                  $$ = new ArrayAccess(lexer.getPos(), n, $3, true); }
+        | primary '[' expr ']'  { $$ = new ArrayAccess(lexer.getPos(), $1, $3, true); }
         ;
 call    : name '(' args ')'     { $$ = new NameInvocation($1, $3); }
         | primary '.' IDENT '(' args ')'

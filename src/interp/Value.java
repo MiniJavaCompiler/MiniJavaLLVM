@@ -4,7 +4,14 @@
 
 package interp;
 
+
 public abstract class Value {
+    public enum COMPARE_OP {
+        OP_EQ,
+        OP_NE,
+        OP_LE,
+        OP_GT,
+    };
     public static final BoolValue TRUE  = new BoolValue(true);
     public static final BoolValue FALSE = new BoolValue(false);
     public static final ObjValue  NULL  = new ObjValue(null, 0);
@@ -49,4 +56,6 @@ public abstract class Value {
         Interp.abort("Type error: value is not an char");
         return 'X';
     }
+
+    public abstract boolean compare(Value.COMPARE_OP op, Value v);
 }

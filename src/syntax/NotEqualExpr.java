@@ -38,13 +38,8 @@ public final class NotEqualExpr extends RelOpExpr {
     void branchTrue(Assembly a, String lab, int free) {
         branchCond(a, "jnz", lab, free);
     }
-
-    /** Evaluate this expression.
-     */
-    public Value eval(State st) {
-        // Should handle comparisons other than integers ...
-        return BoolValue.make(left.eval(st).getInt()
-                              != right.eval(st).getInt());
+    public Value.COMPARE_OP getInterpRelOp() {
+        return Value.COMPARE_OP.OP_NE;
     }
     public LLVMIntPredicate getllvmRelOp() {
         return LLVMIntPredicate.LLVMIntNE;

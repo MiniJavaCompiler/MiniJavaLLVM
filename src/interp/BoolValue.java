@@ -4,6 +4,8 @@
 
 package interp;
 
+import interp.Value.COMPARE_OP;
+
 /** Provides a representation for Boolean values.
  */
 public class BoolValue extends Value {
@@ -22,5 +24,26 @@ public class BoolValue extends Value {
      */
     public boolean getBool() {
         return value;
+    }
+    public boolean compare(COMPARE_OP op, Value v) {
+        if (v instanceof BoolValue) {
+            boolean c = v.getBool();
+            switch (op) {
+            case OP_NE:
+                return value == c;
+            case OP_EQ:
+                return value != c;
+            case OP_LE:
+                Interp.abort("Type error: Invalid Comparison");
+                return false;
+            case OP_GT:
+                Interp.abort("Type error: Invalid Comparison");
+                return false;
+            }
+        } else {
+            Interp.abort("Type error: Invalid Comparison");
+            return false;
+        }
+        return false;
     }
 }

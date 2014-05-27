@@ -5,55 +5,90 @@ import checker.*;
 import codegen.*;
 import interp.*;
 
+import org.llvm.TypeRef;
+
+import java.util.Hashtable;
 /** Provides a representation for String literals.
  */
 public final class StringLiteral extends Literal {
     private String value;
     private org.llvm.Value actual;
     ClassType stringType = null;
-    ClassType charType = null;
-    Expression built;
-    static int string_lit_temp = 0;
-    private Name name;
-    private NameAccess name_access;
+    ArrayType charArrType = null;
+    StringLiteral master;
+    String x86name;
+    ObjValue interp_obj = null;
+
     public StringLiteral(Position pos, String literal) {
         super(pos);
         this.value = literal;
         this.actual = null;
         this.stringType = null;
-        this.built = null;
-        this.name = null;
-        this.name_access = null;
+        this.master = null;
+        this.x86name = null;
     }
-    public void setName(Id static_class, Id id) {
-        this.name = new Name(new Name(static_class), id);
-    }
-    public Name getName() {
-        return name;
-    }
-
     public String getString() {
         return this.value;
     }
-    public void setLLVMString(org.llvm.Value llvm_string) {
-        actual = llvm_string;
+
+    public void fixString(Context ctxt) {
+        stringType = ctxt.findClass("String");
+        charArrType = ctxt.findClass("char[]").isArray();
+        this.master = ctxt.addStringLiteral(this);
     }
+
     /** Check this expression and return an object that describes its
      *  type (or throw an exception if an unrecoverable error occurs).
      */
     public Type typeOf(Context ctxt, VarEnv env)
     throws Diagnostic {
-        name_access = new NameAccess(name);
-        return name_access.typeOf(ctxt, env);
+        return stringType;
     }
 
     /** Generate code to evaluate this expression and
      *  leave the result in the specified free variable.
      */
     public void compileExpr(Assembly a, int free) {
-        name_access.compileExpr(a, free);
+        if (x86name == null) {
+            master.compileExpr(a, free);
+        } else {
+            a.emit("movl", '$' + a.name(x86name),  a.reg(free));
+        }
     }
 
+    public void emitStaticString(Assembly a, int n) {
+        String [] elements = new String[value.length()];
+        x86name = "str_" + n + "_lit";
+        for (int x = 0; x < value.length(); x++) {
+            elements[x] = Integer.toString((int)value.charAt(x));
+        }
+        String char_name = a.name("char_" + n + "_lit");
+        charArrType.globalInitValue(a, char_name, elements);
+
+        Hashtable<String, String> args = new Hashtable<String, String>();
+        args.put("string", char_name);
+
+        stringType.globalInitValue(a, x86name, args);
+
+    }
+
+    public void emitStaticString(LLVM l) {
+        String name = "static_string";
+        org.llvm.Value chars = l.getModule().addGlobal(charArrType.llvmType(), name);
+        org.llvm.Value str = l.getModule().addGlobal(stringType.llvmType(), name);
+        org.llvm.Value [] elements = new org.llvm.Value[value.length()];
+        for (int x = 0; x < value.length(); x++) {
+            elements[x] = TypeRef.int64Type().constInt(value.charAt(x), false);
+        }
+        chars.setInitializer(charArrType.globalInitValue(l, name, elements));
+
+        Hashtable<String, org.llvm.Value> str_args = new
+        Hashtable<String, org.llvm.Value>();
+        str_args.put("string", chars);
+
+        str.setInitializer(stringType.globalInitValue(l, name, str_args));
+        actual = str;
+    }
     /** Generate code to evaluate this expression and
      *  branch to a specified label if the result is false.
      */
@@ -65,16 +100,31 @@ public final class StringLiteral extends Literal {
      *  branch to a specified label if the result is true.
      */
     void branchTrue(Assembly a, String lab, int free) {
-        name_access.branchTrue(a, lab, free);
+        a.emit("jmp", lab);
     }
 
     /** Evaluate this expression.
      */
     public Value eval(State st) {
-        return name_access.eval(st);
+        if (this.master != this) {
+            return this.master.eval(st);
+        } else if (interp_obj == null) {
+            ArrayValue chars = new ArrayValue(value.length(), charArrType);
+            for (int x = 0; x < value.length(); x++) {
+                chars.setElem(x, new CharValue(value.charAt(x)));
+            }
+            ObjValue str = stringType.newObject();
+            str.setField(stringType.findField("string").getOffset(), chars);
+            interp_obj = str;
+        }
+        return interp_obj;
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
-        return name_access.llvmGen(l);
+        if (this.actual == null) {
+            return this.master.llvmGen(l);
+        } else {
+            return actual;
+        }
     }
 }

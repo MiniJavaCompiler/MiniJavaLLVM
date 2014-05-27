@@ -40,11 +40,8 @@ public final class EqualExpr extends RelOpExpr {
         branchCond(a, "jz", lab, free);
     }
 
-    /** Evaluate this expression.
-     */
-    public Value eval(State st) {
-        // Should handle comparisons other than integers ...
-        return BoolValue.make(left.eval(st).getInt() == right.eval(st).getInt());
+    public Value.COMPARE_OP getInterpRelOp() {
+        return Value.COMPARE_OP.OP_EQ;
     }
 
     public LLVMIntPredicate getllvmRelOp() {

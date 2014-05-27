@@ -9,6 +9,7 @@ import syntax.*;
 import checker.*;
 
 import java.util.ArrayList;
+import java.util.Hashtable;
 
 /** Provides a representation for contexts used during type checking.
  */
@@ -19,14 +20,41 @@ public final class Context extends Phase {
     private int         localBytes;
     private Position pos;
     private ClassType staticClass;
+    private Hashtable<String, StringLiteral> uniqueStrings;
     private StringLiteral [] strings;
+
+    private int staticStringCount;
+    private Id static_class_id;
 
     public Context(Position pos, Handler handler, ClassType[] classes,
                    StringLiteral [] strings) {
         super(handler);
         this.classes = classes;
         this.pos = pos;
+        this.uniqueStrings = new Hashtable<String, StringLiteral>();
         this.strings = strings;
+        this.staticStringCount = 0;
+        this.static_class_id = new Id(pos, "MJCStatic");
+    }
+    public StringLiteral [] getUniqueStrings() {
+        return uniqueStrings.values().toArray(new StringLiteral[0]);
+    }
+    public StringLiteral getFilename(Position pos) {
+        StringLiteral s = null;
+        if ((s = uniqueStrings.get(pos.getFilename())) != null) {
+            return s;
+        } else {
+            throw new RuntimeException("Cannot find matching file string");
+        }
+    }
+    public StringLiteral addStringLiteral(StringLiteral s) {
+        StringLiteral result = null;
+        if ((result = uniqueStrings.get(s.getString())) == null) {
+            staticStringCount++;
+            uniqueStrings.put(s.getString(), s);
+            result = s;
+        }
+        return result;
     }
 
     public ClassType [] getClasses() {
@@ -109,7 +137,6 @@ public final class Context extends Phase {
 
         if (staticClass == null) {
             Id method_id = new Id(pos, "init");
-            Id class_id = new Id(pos, "MJCStatic");
             Modifiers m = new Modifiers(pos);
             m.set(Modifiers.PUBLIC | Modifiers.STATIC);
 
@@ -126,44 +153,15 @@ public final class Context extends Phase {
                     }
                 }
             }
-
-            Type char_arr_class = findClass("char[]");
-            Type string_class = findClass("String");
-            Id tmp_char = new Id(pos, "tmp_char");
-            static_body.add(new LocalVarDecl(pos, char_arr_class, new VarDecls(tmp_char,
-                                             null)));
-            int global_string_index = 0;
-
             for (StringLiteral s : strings) {
-                Id str_id = new Id(pos, "global_string" +  global_string_index++);
-                s.setName(class_id, str_id);
-                decls = new FieldDecl(m, string_class, new VarDecls(str_id,
-                                      (Expression)null)).link(decls);
-                static_body.add(
-                    new ExprStmt(pos,
-                                 new AssignExpr(pos, new NameAccess(new Name(tmp_char)),
-                                                new ConstructorInvocation(new Name(new Id(pos, "char[]")),
-                                                        new Args(new IntLiteral(pos, s.getString().length()), null)))));
-                for (int x = 0; x < s.getString().length(); x++) {
-                    static_body.add(
-                        new ExprStmt(pos,
-                                     new AssignExpr(pos,
-                                                    new ArrayAccess(pos, new NameAccess(new Name(tmp_char)), new IntLiteral(pos,
-                                                            x)),
-                                                    new CharLiteral(pos, s.getString().charAt(x)))));
-                }
-                static_body.add(new ExprStmt(pos,
-                                             new AssignExpr(pos, new NameAccess(s.getName()),
-                                                     new NameInvocation(new Name(new Name(new Id(pos, "String")), new Id(pos,
-                                                             "makeStringChar")),
-                                                             new Args(new NameAccess(new Name(tmp_char)), null)))));
+                s.fixString(this);
             }
             static_body.add(new Return(pos));
 
             decls = new MethDecl(false, m, Type.VOID, method_id,
                                  null, new Block(pos, static_body.toArray(new Statement[0]))).link(decls);
 
-            staticClass = new ClassType(m, class_id, null, decls);
+            staticClass = new ClassType(m, static_class_id, null, decls);
             ClassType [] new_classes = new ClassType[classes.length + 1];
             int x = 0;
             for (ClassType c : classes) {

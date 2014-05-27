@@ -7,6 +7,7 @@ package syntax;
 import compiler.*;
 import checker.*;
 import codegen.*;
+import interp.*;
 
 import org.llvm.binding.LLVMLibrary.LLVMIntPredicate;
 import org.llvm.binding.LLVMLibrary.LLVMRealPredicate;
@@ -49,5 +50,10 @@ public abstract class RelOpExpr extends BinaryOp {
     public org.llvm.Value llvmGen(LLVM l) {
         return l.getBuilder().buildICmp(getllvmRelOp(), left.llvmGen(l),
                                         right.llvmGen(l), "cmptmp");
+    }
+    public abstract Value.COMPARE_OP getInterpRelOp();
+
+    public Value eval(State st) {
+        return BoolValue.make(left.eval(st).compare(getInterpRelOp(), right.eval(st)));
     }
 }

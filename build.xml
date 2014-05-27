@@ -106,10 +106,10 @@
           <arg value="llvm" />
           <arg value="LLVM_HOME=/usr/" />
         </exec>
-        <mkdir dir="llvm-j/build/classes"/>
+        <mkdir dir="build/llvm-j/"/>
         <javac includeantruntime="false" srcdir="llvm-j/src/" 
-               destdir="llvm-j/build/classes/" classpathref="llvm-j.build.classpath" />
-        <jar destfile="${llvm-j.jar}" basedir="llvm-j/build/classes" />
+               destdir="build/llvm-j/" classpathref="llvm-j.build.classpath" />
+        <jar destfile="${llvm-j.jar}" basedir="build/llvm-j/" />
       </else>
     </if>
     <if>

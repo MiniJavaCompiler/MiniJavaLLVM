@@ -3,11 +3,47 @@ class MJC {
     static CPOINTER allocObject(int bytes);
     static CPOINTER allocArray(int bytes, int len);
     static CPOINTER arrayIndex(CPOINTER array, int index);
+    static void die();
+}
+
+class Exception {
+    public static void throw (String msg) {
+        System.out.print("EXCEPTION: ");
+        System.out.println(msg);
+        MJC.die();
+    }
+    public static void throwLoc(String file, int lineno, String message) {
+        String [] items = new String[3];
+        items[0] = file;
+        items[1] = Integer.toString(lineno);
+        items[2] = message;
+        Exception.throw(String.format("%:% %", items));
+    }
 }
 
 class Object {
     public String toString() {
         return "<SomeObject>";
+    }
+}
+
+class Array {
+    public static boolean inBounds(int length, int index) {
+        return index < length && index > -1;
+    }
+    public static boolean boundsCheck(String filename, int lineno, int length,
+                                      int index) {
+        if (inBounds(length, index)) {
+            return true;
+        } else {
+            String msg = "";
+            String [] items = new String[2];
+            items[0] = Integer.toString(index);
+            items[1] = Integer.toString(length);
+            Exception.throwLoc(filename, lineno,
+                               String.format("Array access out of bounds (index %, length %).", items));
+            return false;
+        }
     }
 }
 
@@ -30,6 +66,36 @@ class String {
     }
     public String toString() {
         return this;
+    }
+    public static String format(String format, String [] items) {
+        String result = "";
+        int x = 0;
+        int current_replace = 0;
+        while (x < format.length()) {
+            char c = format.charAt(x);
+            if (c == '%') {
+                if (current_replace < items.length) {
+                    result = result.append(items[current_replace]);
+                    current_replace = current_replace + 1;
+                } else {
+                    Exception.throw("Too few strings provided to format.");
+                }
+            } else {
+                result = result.appendChar(c);
+            }
+            x = x + 1;
+        }
+        return result;
+    }
+    public String appendChar(char c) {
+        char [] result = new char[this.length() + 1];
+        int x = 0;
+        while (x < this.length()) {
+            result[x] = this.string[x];
+            x = x + 1;
+        }
+        result[x] = c;
+        return String.makeStringChar(result);
     }
 
     public String append(String s) {

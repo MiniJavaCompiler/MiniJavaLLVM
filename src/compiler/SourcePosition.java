@@ -50,6 +50,9 @@ public class SourcePosition extends Position {
         this.column = column;
     }
 
+    public String getFilename() {
+        return source.describe();
+    }
     /** Obtain a printable description of the source position.
      */
     public String describe() {

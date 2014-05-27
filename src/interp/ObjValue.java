@@ -70,4 +70,25 @@ public class ObjValue extends Value {
     public Value call(State st, int slot) {
         return cls.call(st, slot);
     }
+    public boolean compare(COMPARE_OP op, Value v) {
+        if (v instanceof ObjValue) {
+            ObjValue c = v.getObj();
+            switch (op) {
+            case OP_NE:
+                return this != c;
+            case OP_EQ:
+                return this == c;
+            case OP_LE:
+                Interp.abort("Type error: Invalid Comparison");
+                return false;
+            case OP_GT:
+                Interp.abort("Type error: Invalid Comparison");
+                return false;
+            }
+        } else {
+            Interp.abort("Type error: Invalid Comparison");
+            return false;
+        }
+        return false;
+    }
 }

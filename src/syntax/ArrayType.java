@@ -14,6 +14,7 @@ import java.util.Arrays;
 import org.llvm.TypeRef;
 import java.util.ArrayList;
 import org.llvm.Builder;
+import java.util.Hashtable;
 
 import org.llvm.binding.LLVMLibrary.LLVMLinkage;
 
@@ -83,5 +84,38 @@ public final class ArrayType extends ClassType {
         } else {
             return false;
         }
+    }
+
+    public void globalInitValue(Assembly a, String name, String [] elements) {
+        Hashtable<String, String> args = new Hashtable<String, String>();
+        String array_name = name + "_array";
+        a.emitLabel(array_name);
+        for (String s : elements) {
+            a.emit(".long", s);
+        }
+        args.put("length", Integer.toString(elements.length));
+        args.put("array", array_name);
+        super.globalInitValue(a, name, args);
+    }
+
+    public org.llvm.Value globalInitValue(LLVM l, String name,
+                                          org.llvm.Value [] elements) {
+        Hashtable<String, org.llvm.Value> args = new
+        Hashtable<String, org.llvm.Value>();
+        org.llvm.Value array = null;
+        if (elements.length > 0) {
+            array = l.getModule().addGlobal(TypeRef.int64Type().arrayType(elements.length),
+                                            name + "_array");
+            array.setInitializer(org.llvm.Value.constArray(Type.PTR.llvmType(),
+                                 Arrays.asList(elements)));
+            //org.llvm.Value [] indices = {Type.INT.llvmType().constInt(0, false), Type.INT.llvmType().constInt(0, false)};
+            //org.llvm.Value ary_ptr = l.getBuilder().buildInBoundsGEP(array, "format", indices);
+        } else {
+            array = TypeRef.int64Type().constNull();
+        }
+        args.put("array", l.getBuilder().buildBitCast(array, Type.PTR.llvmType(),
+                 "cast"));
+        args.put("length", Type.INT.llvmType().constInt(elements.length, true));
+        return super.globalInitValue(l, name, args);
     }
 }

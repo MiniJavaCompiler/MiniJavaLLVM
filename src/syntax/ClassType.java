@@ -419,7 +419,7 @@ public class ClassType extends Type {
         return v;
     }
 
-    public org.llvm.Value globalInitValue(LLVM l,
+    public org.llvm.Value globalInitValue(LLVM l, String name,
                                           Hashtable<String, org.llvm.Value> args) {
         ArrayList<org.llvm.Value> field_defaults = new ArrayList<org.llvm.Value>();
         field_defaults.add(llvmVtableLoc);
@@ -432,7 +432,21 @@ public class ClassType extends Type {
             }
         }
 
-        return org.llvm.Value.constNamedStruct(llvmType(),
-                                               field_defaults.toArray(new org.llvm.Value[0]));
+        return  org.llvm.Value.constNamedStruct(llvmType(),
+                                                field_defaults.toArray(new org.llvm.Value[0]));
+    }
+
+    public void globalInitValue(Assembly a, String name,
+                                Hashtable<String, String> args) {
+        a.emitLabel(a.name(name));
+        a.emit(".long", a.name(getVTName()));
+
+        if (fields != null) {
+            for (FieldEnv f : fields) {
+                if (!f.isStatic()) {
+                    a.emit(".long", args.get(f.getName()));
+                }
+            }
+        }
     }
 }

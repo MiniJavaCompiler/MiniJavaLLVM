@@ -27,6 +27,10 @@ int* MJC_allocObject(int size) {
   return newObj;
 }
 
+void MJC_die() {
+  exit(-1);
+}
+
 int* MJC_allocArray(int elementSize, int len) {
   int size = elementSize * len;
   int* newArr = heap + freeHeap;

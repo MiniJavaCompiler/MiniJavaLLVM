@@ -190,8 +190,7 @@ class Test:
         ]
 
         for test in all_tests:
-            if not test.run(self.verbose):
-                self.passed = False
+            test.run(self.verbose)
 
         self.passed = (self.passed
                        and self.missingRefs() == 0

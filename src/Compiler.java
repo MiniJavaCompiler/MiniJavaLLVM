@@ -85,6 +85,7 @@ public class Compiler {
                 new ArrayType(null, new Id(fake_pos, p.toString()), p));
         }
         Handler handler = new SimpleHandler();
+        string_list.add(new StringLiteral(fake_pos, fake_pos.getFilename()));
         for (String i : input_files) {
             try {
                 Reader  reader = new FileReader(i);
@@ -94,6 +95,7 @@ public class Compiler {
                 if (parser.getClasses() != null) {
                     class_list.addAll(Arrays.asList(parser.getClasses()));
                 }
+                string_list.add(new StringLiteral(fake_pos, source.describe()));
                 string_list.addAll(Arrays.asList(parser.getStrings()));
             } catch (FileNotFoundException e) {
                 handler.report(new Failure("Cannot open input file " +
@@ -114,7 +116,7 @@ public class Compiler {
                     handler.report(new Failure("Cannot open file " +
                                                assemblyFile + " for output"));
                 } else {
-                    assembly.emitStart(inputFile, classes, strings);
+                    assembly.emitStart(inputFile, classes, context.getUniqueStrings());
                     for (int i = 0; i < classes.length; i++) {
                         classes[i].compile(assembly);
                     }
@@ -123,7 +125,8 @@ public class Compiler {
             }
             if (cmd.hasOption("L") || cmd.hasOption("l")) {
                 LLVM llvm = new LLVM();
-                llvm.llvmGen(classes, strings, cmd.getOptionValue("L"), cmd.hasOption("l"));
+                llvm.llvmGen(classes, context.getUniqueStrings(), cmd.getOptionValue("L"),
+                             cmd.hasOption("l"));
             }
             if (cmd.hasOption("I")) {
                 State s = new State();

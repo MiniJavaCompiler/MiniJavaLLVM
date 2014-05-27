@@ -21,6 +21,8 @@ public abstract class Position {
      */
     public abstract String describe();
 
+    public abstract String getFilename();
+
     /** Return a column number for this position.  By convention,
      *  column numbers start at zero.  If no sensible column number
      *  value is available, then we return zero.  Calling methods

@@ -15,12 +15,16 @@ public final class ArrayAccess extends FieldAccess {
     private Expression object;
     private Expression index;
     private ArrayType array_class;
-    public ArrayAccess(Position pos, Expression object, Expression index) {
+    private boolean check_enabled;
+    private Expression array_check;
+    public ArrayAccess(Position pos, Expression object, Expression index,
+                       boolean check_enabled) {
         super(pos);
         this.object = object;
         this.index = index;
+        this.array_check = null;
+        this.check_enabled = check_enabled;
     }
-
     /** Check this expression and return an object that describes its
      *  type (or throw an exception if an unrecoverable error occurs).
      */
@@ -35,6 +39,18 @@ public final class ArrayAccess extends FieldAccess {
             throw new Failure(pos,
             "Index type for array must be int (not " + index_type + ")");
         }
+        if (check_enabled) {
+            array_check = new NameInvocation(new Name(new Name(new Id(pos, "Array")),
+            new Id(pos, "boundsCheck")),
+            new Args(ctxt.getFilename(pos),
+            new Args(new IntLiteral(pos, pos.getRow()),
+            new Args(
+                new ObjectAccess(object, new Id(pos, "length")), new Args(index, null)))));
+        } else {
+            array_check = new IntLiteral(pos, 0); // No Op
+        }
+
+        array_check.typeOf(ctxt, env);
         return cls.getElementType();
     }
 
@@ -42,6 +58,7 @@ public final class ArrayAccess extends FieldAccess {
      *  leave the result in the specified free variable.
      */
     public void compileExpr(Assembly a, int free) {
+        array_check.compileExpr(a, free + 1);
         index.compileExpr(a, free);
         a.emit("imull",  a.immed(array_class.getElementType().getWidth()), a.reg(free));
         a.spill(free + 1);
@@ -57,6 +74,7 @@ public final class ArrayAccess extends FieldAccess {
      *  this expression.
      */
     void saveVar(Assembly a, int free) {
+        array_check.compileExpr(a, free + 1);
         a.spill(free + 1);
         index.compileExpr(a, free + 1);
         a.emit("imull", a.immed(array_class.getElementType().getWidth()),
@@ -73,6 +91,7 @@ public final class ArrayAccess extends FieldAccess {
     /** Evaluate this expression.
      */
     public Value eval(State st) {
+        array_check.eval(st);
         return object.eval(st).getObj()
                .getField(array_class.findField("array").getOffset())
                .getArray().getElem(index.eval(st).getInt());
@@ -81,12 +100,14 @@ public final class ArrayAccess extends FieldAccess {
     /** Save a value in the location specified by this left hand side.
      */
     public void save(State st, Value val) {
+        array_check.eval(st);
         object.eval(st).getObj()
         .getField(array_class.findField("array").getOffset())
         .getArray().setElem(index.eval(st).getInt(), val);
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
+        array_check.llvmGen(l);
         org.llvm.Value array_addr = l.getBuilder().buildStructGEP(
                                         object.llvmGen(l),
                                         array_class.findField("array").getFieldIndex(), "array");
@@ -100,6 +121,7 @@ public final class ArrayAccess extends FieldAccess {
     }
 
     public org.llvm.Value llvmSave(LLVM l, org.llvm.Value r) {
+        array_check.llvmGen(l);
         org.llvm.Value array_addr = l.getBuilder().buildStructGEP(
                                         object.llvmGen(l),
                                         array_class.findField("array").getFieldIndex(), "array");

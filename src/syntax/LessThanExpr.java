@@ -39,12 +39,10 @@ public final class LessThanExpr extends RelOpExpr {
         branchCond(a, "jl", lab, free);
     }
 
-    /** Evaluate this expression.
-     */
-    public Value eval(State st) {
-        // Should handle comparisons other than integers ...
-        return BoolValue.make(left.eval(st).getInt() < right.eval(st).getInt());
+    public Value.COMPARE_OP getInterpRelOp() {
+        return Value.COMPARE_OP.OP_LE;
     }
+
     public LLVMIntPredicate getllvmRelOp() {
         return LLVMIntPredicate.LLVMIntSLT;
     }
