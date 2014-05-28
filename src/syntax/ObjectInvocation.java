@@ -20,7 +20,7 @@ public class ObjectInvocation extends Invocation {
 
     public ObjectInvocation(Expression object, Id id, Args args) {
         super(id.getPos(), args);
-        this.object = object;
+        this.object = new NullCheck(pos, object);
         this.name   = id.getName();
     }
 

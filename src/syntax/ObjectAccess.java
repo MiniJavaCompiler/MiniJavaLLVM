@@ -18,7 +18,7 @@ public final class ObjectAccess extends FieldAccess {
 
     public ObjectAccess(Expression object, Id id) {
         super(id.getPos());
-        this.object = object;
+        this.object = new NullCheck(pos, object);
         this.name   = id.getName();
     }
 

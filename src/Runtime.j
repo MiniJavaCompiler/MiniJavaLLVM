@@ -25,6 +25,12 @@ class Object {
     public String toString() {
         return "<SomeObject>";
     }
+    public static Object nullCheck(String filename, int lineno, Object o) {
+        if (o == null) {
+            Exception.throwLoc(filename, lineno, "Null Reference");
+        }
+        return o;
+    }
 }
 
 class Array {
