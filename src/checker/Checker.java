@@ -45,8 +45,7 @@ public class Checker {
         MjcLexer    lexer   = new MjcLexer(handler, source);
         Parser      parser  = new Parser(handler, lexer);
         ClassType[] classes = parser.getClasses();
-        StringLiteral[] strings = parser.getStrings();
-        if (new Context(fake_pos, handler, classes, strings).check() != null) {
+        if (new Context(fake_pos, handler, classes).check() != null) {
             System.out.println(
                 "No static errors found in \"" + inputFile + "\"");
         }

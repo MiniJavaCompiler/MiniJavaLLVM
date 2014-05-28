@@ -131,15 +131,24 @@ class Test:
         x86_file = testname + ".x86.out"
         interp_file = testname + ".interp.out"
         
-
+        #no comparisons, just clean them up
+        intermediate_files = [
+            llvm_object,
+            bitcode_file,
+            x86_asm_file,
+            x86_compiled,
+            llvm_exec,            
+        ]
+        #these will all be compared to each other
         run_output = [
             llvm_file,
             x86_file,
             interp_file
         ]
+        #these are expected to have corresponding refs
         out_files = [gcc_file, mjc_file]
 
-        for o in out_files + run_output:
+        for o in out_files + run_output + intermediate_files:
             if os.path.exists(o):
                 os.remove(o)
 

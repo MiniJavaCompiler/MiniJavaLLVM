@@ -26,26 +26,16 @@ public final class Context extends Phase {
     private int staticStringCount;
     private Id static_class_id;
 
-    public Context(Position pos, Handler handler, ClassType[] classes,
-                   StringLiteral [] strings) {
+    public Context(Position pos, Handler handler, ClassType[] classes) {
         super(handler);
         this.classes = classes;
         this.pos = pos;
         this.uniqueStrings = new Hashtable<String, StringLiteral>();
-        this.strings = strings;
         this.staticStringCount = 0;
         this.static_class_id = new Id(pos, "MJCStatic");
     }
     public StringLiteral [] getUniqueStrings() {
         return uniqueStrings.values().toArray(new StringLiteral[0]);
-    }
-    public StringLiteral getFilename(Position pos) {
-        StringLiteral s = null;
-        if ((s = uniqueStrings.get(pos.getFilename())) != null) {
-            return s;
-        } else {
-            throw new RuntimeException("Cannot find matching file string");
-        }
     }
     public StringLiteral addStringLiteral(StringLiteral s) {
         StringLiteral result = null;
@@ -152,9 +142,6 @@ public final class Context extends Phase {
                         }
                     }
                 }
-            }
-            for (StringLiteral s : strings) {
-                s.fixString(this);
             }
             static_body.add(new Return(pos));
 

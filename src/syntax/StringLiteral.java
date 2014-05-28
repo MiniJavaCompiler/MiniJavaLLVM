@@ -30,18 +30,14 @@ public final class StringLiteral extends Literal {
     public String getString() {
         return this.value;
     }
-
-    public void fixString(Context ctxt) {
-        stringType = ctxt.findClass("String");
-        charArrType = ctxt.findClass("char[]").isArray();
-        this.master = ctxt.addStringLiteral(this);
-    }
-
     /** Check this expression and return an object that describes its
      *  type (or throw an exception if an unrecoverable error occurs).
      */
     public Type typeOf(Context ctxt, VarEnv env)
     throws Diagnostic {
+        stringType = ctxt.findClass("String");
+        charArrType = ctxt.findClass("char[]").isArray();
+        this.master = ctxt.addStringLiteral(this);
         return stringType;
     }
 
@@ -49,7 +45,7 @@ public final class StringLiteral extends Literal {
      *  leave the result in the specified free variable.
      */
     public void compileExpr(Assembly a, int free) {
-        if (x86name == null) {
+        if (this != master) {
             master.compileExpr(a, free);
         } else {
             a.emit("movl", '$' + a.name(x86name),  a.reg(free));
@@ -121,7 +117,7 @@ public final class StringLiteral extends Literal {
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
-        if (this.actual == null) {
+        if (this != master) {
             return this.master.llvmGen(l);
         } else {
             return actual;

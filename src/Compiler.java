@@ -77,7 +77,6 @@ public class Compiler {
     static void compile(String inputFile, CommandLine cmd) {
         String [] input_files = {inputFile, "src/Runtime.j"};
         ArrayList<ClassType> class_list = new ArrayList<ClassType>();
-        ArrayList<StringLiteral> string_list = new ArrayList<StringLiteral>();
         Source fake = new JavaSource(null, "<MJCInternal>", null);
         Position fake_pos = new SourcePosition(fake, 0, 0);
         for (Type p : Type.getArrayPrimitives()) {
@@ -85,7 +84,6 @@ public class Compiler {
                 new ArrayType(null, new Id(fake_pos, p.toString()), p));
         }
         Handler handler = new SimpleHandler();
-        string_list.add(new StringLiteral(fake_pos, fake_pos.getFilename()));
         for (String i : input_files) {
             try {
                 Reader  reader = new FileReader(i);
@@ -95,8 +93,6 @@ public class Compiler {
                 if (parser.getClasses() != null) {
                     class_list.addAll(Arrays.asList(parser.getClasses()));
                 }
-                string_list.add(new StringLiteral(fake_pos, source.describe()));
-                string_list.addAll(Arrays.asList(parser.getStrings()));
             } catch (FileNotFoundException e) {
                 handler.report(new Failure("Cannot open input file " +
                                            i));
@@ -104,9 +100,8 @@ public class Compiler {
         }
 
         ClassType [] classes = class_list.toArray(new ClassType[0]);
-        StringLiteral [] strings = string_list.toArray(new StringLiteral[0]);
         MethEnv main = null;
-        Context context = new Context(fake_pos, handler, classes, strings);
+        Context context = new Context(fake_pos, handler, classes);
         if ((main = context.check()) != null) {
             classes = context.getClasses();
             if (cmd.hasOption("x")) {

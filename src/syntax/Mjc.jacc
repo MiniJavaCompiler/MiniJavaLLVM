@@ -216,7 +216,7 @@ primary : literal
         | call
         ;
 literal : INTLIT
-        | STRING                { addString($1); $$ = $1;}
+        | STRING                { $$ = $1;}
         | CHARLIT               { $$ = $1; }
         | TRUE                  { $$ = new BooleanLiteral($1, true); }
         | FALSE                 { $$ = new BooleanLiteral($1, false); }
@@ -264,10 +264,6 @@ args1   : args1 ',' expr        { $$ = new Args($3, $1); }
         report(new Failure(lexer.getPos(), msg));
     }
 
-    private void addString(StringLiteral str) {
-            string_list.add(str);
-    }
-
     private void addClass(ClassType cls) {
         if (classes==null) {
             classes = new ClassType[1];
@@ -281,9 +277,6 @@ args1   : args1 ',' expr        { $$ = new Args($3, $1); }
         classes[used++] = cls;
     }
 
-    public StringLiteral [] getStrings() {
-           return string_list.toArray(new StringLiteral[0]);
-    }
     public ClassType[] getClasses() {
         if (parsed) {
             ClassType[] result = new ClassType[used];
