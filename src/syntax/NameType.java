@@ -34,6 +34,9 @@ public final class NameType extends Type {
     public void llvmGenTypes(LLVM l) {
         throw new RuntimeException("Type has not been determined.");
     }
+    public Expression defaultExpr(Position pos) {
+        throw new RuntimeException("Type has not been determined.");
+    }
     /** Check to ensure that this is a valid type.  Used to deal with
      *  types that are specified by name, which cannot be properly
      *  resolved until parsing is complete.
