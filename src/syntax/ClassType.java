@@ -32,8 +32,6 @@ public class ClassType extends Type {
     private int       width;    // # bytes for objects of this class
     private int       vfuns;    // # entries in vtable
     private MethEnv[] vtable;   // virtual function table for this class
-
-    private MethEnv constructor;
     private TypeRef llvmType;
     private TypeRef llvmVtable;
     private org.llvm.Value llvmVtableLoc;
@@ -182,8 +180,8 @@ public class ClassType extends Type {
                 }
             }
             if (constructor_count > 1) {
-                new Failure(id.getPos(),
-                            "Only one constructor is allowed per class.");
+                ctxt.report(new Failure(id.getPos(),
+                                        "Only one constructor is allowed per class."));
             }
             boolean has_constructor = constructor_count != 0;
 

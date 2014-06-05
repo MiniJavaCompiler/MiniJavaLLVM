@@ -11,7 +11,6 @@ import interp.*;
 public class CastExpr extends Expression {
     Expression needsCast;
     Type castType;
-    Type exprType;
     public CastExpr(Position pos, Type castType, Expression needsCast) {
         super(pos);
         this.castType = castType;
@@ -21,7 +20,7 @@ public class CastExpr extends Expression {
     public Type typeOf(Context ctxt, VarEnv env)
     throws Diagnostic {
         castType = castType.check(ctxt);
-        exprType = needsCast.typeOf(ctxt, env);
+        needsCast.typeOf(ctxt, env);
         return castType;
     }
 

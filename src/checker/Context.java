@@ -21,8 +21,6 @@ public final class Context extends Phase {
     private Position pos;
     private ClassType staticClass;
     private Hashtable<String, StringLiteral> uniqueStrings;
-    private StringLiteral [] strings;
-
     private int staticStringCount;
     private Id static_class_id;
 

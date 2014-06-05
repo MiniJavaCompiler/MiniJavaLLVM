@@ -40,8 +40,9 @@ public final class IfThenElse extends Statement {
         } catch (Diagnostic d) {
             ctxt.report(d);
         }
-        return (ifTrue.check(ctxt, env, frameOffset) &
-                (ifFalse == null || ifFalse.check(ctxt, env, frameOffset)));
+        boolean t_check = ifTrue.check(ctxt, env, frameOffset);
+        boolean f_check = (ifFalse == null || ifFalse.check(ctxt, env, frameOffset));
+        return t_check && f_check;
     }
 
     /** Emit code to execute this statement.

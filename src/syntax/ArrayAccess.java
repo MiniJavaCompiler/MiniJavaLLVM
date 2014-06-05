@@ -15,7 +15,6 @@ public final class ArrayAccess extends FieldAccess {
     private Expression object;
     private Expression index;
     private ArrayType array_class;
-    private boolean check_enabled;
     private Expression array_check;
     public ArrayAccess(Position pos, Expression object, Expression index,
                        boolean check_enabled) {
@@ -23,7 +22,6 @@ public final class ArrayAccess extends FieldAccess {
         this.object = object;
         this.index = index;
         this.array_check = null;
-        this.check_enabled = check_enabled;
         if (check_enabled) {
             array_check = new NameInvocation(
                 new Name(new Name(new Id(pos, "Array")), new Id(pos, "boundsCheck")),

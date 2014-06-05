@@ -69,15 +69,17 @@ public class SourcePosition extends Position {
             buf.append("line ");
             buf.append(row);
         }
-        String line = source.getLine(row);
-        if (line != null) {
-            buf.append('\n');
-            buf.append(line);
-            buf.append('\n');
-            for (int i = 0; i < column; i++) {
-                buf.append(' ');
+        if (source != null) {
+            String line = source.getLine(row);
+            if (line != null) {
+                buf.append('\n');
+                buf.append(line);
+                buf.append('\n');
+                for (int i = 0; i < column; i++) {
+                    buf.append(' ');
+                }
+                buf.append('^');
             }
-            buf.append('^');
         }
         return (buf.length() == 0) ? "input" : buf.toString();
     }

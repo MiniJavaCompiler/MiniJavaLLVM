@@ -122,7 +122,6 @@ public final class ArrayType extends ClassType {
                                    elements.length), name + "_array");
         array.setInitializer(org.llvm.Value.constArray(TypeRef.int64Type(),
                              Arrays.asList(elements)));
-        org.llvm.Value [] indices = {Type.INT.llvmType().constInt(0, false), Type.INT.llvmType().constInt(0, false)};
         org.llvm.Value ary_ptr = l.getBuilder().buildStructGEP(array, 0, "array_loc");
         args.put("array", l.getBuilder().buildBitCast(ary_ptr, Type.PTR.llvmType(),
                  "ptr_cast"));

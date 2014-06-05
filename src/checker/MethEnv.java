@@ -43,7 +43,6 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
     private org.llvm.Value functionVal;
 
     private boolean isMain;
-    private boolean isPrintf;
     private boolean isConstructor;
 
     public MethEnv(boolean isConstructor,
@@ -59,7 +58,6 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
         this.llvmFuncType = null;
         this.functionVal = null;
         this.isMain = false;
-        this.isPrintf = false;
         this.isConstructor = isConstructor;
     }
     public void updateBody(Statement new_body) {

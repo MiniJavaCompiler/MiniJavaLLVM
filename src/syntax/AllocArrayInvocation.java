@@ -18,7 +18,6 @@ import org.llvm.TypeRef;
 public class AllocArrayInvocation extends ExternalInvocation {
     private ArrayType arrayType;
     private Type array;
-    private Type elem;
     private Expression size;
     public AllocArrayInvocation(Position pos, Type array, Type elem,
                                 Expression size) {
@@ -27,7 +26,6 @@ public class AllocArrayInvocation extends ExternalInvocation {
             new Args(size,
                      new Args(new TypeLen(pos, elem), null)));
         this.array = array;
-        this.elem = elem;
         this.size = size;
     }
     public Type typeOf(Context ctxt, VarEnv env)

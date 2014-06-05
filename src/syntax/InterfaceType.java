@@ -91,10 +91,4 @@ public final class InterfaceType extends ClassType {
             return false;
         }
     }
-    public void addMethod(Context ctxt, Boolean is_constructor, Modifiers mods,
-                          Id id, Type type,
-                          VarEnv params, Statement body) {
-        Position pos = id.getPos();
-        super.addMethod(ctxt, is_constructor, mods, id, type, params, body);
-    }
 }

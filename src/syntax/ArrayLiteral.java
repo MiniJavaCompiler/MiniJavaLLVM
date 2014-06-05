@@ -38,7 +38,7 @@ public final class ArrayLiteral extends Literal {
     throws Diagnostic {
         ArrayType a_type = type.check(ctxt).isArray();
         if (a_type == null) {
-            throw new Failure(pos, "ArrayLiteral Type must be array type, not " + a_type);
+            throw new Failure(pos, "ArrayLiteral Type must be array type not " + type);
         } else {
             Type element = a_type.getElementType();
             for (Expression e : literals) {

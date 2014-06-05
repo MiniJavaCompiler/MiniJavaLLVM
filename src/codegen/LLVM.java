@@ -182,9 +182,6 @@ public class LLVM {
         TypeRef gcroot_type = TypeRef.functionType(TypeRef.voidType(), gcroot_args);
         globalFns[GlobalFn.GCROOT.ordinal()] = mod.addFunction("llvm.gcroot",
                                                gcroot_type);
-
-        TypeRef program_entry_type = TypeRef.functionType(Type.VOID.llvmType(),
-                                     (List)Collections.emptyList());
     }
 
     public void markGCRoot(Value v, Type type) {
@@ -195,7 +192,7 @@ public class LLVM {
             org.llvm.Value meta =
                 TypeRef.int8Type().pointerType().constNull();  // TODO: replace with type data
             org.llvm.Value [] args = {res, meta};
-            org.llvm.Value gc = b.buildCall(getGlobalFn(LLVM.GlobalFn.GCROOT), "", args);
+            b.buildCall(getGlobalFn(LLVM.GlobalFn.GCROOT), "", args);
         }
     }
 
@@ -206,9 +203,6 @@ public class LLVM {
         buildGlobalFns(mod);
         //Entering a "GLOBAL" Scope, the home of static vars.
         enterScope();
-        TypeRef main_entry_type = TypeRef.functionType(Type.INT.llvmType(),
-                                  (List)Collections.emptyList());
-
         ClassType string = null;
         ClassType char_arr = null;
         for (ClassType c : classes) {
