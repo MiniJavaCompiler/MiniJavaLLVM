@@ -21,10 +21,12 @@ import org.llvm.binding.LLVMLibrary.LLVMLinkage;
 /** Provides a representation for class types.
  */
 public class ClassType extends Type {
+    private static int globalClassId = 0;
     private Modifiers mods;
     private Id        id;
     private Type      extendsType;
-    protected Decls     decls;
+    private Type[]    implementsType;
+    private Decls     decls;
     private FieldEnv  fields;
     private MethEnv   methods;
     private int       width;    // # bytes for objects of this class
@@ -35,21 +37,31 @@ public class ClassType extends Type {
     private TypeRef llvmType;
     private TypeRef llvmVtable;
     private org.llvm.Value llvmVtableLoc;
-
+    private int classId;
     private int fieldCount;
-    public ClassType(Modifiers mods, Id id, Type extendsType, Decls decls) {
+    public ClassType(Modifiers mods, Id id, Type extendsType, Type[] implementsType,
+                     Decls decls) {
         this.mods        = mods;
         this.id          = id;
         this.extendsType = null;
+        this.implementsType = implementsType;
         if (extendsType != null) {
             this.extendsType = extendsType;
         } else if (!id.getName().equals("Object")) {
             this.extendsType = new NameType(new Name(new Id(id.getPos(), "Object")));
         }
-        this.decls       = decls;
+        this.decls    = decls;
         this.llvmType = null;
         this.llvmVtable = null;
         this.fieldCount = 1;  /* always reserve one spot for vtable */
+        this.classId = globalClassId++;
+    }
+
+    public int getClassId() {
+        return classId;
+    }
+    public Modifiers getMods() {
+        return mods;
     }
 
     public org.llvm.Value getVtableLoc() {
@@ -121,10 +133,12 @@ public class ClassType extends Type {
      *  cycles in the class hierarchy, and to process (but not yet
      *  check) any definitions that it contains.
      */
-    public void checkClass(Context ctxt) {
+    public void checkClass(Context ctxt)
+    throws Diagnostic {
         if (level == CHECKING) {
-            ctxt.report(new Failure(id.getPos(),
-                                    "Cyclic class hierarchy for class " + id));
+            /* cannot proceed after this since many method searches rely on being able to terminate */
+            throw new Failure(id.getPos(),
+            "Cyclic class hierarchy for class " + id);
         } else if (level == UNCHECKED) {
             ClassType extendsClass = null;
             if (extendsType != null) {
@@ -132,14 +146,15 @@ public class ClassType extends Type {
             }
             if (extendsType != null) {
                 if (this.equal(extendsType)) {
-                    ctxt.report(new Failure(id.getPos(),
-                                            "Class " + id + " extends itself!"));
+                    /* cannot proceed after this since many method searches rely on being able to terminate */
+                    throw new Failure(id.getPos(),
+                                      "Class " + id + " extends itself!");
                 }
                 extendsClass = extendsType.isClass();
                 if (extendsClass == null) {
+                    extendsType = null;
                     ctxt.report(new Failure(id.getPos(),
                                             "Illegal superclass"));
-                    extendsType = null;
                 } else {
                     level = CHECKING;
                     extendsClass.checkClass(ctxt);
@@ -160,14 +175,19 @@ public class ClassType extends Type {
                 decls.addToClass(ctxt, this);
             }
             MethEnv menv = methods;
-            boolean has_constructor = false;
+            int constructor_count = 0;
             for (; menv != null; menv = menv.getNext()) {
                 if (menv.isConstructor()) {
-                    has_constructor = true;
+                    constructor_count++;
                 }
             }
+            if (constructor_count > 1) {
+                new Failure(id.getPos(),
+                            "Only one constructor is allowed per class.");
+            }
+            boolean has_constructor = constructor_count != 0;
 
-            if (!has_constructor) {
+            if (!has_constructor && this.isInterface() == null) {
                 /* if no constructor, add a default with nothing to it */
                 Position pos = getPos();
                 Modifiers m = new Modifiers(pos);
@@ -176,7 +196,39 @@ public class ClassType extends Type {
                                                  new Statement[0]));
                 new_cons.addToClass(ctxt, this);
             }
+            ArrayList<Statement> init_stmts = new ArrayList<Statement>();
+            if (fields != null) {
+                for (FieldEnv f : fields) {
+                    if (!f.isStatic() && f.getInitExpr() != null) {
+                        init_stmts.add(new ExprStmt(f.getPos(),
+                                                    new AssignExpr(f.getPos(),
+                                                            new ObjectAccess(new This(f.getPos()), f.getId()), f.getInitExpr())));
 
+                    }
+                }
+            }
+            Position pos = id.getPos();
+            if (isInterface() == null) {
+                init_stmts.add(new ExprStmt(pos,
+                                            new AssignExpr(pos, new ObjectAccess(new This(pos), new Id(pos, "classId")),
+                                                    new IntLiteral(pos, classId))));
+            }
+
+            Statement init_block = new Block(id.getPos(),
+                                             init_stmts.toArray(new Statement[0]));
+            menv = methods;
+            for (; menv != null; menv = menv.getNext()) {
+                if (menv.isConstructor()) {
+                    /* add non-static initialization to constructor */
+                    menv.updateBody(
+                        new Block(menv.getPos(),
+                    new Statement[] {
+                        init_block,
+                        menv.getBody()
+                    }
+                                 ));
+                }
+            }
             // Finally, build vtable
             vtable = new MethEnv[vfuns];
             if (vfuns > 0) {
@@ -187,7 +239,36 @@ public class ClassType extends Type {
                 }
                 MethEnv.addToVTable(methods, vtable);
             }
+            verifyInterfaces(ctxt);
         }
+    }
+    private void verifyInterfaces(Context ctxt)
+    throws Diagnostic {
+        ArrayList<Type> new_types = new ArrayList<Type>();
+        for (Type t : implementsType) {
+            Type checked = t.check(ctxt);
+            InterfaceType iface;
+            if ((iface = checked.isInterface()) == null) {
+                ctxt.report(new Failure(id.getPos(),
+                "Can only implement interface types. " + checked + " is not an interface."));
+            } else {
+                iface.checkClass(ctxt);
+                for (MethEnv iface_meth : iface.getVtable()) {
+                    MethEnv this_meth = findMethod(iface_meth.getName());
+                    if (this_meth == null) {
+                        ctxt.report(new Failure(id.getPos(),
+                                                id.getName() + " does not implement method " + iface_meth.getName() + " from " +
+                                                iface_meth.getOwner()));
+                    } else if (!this_meth.eqMethSig(iface_meth)) {
+                        ctxt.report(new Failure(this_meth.getPos(),
+                                                id.getName() + " does not match signature of " + iface_meth.getName() + " from "
+                                                + iface_meth.getOwner()));
+                    }
+                }
+                new_types.add(checked);
+            }
+        }
+        implementsType = new_types.toArray(new Type[0]);
     }
 
     /** Return the superclass, if any, of this class.
@@ -209,6 +290,29 @@ public class ClassType extends Type {
         return (that != null && that.id.sameId(this.id));
     }
 
+    public ArrayList<ClassType> possibleInstances() {
+        ArrayList<ClassType> instancesof = new ArrayList<ClassType>();
+        if (extendsType != null && extendsType.isClass() != null) {
+            instancesof.addAll(extendsType.isClass().possibleInstances());
+        }
+        for (Type t : implementsType) {
+            if (t.isClass() != null) {
+                instancesof.addAll(t.isClass().possibleInstances());
+            }
+        }
+        instancesof.add(this);
+        return instancesof;
+    }
+    public Expression [] instancesExpr() {
+        ArrayList<ClassType> instancesof = possibleInstances();
+        Expression [] es = new Expression[instancesof.size()];
+        int x = 0;
+        for (ClassType c : instancesof) {
+            es[x] = new IntLiteral(id.getPos(), c.getClassId());
+            x++;
+        }
+        return es;
+    }
     /** Add a new field to this class.
      */
     public void addField(Context ctxt, Modifiers mods, Id id, Type type,
@@ -303,32 +407,34 @@ public class ClassType extends Type {
         a.emitVTable(this, width, vtable);
     }
 
-    private ArrayList llvmFields() {
-        ArrayList<TypeRef> llvm_fields = new ArrayList<TypeRef>();
+    public ArrayList<FieldEnv> nonStaticFields() {
+        ArrayList<FieldEnv> llvm_fields = new ArrayList<FieldEnv>();
 
         if (extendsType != null) {
-            llvm_fields.addAll(((ClassType)extendsType).llvmFields());
-            /* remove the vtable entry for the parent type */
-            llvm_fields.remove(0);
+            llvm_fields.addAll(((ClassType)extendsType).nonStaticFields());
         } else {
-            llvm_fields = new ArrayList<TypeRef>();
+            llvm_fields = new ArrayList<FieldEnv>();
         }
-        /* insert vtable entry for current */
-        llvm_fields.add(0, getLLVMVtable().pointerType());
-
         if (fields != null) {
             for (FieldEnv f : fields) {
                 TypeRef t;
-                if (f.getType() == this) {
-                    t = llvmType().pointerType();
-                } else {
-                    t = f.llvmType();
-                    if (f.getType().isClass() != null) {
-                        t = t.pointerType();
-                    }
+                if (!f.isStatic()) {
+                    llvm_fields.add(f);
                 }
-                llvm_fields.add(t);
             }
+        }
+        return llvm_fields;
+    }
+
+    private ArrayList llvmFields() {
+        ArrayList<FieldEnv> all_fields = nonStaticFields();
+        ArrayList<TypeRef> llvm_fields = new ArrayList<TypeRef>();
+
+        /* insert vtable entry for current */
+        llvm_fields.add(0, getLLVMVtable().pointerType());
+
+        for (FieldEnv f : all_fields) {
+            llvm_fields.add(f.llvmTypeField());
         }
 
         return llvm_fields;
@@ -422,16 +528,20 @@ public class ClassType extends Type {
     public org.llvm.Value globalInitValue(LLVM l, String name,
                                           Hashtable<String, org.llvm.Value> args) {
         ArrayList<org.llvm.Value> field_defaults = new ArrayList<org.llvm.Value>();
+        args.put("classId", TypeRef.int32Type().constInt(classId, false));
         field_defaults.add(llvmVtableLoc);
 
-        if (fields != null) {
-            for (FieldEnv f : fields) {
-                if (!f.isStatic()) {
+        for (FieldEnv f : nonStaticFields()) {
+            if (!f.isStatic()) {
+                if (args.get(f.getName()) != null) {
                     field_defaults.add(args.get(f.getName()));
+                } else {
+                    System.out.println("WARNING: Missing Initialization for " + f.getOwner() + " " +
+                                       f.getName());
+                    field_defaults.add(f.getType().defaultValue());
                 }
             }
         }
-
         return  org.llvm.Value.constNamedStruct(llvmType(),
                                                 field_defaults.toArray(new org.llvm.Value[0]));
     }
@@ -441,12 +551,21 @@ public class ClassType extends Type {
         a.emitLabel(a.name(name));
         a.emit(".long", a.name(getVTName()));
 
-        if (fields != null) {
-            for (FieldEnv f : fields) {
-                if (!f.isStatic()) {
+        args.put("classId", Integer.toString(classId));
+        for (FieldEnv f : nonStaticFields()) {
+            if (!f.isStatic()) {
+                if (args.get(f.getName()) != null) {
                     a.emit(".long", args.get(f.getName()));
+                } else {
+                    System.out.println("WARNING: Missing Initialization for " + f.getOwner() + " " +
+                                       f.getName());
+                    a.emit(".long", "0");
                 }
             }
         }
+    }
+
+    public Expression defaultExpr(Position pos) {
+        return new CastExpr(pos, this, new NullLiteral(pos));
     }
 }

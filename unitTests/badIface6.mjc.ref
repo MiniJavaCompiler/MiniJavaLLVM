@@ -1,0 +1,6 @@
+ERROR: "unitTests/badIface6.j", line 14
+SomeOtherClass does not match signature of test from Iface
+
+ERROR: "unitTests/badIface6.j", line 8
+SomeClass does not match signature of other from Iface
+

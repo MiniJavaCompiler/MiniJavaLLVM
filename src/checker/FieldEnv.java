@@ -77,11 +77,10 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
         if (env != null) {
             for (FieldEnv f : env) {
                 try {
-                    if (!f.isStatic() && f.getInitExpr() != null) {
-                        ctxt.report(new Failure("Non-static members cannot have initializers."));
-                    } else if (f.isStatic() && f.getInitExpr() != null
-                               && !f.getType().isSuperOf(f.getInitExpr().typeOf(ctxt, null))) {
-                        ctxt.report(new Failure("Type of static member initialization does not match"));
+                    if (f.getInitExpr() != null
+                        && !f.getType().isSuperOf(f.getInitExpr().typeOf(ctxt, null))) {
+                        ctxt.report(new Failure("Type of member initialization does not match." +
+                                                f.getName()));
                     }
                 } catch (Diagnostic d) {
                     ctxt.report(d);

@@ -1,3 +1,6 @@
 [submodule "llvm-j"]
 	path = llvm-j
 	url = https://github.com/crzysdrs/llvm-j
+[submodule "llvm"]
+	path = llvm
+	url = git@github.com:llvm-mirror/llvm.git

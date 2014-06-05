@@ -62,7 +62,9 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
         this.isPrintf = false;
         this.isConstructor = isConstructor;
     }
-
+    public void updateBody(Statement new_body) {
+        this.body = new_body;
+    }
     public boolean isMain() {
         return this.isMain;
     }
@@ -74,6 +76,9 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
             llvmGenTypes(l);
         }
         return functionVal;
+    }
+    public VarEnv getParams() {
+        return params;
     }
     public Iterator<MethEnv> iterator() {
         return new ListIterator<MethEnv>(this);
@@ -103,6 +108,10 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
     /** Test to see whether another signature matches the signature of this
      *  method.
      */
+    public boolean eqMethSig(MethEnv other) {
+        return eqSig(other.type, other.params);
+    }
+
     public boolean eqSig(Type type, VarEnv params) {
         return ((this.type == null && type == null) ||
                 (this.type != null && type != null && this.type.equal(type))) &&
@@ -122,9 +131,9 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
     void checkMethod(Context ctxt) {
         if (body != null) {
             ctxt.setCurrMethod(this);
-            if (body.check(ctxt, params, 0) && getType() != Type.VOID) {
+            if (body.check(ctxt, params, 0) && !type.equal(Type.VOID)) {
                 ctxt.report(new Failure(body.getPos(),
-                                        "Method does not return a value"));
+                                        "Method does not return a value, needs " + type));
             }
             localBytes = ctxt.getLocalBytes();
             ctxt.setCurrMethod(null);
@@ -223,16 +232,10 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
                 llvm_formals.add(owner.llvmType().pointerType()); //this pointer
             }
             for (VarEnv p = params; p != null; p = p.getNext()) {
-                TypeRef formal = p.getType().llvmType();
-                if (p.getType().isClass() != null) {
-                    formal = formal.pointerType();
-                }
+                TypeRef formal = p.getType().llvmTypeField();
                 llvm_formals.add(formal);
             }
-            TypeRef return_type = type.llvmType();
-            if (type.isClass() != null) {
-                return_type = return_type.pointerType();
-            }
+            TypeRef return_type = type.llvmTypeField();
             llvmFuncType = TypeRef.functionType(return_type, llvm_formals);
         }
         return llvmFuncType;
@@ -284,7 +287,12 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
         int argReg = 0;
         if (!isStatic()) {
             a.emit("pushl", a.reg(0));
-            a.emit("movl", a.indirect(0, a.reg(0)), a.reg(0));
+            InterfaceType iface = owner.isInterface();
+            if (iface == null) {
+                a.emit("movl", a.indirect(0, a.reg(0)), a.reg(0));
+            } else {
+                a.emit("movl", a.vtAddr(iface), a.reg(0));
+            }
             a.emit("movl", a.indirect(a.vtOffset(slot), a.reg(0)), a.reg(0));
             argReg = 1;
         }
@@ -316,7 +324,12 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
             obj.checkNull();
             st.push(obj);
             Args.push(st, args);
-            return obj.call(st, slot);
+            InterfaceType iface = owner.isInterface();
+            if (iface == null) {
+                return obj.call(st, slot);
+            } else {
+                return iface.call(st, slot);
+            }
         }
     }
 

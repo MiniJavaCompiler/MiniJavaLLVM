@@ -3,6 +3,7 @@
 // February 3 2008 11:12 AM
 
 package syntax;
+import checker.*;
 
 /** Provides a representation for formal parameter declarations.
  */

@@ -311,6 +311,8 @@ public class MjcLexer extends SourceLexer implements Tokens {
         reserved.put("true",    new Integer(TRUE));
         reserved.put("false",   new Integer(FALSE));
         reserved.put("CPOINTER",   new Integer(PTR));
+        reserved.put("interface",   new Integer(INTERFACE));
+        reserved.put("implements",   new Integer(IMPLEMENTS));
     }
 
     //- Numeric integer literals ----------------------------------------------

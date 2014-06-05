@@ -158,9 +158,6 @@ class Test:
                                            "--LLVM", BUILDDIR + bitcode_file,
                                            "--x86", BUILDDIR + x86_asm_file])
 
-        
-
-
         if self.bad:
             self.compare_files = [CompareFile([mjc_file], testname + ".mjc.ref")]
              # we don't actually care if this passes, must match ref
@@ -215,6 +212,9 @@ def doTest(test):
     return test
 
 if __name__ == '__main__':
+    if not ('LD_LIBRARY_PATH' in os.environ):
+        print("LD_LIBRARY_PATH is not set (did you forget to run ./wrap around it?)");
+        sys.exit(1);
     ignore_ref = False
     create_ref = False
     show_diff = False

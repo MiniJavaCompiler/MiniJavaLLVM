@@ -122,9 +122,27 @@ public final class Context extends Phase {
                     break;
                 }
             }
-            classes[i].checkClass(this);
+            try {
+                classes[i].checkClass(this);
+            } catch (Diagnostic d) {
+                report(d);
+                return noFailures();
+            }
         }
-
+        for (ClassType outer_c : classes) {
+            for (ClassType c : outer_c.possibleInstances()) {
+                if (c.isInterface() != null) {
+                    InterfaceType iface = c.isInterface();
+                    iface.registerImplement(outer_c);
+                }
+            }
+        }
+        for (ClassType c : classes) {
+            if (c.isInterface() != null) {
+                InterfaceType iface = c.isInterface();
+                iface.concreteMethods(this);
+            }
+        }
         if (staticClass == null) {
             Id method_id = new Id(pos, "init");
             Modifiers m = new Modifiers(pos);
@@ -133,9 +151,10 @@ public final class Context extends Phase {
             ArrayList<Statement> static_body = new ArrayList<Statement>();
             Decls decls = null;
 
-            for (int i = classes.length - 1; i >= 0; i--) {
-                if (classes[i].getFields() != null) {
-                    for (FieldEnv f : classes[i].getFields()) {
+            /* all static initialization of fields */
+            for (ClassType c : classes) {
+                if (c.getFields() != null) {
+                    for (FieldEnv f : c.getFields()) {
                         Statement s = f.staticInit();
                         if (s != null) {
                             static_body.add(s);
@@ -143,12 +162,33 @@ public final class Context extends Phase {
                     }
                 }
             }
+
+            /* creating "Class" classes for all the classes */
+            static_body.add(new LocalVarDecl(pos, new NameType(new Name(new Id(pos,
+                                             "ClassPool"))),
+                                             new VarDecls(new Id(pos, "class_pool"),
+                                                     new NameInvocation(new Name(new Name(new Id(pos, "ClassPool")), new Id(pos,
+                                                             "getInstance")), null))));
+
+            for (ClassType c : classes) {
+                static_body.add(
+                    new ExprStmt(pos,
+                                 new NameInvocation(new Name(new Name(new Id(pos, "class_pool")), new Id(pos,
+                                                    "addClass")),
+                                                    new Args(
+                                                        new ConstructorInvocation(new Name(new Id(pos, "Class")),
+                                                                new Args(new StringLiteral(pos, c.getId().getName()),
+                                                                        new Args(new IntLiteral(pos, c.getClassId()),
+                                                                                new Args(new ArrayLiteral(pos, new NameType(new Name(new Id(pos, "int[]"))),
+                                                                                        c.instancesExpr()), null)))), null))));
+            }
+
             static_body.add(new Return(pos));
 
             decls = new MethDecl(false, m, Type.VOID, method_id,
                                  null, new Block(pos, static_body.toArray(new Statement[0]))).link(decls);
 
-            staticClass = new ClassType(m, static_class_id, null, decls);
+            staticClass = new ClassType(m, static_class_id, null, new Type[0], decls);
             ClassType [] new_classes = new ClassType[classes.length + 1];
             int x = 0;
             for (ClassType c : classes) {
@@ -157,7 +197,11 @@ public final class Context extends Phase {
             }
             new_classes[classes.length] = staticClass;
             this.classes = new_classes;
-            staticClass.checkClass(this);
+            try {
+                staticClass.checkClass(this);
+            } catch (Diagnostic d) {
+                report(d);
+            }
         } else {
             System.out.println("Static Initialization Class Already Exists");
         }

@@ -31,12 +31,16 @@ public class MethDecl extends Decls {
         }
     }
 
+    public Block getBody() {
+        return body;
+    }
     /** Add a declared item to a specified class.
      */
     public void addToClass(Context ctxt, ClassType cls) {
         if (type != null) {
             type = type.check(ctxt);
         }
+
         VarEnv params = null;
         for (; formals != null; formals = formals.getNext()) {
             Id   paramId   = formals.getId();
@@ -51,6 +55,7 @@ public class MethDecl extends Decls {
         if (is_constructor) {
             type = cls;
         }
+
         cls.addMethod(ctxt, is_constructor, mods, id, type, params, body);
     }
 }

@@ -81,7 +81,7 @@ public class Compiler {
         Position fake_pos = new SourcePosition(fake, 0, 0);
         for (Type p : Type.getArrayPrimitives()) {
             class_list.add(
-                new ArrayType(null, new Id(fake_pos, p.toString()), p));
+                new ArrayType(new Modifiers(fake_pos), new Id(fake_pos, p.toString()), p));
         }
         Handler handler = new SimpleHandler();
         for (String i : input_files) {

@@ -1,0 +1,6 @@
+ERROR: "unitTests/badIface.j", line 13
+Unable to instantiate abstract class or interface Iface
+
+ERROR: "unitTests/badIface.j", line 13
+Unable to instantiate abstract class or interface Iface
+

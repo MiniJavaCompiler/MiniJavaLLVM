@@ -28,13 +28,13 @@ public class CastExpr extends Expression {
     public org.llvm.Value llvmGen(LLVM l) {
         if (castType.equal(Type.INT)) {
             return l.getBuilder().buildTrunc(needsCast.llvmGen(l),
-                                             castType.llvmTypeField(), "cast");
+                                             castType.llvmTypeField(), "int_trunc");
         } else if (castType.equal(Type.LONG)) {
             return l.getBuilder().buildSExt(needsCast.llvmGen(l),
-                                            castType.llvmTypeField(), "cast");
+                                            castType.llvmTypeField(), "long_extend");
         } else {
             return l.getBuilder().buildBitCast(needsCast.llvmGen(l),
-                                               castType.llvmTypeField(), "cast");
+                                               castType.llvmTypeField(), "bit_cast");
         }
     }
 

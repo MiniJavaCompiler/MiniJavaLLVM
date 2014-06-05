@@ -58,6 +58,9 @@ public class LocalVarDecl extends Statement {
                         Expression e;
                         if (vs.getInitExpr() != null) {
                             e = vs.getInitExpr();
+                        } else if (type.isClass() != null) {
+                            e = new CastExpr(vs.getId().getPos(), type,
+                                             new NullLiteral(vs.getId().getPos()));
                         } else {
                             e = new CastExpr(vs.getId().getPos(), type, new IntLiteral(vs.getId().getPos(),
                                              0));

@@ -41,7 +41,7 @@ public class TypeLen extends Expression {
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
-        return l.getBuilder().buildBitCast(type.llvmTypeField().sizeOf(),
-                                           Type.INT.llvmType(), "cast");
+        return l.getBuilder().buildTrunc(type.llvmTypeField().sizeOf(),
+                                         Type.INT.llvmType(), "typelen_cast");
     }
 }

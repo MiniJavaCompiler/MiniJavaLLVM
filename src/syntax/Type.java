@@ -62,6 +62,10 @@ public abstract class Type {
     public ArrayType isArray() {
         return null;
     }
+
+    public InterfaceType isInterface() {
+        return null;
+    }
     /** Check to ensure that this is a valid type.  This is part of the
      *  mechanism used to deal with types that are specified by name,
      *  which cannot be properly resolved until parsing is complete.
@@ -90,4 +94,5 @@ public abstract class Type {
             return null;
         }
     }
+    public abstract Expression defaultExpr(Position pos);
 }

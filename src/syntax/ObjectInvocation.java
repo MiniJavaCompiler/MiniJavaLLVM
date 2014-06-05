@@ -63,8 +63,13 @@ public class ObjectInvocation extends Invocation {
         org.llvm.Value func, method_this;
         if (!menv.isStatic()) {
             org.llvm.Value obj = object.llvmGen(l);
-            org.llvm.Value vtable_addr =  b.buildStructGEP(obj, 0, "vtable_lookup");
-            org.llvm.Value vtable = b.buildLoad(vtable_addr, "vtable");
+            org.llvm.Value vtable;
+            if (menv.getOwner().isInterface() == null) {
+                org.llvm.Value vtable_addr = b.buildStructGEP(obj, 0, "vtable_lookup");
+                vtable = b.buildLoad(vtable_addr, "vtable");
+            } else {
+                vtable = menv.getOwner().getVtableLoc();
+            }
             org.llvm.Value func_addr = b.buildStructGEP(vtable, menv.getSlot(),
                                        "func_lookup");
             func = b.buildLoad(func_addr, menv.getName());

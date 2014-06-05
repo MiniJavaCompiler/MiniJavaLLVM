@@ -10,7 +10,8 @@
   <property name="dir.libs" value="build/libs" />
   <property name="dir.classes" value="build/classes" />
   <property name="dir.runtime" value="build/runtime" />
-  <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+  <property name="llvm.lib" value="llvm/Debug+Asserts/lib/libLLVM-3.5svn.so" />
+  <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>  
   <path id="llvm-j.build.classpath">
     <pathelement location="${junit.jar}" />
     <pathelement location="${bridj.jar}"/>
@@ -45,8 +46,8 @@
       <arg value="-y" />
       <arg value="install" />
       <arg value="libjna-java" />
-      <arg value="llvm-3.4-dev" />
-      <arg value="clang-3.4" />
+      <arg value="llvm-3.5-dev" />
+      <arg value="clang-3.5" />
       <arg value="gcc-4.7-multilib" />
       <arg value="g++-4.7-multilib" />
       <arg value="junit4" />
@@ -56,6 +57,17 @@
   </target>
   <target name="clean">
     <delete dir="build"/>
+  </target>
+  <target name="fullclean" depends="clean">
+    <exec executable="git" dir="llvm/" failonerror="true">
+      <arg value="reset" />
+      <arg value="--hard" />
+    </exec>
+    <exec executable="git" dir="llvm/" failonerror="true">
+      <arg value="clean" />
+      <arg value="-f" />
+      <arg value="-d" />
+    </exec>
   </target>
   <target name="runtime">
     <mkdir dir="${dir.runtime}"/>
@@ -79,6 +91,30 @@
   </target>
   <target name="build_libs">
     <mkdir dir="${dir.libs}" />
+    <if>
+      <available file="llvm/Makefile.llvmbuild" />
+      <else>
+        <exec executable="./configure" dir="llvm/" failonerror="true">
+          <arg value="--enable-assertions" />
+          <arg value="--enable-debug-symbols" />
+          <arg value="--disable-optimized" />
+          <arg value="--enable-shared" />
+        </exec>
+      </else>
+    </if>
+    <if>
+      <available file="${llvm.lib}" />
+      <else>
+        <exec executable="git">
+          <arg value="submodule" />
+          <arg value="update" />
+        </exec>
+        <exec executable="make" dir="llvm/" failonerror="true">
+          <arg value="-j" />
+          <arg value="4" />
+        </exec>
+      </else>
+    </if>
     <if>
       <available file="${bridj.jar}"/>
       <else>
@@ -105,6 +141,7 @@
         <exec executable="make" dir="llvm-j" failonerror="true">
           <arg value="llvm" />
           <arg value="LLVM_HOME=/usr/" />
+          <arg value="LLVM_VERSION=3.5svn" />
         </exec>
         <mkdir dir="build/llvm-j/"/>
         <javac includeantruntime="false" srcdir="llvm-j/src/" 
@@ -140,7 +177,6 @@
       <arg value="org.llvm.test.TestFactorial" />
     </java>
   </target>
-
   <target name="compile" depends="build_libs">
     <mkdir dir="${dir.classes}"/>
     <outofdate>
@@ -175,7 +211,8 @@
     <java jar="build/jar/mjc.jar" fork="true"/>
   </target>
   <target name="test" depends="jar">
-    <exec executable="./runTests.py" failonerror="true">
+    <exec executable="./wrap" failonerror="true">
+      <arg value="./runTests.py" />
       <arg value="show_diff" />
     </exec>
   </target>

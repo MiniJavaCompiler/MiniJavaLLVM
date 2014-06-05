@@ -1,0 +1,2 @@
+#!/bin/bash
+export LD_LIBRARY_PATH=./llvm/Debug+Asserts/lib

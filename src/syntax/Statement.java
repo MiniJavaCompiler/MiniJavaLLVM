@@ -29,7 +29,7 @@ public abstract class Statement extends Syntax {
         boolean res = check(ctxt, env, frameOffset);
         if (iter.hasNext()) {
             Statement s = iter.next();
-            return res && s.check(ctxt, env, frameOffset, iter);
+            return s.check(ctxt, env, frameOffset, iter);
         } else {
             return res;
         }

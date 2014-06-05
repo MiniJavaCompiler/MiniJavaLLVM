@@ -59,6 +59,13 @@ public class Name {
         return null;
     }
 
+    public InterfaceType asInterface(Context ctxt) {
+        ClassType c = asClass(ctxt);
+        if (c != null) {
+            return c.isInterface();
+        }
+        return null;
+    }
     /** Lookup name as a value.
      */
     public FieldAccess asValue(Context ctxt, VarEnv env) {
@@ -101,6 +108,7 @@ public class Name {
             if (object != null) {
                 return new ObjectInvocation(object, id, args);
             }
+
             ClassType cls = prefix.asClass(ctxt);
             if (cls != null) {
                 return new ClassInvocation(cls, id, args);

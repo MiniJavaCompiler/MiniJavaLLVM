@@ -65,7 +65,6 @@ public final class StringLiteral extends Literal {
         args.put("string", char_name);
 
         stringType.globalInitValue(a, x86name, args);
-
     }
 
     public void emitStaticString(LLVM l) {
@@ -81,7 +80,6 @@ public final class StringLiteral extends Literal {
         Hashtable<String, org.llvm.Value> str_args = new
         Hashtable<String, org.llvm.Value>();
         str_args.put("string", chars);
-
         str.setInitializer(stringType.globalInitValue(l, name, str_args));
         actual = str;
     }

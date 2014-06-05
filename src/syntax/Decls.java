@@ -12,6 +12,9 @@ public abstract class Decls {
     protected Modifiers mods;
     private   Decls     next;
 
+    public Modifiers getMods() {
+        return mods;
+    }
     public Decls(Modifiers mods) {
         this.mods = mods;
     }

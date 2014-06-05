@@ -1,0 +1,6 @@
+ERROR: "unitTests/badIface3.j", line 13
+SomeOtherClass does not implement method other from Iface
+
+ERROR: "unitTests/badIface3.j", line 6
+SomeClass does not implement method test from Iface
+

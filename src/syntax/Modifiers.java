@@ -38,7 +38,11 @@ public final class Modifiers extends Syntax {
      *  appears in code in the given fromClass.
      */
     public boolean accessible(ClassType homeClass, ClassType fromClass) {
-        if (includes(PRIVATE)) {
+        if (fromClass.getId().getName().equals("MJCStatic")) {
+            /* special case to allow static field initialization from a global
+               static class */
+            return true;
+        } else if (includes(PRIVATE)) {
             return homeClass == fromClass;
         } else if (includes(PROTECTED)) {
             return homeClass.isSuperOf(fromClass);

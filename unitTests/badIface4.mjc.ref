@@ -1,0 +1,12 @@
+ERROR: "unitTests/badIface4.j", line 12
+SomeOtherClass does not implement method other from Iface
+
+ERROR: "unitTests/badIface4.j", line 13
+SomeOtherClass does not match signature of test from Iface
+
+ERROR: "unitTests/badIface4.j", line 7
+SomeClass does not match signature of other from Iface
+
+ERROR: "unitTests/badIface4.j", line 6
+SomeClass does not implement method test from Iface
+

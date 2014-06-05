@@ -14,8 +14,8 @@ import compiler.Handler;
 import compiler.Failure;
 import compiler.Warning;
 import compiler.Position;
-import java.util.Vector;
 import lexer.MjcLexer;
+import syntax.MjcList;
 import java.util.ArrayList;
 
 %}
@@ -34,6 +34,7 @@ import java.util.ArrayList;
 %token <Position>       BOOLEAN CLASS ELSE EXTENDS IF INT CHAR PTR NEW 
 %token <Position>       RETURN STATIC SUPER THIS VOID WHILE DO
 %token <Position>       ABSTRACT PUBLIC PRIVATE PROTECTED
+%token <Position>       INTERFACE IMPLEMENTS
 
 // Literals:
 %token <Position>       TRUE FALSE NULL
@@ -48,6 +49,7 @@ import java.util.ArrayList;
 
 // Nonterminals:
 %type  <ClassType>      class
+%type  <InterfaceType>  interface
 %type  <Name>           name
 %type  <Type>           type extends d_type
 %type  <Expression>     expr literal expr cOrExpr cAndExpr orExpr andExpr xorExpr
@@ -60,7 +62,8 @@ import java.util.ArrayList;
 %type  <Modifiers>      modifiers
 %type  <Position>       pos
 %type  <Statement>      stmt
-%type  <ArrayList>      stmts
+%type  <MjcList.StmtList> stmts
+%type  <MjcList.TypeList> implements_name implements
 %type  <Block>          block body
 %type  <AssignExpr>     assign 
 %type  <NewExpr>        new
@@ -68,37 +71,53 @@ import java.util.ArrayList;
 
 %%
 
-program : classes
+program : toplevels
         ;
-classes : classes class         { addClass($2); }
-        | /* empty */           { $$ = null; }
-        ;
-class   : modifiers CLASS IDENT extends '{' decls '}'
+
+toplevels : toplevels class         { addClass($2); }
+          | toplevels interface     { addClass($2); }
+          | /* empty */             { $$ = null; }
+          ;
+
+class   : modifiers CLASS IDENT extends implements '{' decls '}'
                                 { checkClassModifiers($1);
-                                  ClassType c = new ClassType($1, $3, $4, $6);
+                                  checkClassDecls($7);
+                                  ClassType c = new ClassType($1, $3, $4, $5.toArray(), $7);
                                   addClass(new ArrayType($1, $3, c));
                                   $$ = c; }
         ;
 extends : /* empty */           { $$ = null; }
         | EXTENDS name          { $$ = new NameType($2); }
         ;
+
+implements : /* empty */                   { $$ = new MjcList.TypeList(); }
+           | IMPLEMENTS implements_name    { $$ = $2; }
+           ;
+
+implements_name : implements_name ',' name { $$ = $1.append(new NameType($3));}
+                | name                     { $$ = new MjcList.TypeList(new NameType($1)); }
+                ;
+
 decls   : decls decl            { $$ = $2.link($1); }
         | /* empty */           { $$ = null; }
         ;
 decl    : modifiers type vardecls ';'
-                                { checkFieldModifiers($1);
-                                  $$ = new FieldDecl($1, $2,
-                                                       VarDecls.reverse($3)); }
+                                { $$ = new FieldDecl($1, $2, VarDecls.reverse($3)); }
         | modifiers IDENT '(' formals ')' body 
-                                { checkMethodModifiers($1, $6);
-                                  $$ = new MethDecl(true, $1, Type.VOID, $2, $4, $6); }
+                                { $$ = new MethDecl(true, $1, Type.VOID, $2, $4, $6); }
         | modifiers VOID IDENT '(' formals ')' body
-                                { checkMethodModifiers($1, $7);
-                                  $$ = new MethDecl(false, $1, Type.VOID, $3, $5, $7); }
+                                { $$ = new MethDecl(false, $1, Type.VOID, $3, $5, $7); }
         | modifiers type IDENT '(' formals ')' body
-                                { checkMethodModifiers($1, $7);
-                                  $$ = new MethDecl(false, $1, $2,   $3, $5, $7); }
+                                { $$ = new MethDecl(false, $1, $2,   $3, $5, $7); }
         ;
+
+
+interface : modifiers INTERFACE IDENT extends '{' decls '}' 
+                      { checkInterfaceModifiers($1);
+                        checkInterfaceDecls($6);
+                        $$ = new InterfaceType($1, $3, $4, $6); }
+          ;
+
 modifiers
 	: pos			{ $$ = new Modifiers($1); }
 	| modifiers PUBLIC      { setPublic($1); }
@@ -154,14 +173,14 @@ stmt    : /* empty */ ';'       { $$ = new Empty($1); }
         | block
         | type pos vardecls ';' { $$ = new LocalVarDecl($2,$1, VarDecls.reverse($3));}
         ;
-block   : '{' stmts '}'         { $$ = new Block($1, (Statement[])$2.toArray(new Statement[0])); }
+block   : '{' stmts '}'         { $$ = new Block($1, $2.toArray()); }
         ;
 exprstmt: call
         | new
         | assign
         ;
-stmts   : /* empty */           { $$ = new ArrayList<Statement>(); }
-        | stmts stmt            { $1.add($2); $$ = $1; }
+stmts   : /* empty */           { $$ = new MjcList.StmtList(); }
+        | stmts stmt            { $$ = $1.append($2); }
         ;
 expr    : assign
         | cOrExpr
@@ -247,14 +266,13 @@ args1   : args1 ',' expr        { $$ = new Args($3, $1); }
 
 %%
     private MjcLexer    lexer;
-    private ClassType[] classes;
+    private ArrayList<ClassType> classes;
     private int         used = 0;
     private boolean     parsed = false;
-    private ArrayList<StringLiteral> string_list;
 
     public MjcParser(Handler handler, MjcLexer lexer) {
         super(handler);
-        string_list = new ArrayList<StringLiteral>();
+        classes = new ArrayList<ClassType>();
         this.lexer = lexer;
         lexer.nextToken();
         parsed = parse();
@@ -265,28 +283,11 @@ args1   : args1 ',' expr        { $$ = new Args($3, $1); }
     }
 
     private void addClass(ClassType cls) {
-        if (classes==null) {
-            classes = new ClassType[1];
-        } else if (used>=classes.length) {
-            ClassType[] newClasses = new ClassType[2*classes.length];
-            for (int i=0; i<classes.length; i++) {
-                 newClasses[i] = classes[i];
-            }
-            classes = newClasses;
-        }
-        classes[used++] = cls;
+        classes.add(cls);
     }
 
     public ClassType[] getClasses() {
-        if (parsed) {
-            ClassType[] result = new ClassType[used];
-            for (int i=0; i<used; i++) {
-                result[i] = classes[i];
-            }
-            return result;
-        } else {
-            return null;
-        }
+        return classes.toArray(new ClassType[0]);
     }
     void setPublic(Modifiers mods) {
       dontRepeat (mods, Modifiers.PUBLIC,    "public");
@@ -334,12 +335,44 @@ args1   : args1 ',' expr        { $$ = new Args($3, $1); }
       }
     }
 
+    void checkClassDecls(Decls decls) {
+         for (Decls d = decls; d != null; d = d.getNext()) {
+             if (d instanceof FieldDecl) {
+                checkFieldModifiers(d.getMods());
+             } else if (d instanceof MethDecl) {
+                checkMethodModifiers(d.getMods(), ((MethDecl)d).getBody());
+             } else {
+                report(new Failure("Unhandled Class Decl Type"));
+             }
+         }
+    }
+    void checkInterfaceDecls(Decls decls) {
+         for (Decls d = decls; d != null; d = d.getNext()) {
+             if (d instanceof FieldDecl) {
+                checkIfaceFieldModifiers(d.getMods());
+             } else if (d instanceof MethDecl) {
+                 checkIfaceMethodModifiers(d.getMods(), ((MethDecl)d).getBody());
+             } else {
+                report(new Failure("Unhandled Class Decl Type"));
+             }
+         }
+    }
     void checkClassModifiers(Modifiers mods) {
       if (mods.includes(Modifiers.PUBLIC
                        |Modifiers.PRIVATE
                        |Modifiers.PROTECTED)) {
         report(new Failure(mods.getPos(), "Illegal class access modifier"));
       }
+    }
+
+    void checkInterfaceModifiers(Modifiers mods) {
+      if (mods.includes(Modifiers.PUBLIC
+                       |Modifiers.PRIVATE
+                       |Modifiers.PROTECTED)) {
+        report(new Failure(mods.getPos(), "Illegal interface access modifier"));
+      }
+      setPublic(mods);
+      setAbstract(mods);
     }
 
     void checkFieldModifiers(Modifiers mods) {
@@ -353,4 +386,65 @@ args1   : args1 ',' expr        { $$ = new Args($3, $1); }
         report(new Failure(mods.getPos(),
                "An abstract method cannot have a body"));
       }
+    }
+
+    void checkIfaceMethodModifiers(Modifiers mods, Block body) {
+        if (mods.includes(Modifiers.PRIVATE) || mods.includes(Modifiers.PROTECTED)) {
+            report(new Failure(mods.getPos(),
+                    "An interface method cannot be protected or private."));
+        }
+
+        if (mods.includes(Modifiers.STATIC)) {
+            if (body == null) {
+                report(new Failure(mods.getPos(),
+                        "An interface method declared static must have a body."));
+            }
+            if (mods.includes(Modifiers.ABSTRACT)) {
+                report(new Failure(mods.getPos(),
+                        "An interface method declared static cannot be abstract."));
+            }
+            if (mods.includes(Modifiers.PUBLIC)) {
+                report(new Warning(mods.getPos(),
+                        "An static interface method is implicitly public."));
+            }
+            if (!mods.includes(Modifiers.PUBLIC)) {
+                setPublic(mods);
+            }
+        } else {
+            if (body != null) {
+                report(new Failure(mods.getPos(),
+                        "An non-static interface method cannot have a body."));
+            }
+            if (mods.includes(Modifiers.PUBLIC) || mods.includes(Modifiers.ABSTRACT)) {
+                report(new Warning(mods.getPos(),
+                        "An interface method is implicitly public and abstract."));
+            }
+            if (!mods.includes(Modifiers.PUBLIC)) {
+                setPublic(mods);
+            }
+            if (!mods.includes(Modifiers.ABSTRACT)) {
+                setAbstract(mods);
+            }
+        }        
+    }
+
+    void checkIfaceFieldModifiers(Modifiers mods) {
+        if (mods.includes(Modifiers.ABSTRACT)) {
+            report(new Failure(mods.getPos(), "A field cannot be abstract"));
+        }
+        if (mods.includes(Modifiers.PRIVATE) || mods.includes(Modifiers.PROTECTED)) {
+            report(new Failure(mods.getPos(),
+                    "An interface field cannot be protected or private."));
+        }
+        if (mods.includes(Modifiers.PUBLIC) || mods.includes(Modifiers.STATIC)) {
+            report(new Warning(mods.getPos(),
+                    "An interface field is implicitly public and abstract."));
+        }
+
+        if (!mods.includes(Modifiers.PUBLIC)) {
+            setPublic(mods);
+        }
+        if (!mods.includes(Modifiers.STATIC)) {
+            setStatic(mods);
+        }
     }

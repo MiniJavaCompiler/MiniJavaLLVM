@@ -31,14 +31,9 @@ public final class ArrayType extends ClassType {
     static private Type buildArrayExtends(Id id) {
         return new NameType(new Name(new Id(id.getPos(), "Object")));
     }
-    public ArrayType(Modifiers mods, Id id, Type elementType) {
-        super(mods,
-              buildArrayName(id),
-              buildArrayExtends(id),
-              null);
 
-        this.elementType = elementType;
-
+    static private Decls buildDecls(Id id, Type elementType) {
+        Decls d = null;
         Position pos = id.getPos();
         Modifiers m = new Modifiers(id.getPos());
         m.set(Modifiers.PUBLIC);
@@ -49,23 +44,44 @@ public final class ArrayType extends ClassType {
         Id size = new Id(id.getPos(), "size");
         VarDecls v = new VarDecls(length);
         VarDecls v2 = new VarDecls(array);
-        Decls d = new FieldDecl(m, Type.INT, v);
-        Decls d2 = new FieldDecl(m2, Type.PTR, v2);
+        d = new FieldDecl(m, Type.INT, v).link(d);
+        d = new FieldDecl(m2, Type.PTR, v2).link(d);
 
+        Type thisType = new NameType(new Name(buildArrayName(id)));
         Statement [] body = {
             new ExprStmt(pos, new AssignExpr(pos, new ObjectAccess(new This(pos), length), new NameAccess(new Name(size)))),
             new ExprStmt(pos, new AssignExpr(pos, new ObjectAccess(new This(pos), array),
-            new AllocArrayInvocation(pos, this, new NameAccess(new Name(size)))))
+            new AllocArrayInvocation(pos, thisType, elementType, new NameAccess(new Name(size)))))
         };
 
-        Decls d3 = new MethDecl(true, m, Type.VOID, buildArrayName(id),
-                                new Formals(Type.INT, size),
-                                new Block(pos, body));
+        d = new MethDecl(true, m, Type.VOID, buildArrayName(id),
+                         new Formals(Type.INT, size),
+                         new Block(pos, body)).link(d);
 
-        d.link(d2);
-        d2.link(d3);
+        Id index = new Id(pos, "index");
+        Id element = new Id(pos, "element");
+        Statement [] initElem_body = {
+            new ExprStmt(pos, new AssignExpr(pos,
+            new ArrayAccess(pos, new This(pos), new NameAccess(new Name(index)), true),
+            new NameAccess(new Name(element)))),
+            new Return(pos, new This(pos)),
+        };
 
-        this.decls = d;
+        /* formals in reverse order */
+        Formals initElemFormals = new Formals(elementType, element);
+        initElemFormals = initElemFormals.link(new Formals(Type.INT, index));
+        d = new MethDecl(false, m, thisType, new Id(pos, "initElem"),
+                         initElemFormals,
+                         new Block(pos, initElem_body)).link(d);
+        return d;
+    }
+    public ArrayType(Modifiers mods, Id id, Type elementType) {
+        super(mods,
+              buildArrayName(id),
+              buildArrayExtends(id),
+              new Type[0],
+              buildDecls(id, elementType));
+        this.elementType = elementType;
     }
 
     public ArrayType isArray() {
@@ -102,19 +118,14 @@ public final class ArrayType extends ClassType {
                                           org.llvm.Value [] elements) {
         Hashtable<String, org.llvm.Value> args = new
         Hashtable<String, org.llvm.Value>();
-        org.llvm.Value array = null;
-        if (elements.length > 0) {
-            array = l.getModule().addGlobal(TypeRef.int64Type().arrayType(elements.length),
-                                            name + "_array");
-            array.setInitializer(org.llvm.Value.constArray(Type.PTR.llvmType(),
-                                 Arrays.asList(elements)));
-            //org.llvm.Value [] indices = {Type.INT.llvmType().constInt(0, false), Type.INT.llvmType().constInt(0, false)};
-            //org.llvm.Value ary_ptr = l.getBuilder().buildInBoundsGEP(array, "format", indices);
-        } else {
-            array = TypeRef.int64Type().constNull();
-        }
-        args.put("array", l.getBuilder().buildBitCast(array, Type.PTR.llvmType(),
-                 "cast"));
+        org.llvm.Value array = l.getModule().addGlobal(TypeRef.int64Type().arrayType(
+                                   elements.length), name + "_array");
+        array.setInitializer(org.llvm.Value.constArray(TypeRef.int64Type(),
+                             Arrays.asList(elements)));
+        org.llvm.Value [] indices = {Type.INT.llvmType().constInt(0, false), Type.INT.llvmType().constInt(0, false)};
+        org.llvm.Value ary_ptr = l.getBuilder().buildStructGEP(array, 0, "array_loc");
+        args.put("array", l.getBuilder().buildBitCast(ary_ptr, Type.PTR.llvmType(),
+                 "ptr_cast"));
         args.put("length", Type.INT.llvmType().constInt(elements.length, true));
         return super.globalInitValue(l, name, args);
     }

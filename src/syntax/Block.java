@@ -34,10 +34,11 @@ public final class Block extends Statement {
     public boolean check(Context ctxt, VarEnv env, int frameOffset) {
         Iterator<Statement> iter = Arrays.asList(stmts).iterator();
         boolean good = true;
-        while (iter.hasNext()) {
+        if (iter.hasNext()) {
             Statement s = iter.next();
-            good = good && s.check(ctxt, env, frameOffset, iter);
+            good = s.check(ctxt, env, frameOffset, iter);
         }
+        assert(!iter.hasNext());
         return good;
     }
 

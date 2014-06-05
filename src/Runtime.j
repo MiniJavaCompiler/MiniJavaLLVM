@@ -21,7 +21,96 @@ class Exception {
     }
 }
 
-class Object {
+class Class {
+    private int [] instancesof;
+    private String name;
+    private int classRefId;
+    public Class(String name, int classRefId, int [] instancesof) {
+        this.name = name;
+        this.instancesof = instancesof;
+        this.classRefId = classRefId;
+    }
+    public String getName() {
+        return name;
+    }
+    public boolean isInstance(Object obj) {
+        int x;
+        if (classRefId == obj.classId) {
+            return true;
+        }
+        x = 0;
+        while (x < instancesof.length) {
+            if (instancesof[x] == obj.classId) {
+                return true;
+            }
+            x = x + 1;
+        }
+        return false;
+    }
+    public int getClassRefId() {
+        return classRefId;
+    }
+}
+
+class ClassPool {
+    private static ClassPool classPool = null;
+    private Class [] pool;
+    private int size;
+    private int used;
+    private ClassPool() {
+        pool = new Class[16];
+        used = 0;
+    }
+    public static ClassPool getInstance() {
+        if (classPool == null) {
+            classPool = new ClassPool();
+        }
+        return classPool;
+    }
+    public void addClass(Class c) {
+        if (!(pool.length > used)) {
+            int size = pool.length * 2;
+            Class [] new_pool = new Class[size];
+            int x = 0;
+            while (x < used) {
+                new_pool[x] = pool[x];
+                x = x + 1;
+            }
+            pool = new_pool;
+        }
+        pool[used] = c;
+        used = used + 1;
+    }
+    public Class findClass(int classId) {
+        int x = 0;
+        while (x < used) {
+            if (pool[x].getClassRefId() == classId) {
+                return pool[x];
+            }
+            x = x + 1;
+        }
+        return null;
+    }
+    public void printDebug() {
+        int x = 0;
+        System.out.println("Size");
+        System.out.println(Integer.toString(pool.length));
+
+        System.out.println("Used");
+        System.out.println(Integer.toString(used));
+
+        while (x < used) {
+            String [] items = new String[2];
+            items[0] = pool[x].getName();
+            items[1] = Integer.toString(pool[x].getClassRefId());
+            System.out.println(String.format("Name: % Id: %", items));
+            x = x + 1;
+        }
+    }
+}
+
+abstract class Object {
+    protected int classId;
     public String toString() {
         return "<SomeObject>";
     }
@@ -30,6 +119,12 @@ class Object {
             Exception.throwLoc(filename, lineno, "Null Reference");
         }
         return o;
+    }
+    public Class getClass() {
+        return ClassPool.getInstance().findClass(classId);
+    }
+    public int getClassId() {
+        return classId;
     }
 }
 
@@ -130,11 +225,11 @@ class String {
 }
 
 class PrintStream {
-    public static void println(Object o) {
+    public static void println(String o) {
         print(o);
         print("\n");
     }
-    public static void print(Object o) {
+    public static void print(String o) {
         String s;
         s = o.toString();
         int x;
@@ -142,6 +237,16 @@ class PrintStream {
         while (x < s.length()) {
             MJC.putc(s.charAt(x));
             x = x + 1;
+        }
+    }
+}
+
+class Boolean {
+    public static String toString(boolean b) {
+        if (b) {
+            return "true";
+        } else {
+            return "false";
         }
     }
 }

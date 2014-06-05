@@ -67,10 +67,20 @@ public final class PrimitiveType extends Type {
         return Assembly.WORDSIZE;
     }
     public org.llvm.Value defaultValue() {
-        if (this.equal(Type.NULL)) {
+        if (this.equal(Type.NULL) || this.equal(Type.PTR)) {
             return llvmType().constPointerNull();
         } else {
             return llvmType().constInt(0, false);
+        }
+    }
+
+    public Expression defaultExpr(Position pos) {
+        if (this.equal(Type.VOID)) {
+            throw new RuntimeException("Void does not have a default value");
+        } else if (this.equal(Type.NULL) || this.equal(Type.PTR)) {
+            return new NullLiteral(pos);
+        } else {
+            return new CastExpr(pos, this, new IntLiteral(pos, 0));
         }
     }
 }

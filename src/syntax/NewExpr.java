@@ -28,6 +28,9 @@ public class NewExpr extends StatementExpr {
         cls = name.asClass(ctxt);
         if (cls == null) {
             throw new Failure(pos, "Undefined name " + name);
+        } else if (cls.getMods().includes(Modifiers.ABSTRACT)) {
+            throw new Failure(pos, "Unable to instantiate abstract class or interface " +
+            name);
         }
         return cls;
     }
@@ -53,11 +56,12 @@ public class NewExpr extends StatementExpr {
     public org.llvm.Value llvmGen(LLVM l) {
         Builder b = l.getBuilder();
         org.llvm.Value size = b.buildTrunc(cls.llvmType().sizeOf(), Type.INT.llvmType(),
-                                           "cast");
+                                           "trunc_size");
         org.llvm.Value [] args = {size};
         org.llvm.Value mem = b.buildCall(l.getGlobalFn(LLVM.GlobalFn.NEW_OBJECT),
                                          "new_obj", args);
-        org.llvm.Value res = b.buildBitCast(mem, cls.llvmType().pointerType(), "cast");
+        org.llvm.Value res = b.buildBitCast(mem, cls.llvmType().pointerType(),
+                                            "obj_cast");
         org.llvm.Value vtable_field = b.buildStructGEP(res, 0, "vtable");
         b.buildStore(cls.getVtableLoc(), vtable_field);
         return res;
