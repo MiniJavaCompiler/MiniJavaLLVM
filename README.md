@@ -3,10 +3,13 @@
 ## MiniJava frontend for LLVM
 
 [Mark Smith](http://github.com/maspdx) and [Mitch Souders](http://github.com/crzysdrs)
+
 Based on the MiniJava Compiler by [Mark P. Jones](http://github.com/zipwith)
+
 CS510 - Advanced Programming Language Implementations
 
-This project is released under GPL2 as described in [LICENSE](../blob/master/LICENSE).
+This project is released under GPL2 as described in [LICENSE](LICENSE).
+
 ## Project Notes
 
 This directory contains the top-level project for the cross-language system built on the initial miniJava program created by Professor Mark Jones of PSU with adaptations by Mark Smith and Mitch Souders for outputting code compatible with LLVM.
@@ -91,4 +94,4 @@ runTests.py  Script to run all existing test infrastructure.
 
 ```
 
-Please see [README_MJC](../blob/master/README_MJC) for details of the directory structure of the MJC.
+Please see [README_MJC](README_MJC) for details of the directory structure of the MJC.
