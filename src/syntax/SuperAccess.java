@@ -87,8 +87,13 @@ public final class SuperAccess extends FieldAccess {
         env.setField(st.getThis(size), val);
     }
 
-    public org.llvm.Value llvmSave(LLVM l, org.llvm.Value v) {
-        throw new RuntimeException(this.getClass().getName() +
-                                   ": Not Yet Implemented.");
+    public org.llvm.Value llvmSave(LLVM l, org.llvm.Value r) {
+        return l.getBuilder().buildStore(r, env.llvmField(l,
+                                         l.getFunction().getParam(0)));
+    }
+
+    public org.llvm.Value llvmGen(LLVM l) {
+        return l.getBuilder().buildLoad(env.llvmField(l, l.getFunction().getParam(0)),
+                                        env.getName());
     }
 }

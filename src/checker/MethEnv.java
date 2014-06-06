@@ -76,6 +76,33 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
         this.isMain = false;
         this.isConstructor = isConstructor;
     }
+
+    public StatementExpr removeSuperConstructor() {
+        if (!isConstructor) {
+            return null;
+        }
+        Block body_block = null;
+        SuperInvocation expr = null;
+        ExprStmt stmt = null;
+        try {
+            if (body == null) {
+                return null;
+            } else if ((body_block = (Block)body) == null) {
+                return null;
+            } else if (body_block.getStmts().length == 0
+                       || (stmt = (ExprStmt)body_block.getStmts()[0]) == null) {
+                return null;
+            } else if ((expr = (SuperInvocation)stmt.getStmtExpr()) == null) {
+                return null;
+            } else {
+                body_block.getStmts()[0] = new Empty(getPos()); /*remove statement */
+                expr.setFirst();
+                return expr;
+            }
+        } catch (ClassCastException c) {
+            return null;
+        }
+    }
     public void updateBody(Statement new_body) {
         this.body = new_body;
     }

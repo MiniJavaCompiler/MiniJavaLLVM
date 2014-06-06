@@ -61,28 +61,11 @@ public abstract class Env {
         return type;
     }
 
-    public TypeRef llvmType() {
-        throw new RuntimeException(this.getClass().getName() +
-                                   ": Not Yet Implemented.");
+    public org.llvm.TypeRef llvmType() {
+        return type.llvmType();
     }
 
-    public TypeRef llvmTypeField() {
-        throw new RuntimeException(this.getClass().getName() +
-                                   ": Not Yet Implemented.");
-    }
-
-    public void llvmGenTypes(LLVM l) {
-        throw new RuntimeException(this.getClass().getName() +
-                                   ": Not Yet Implemented.");
-    }
-
-    public org.llvm.Value llvmGen(LLVM l) {
-        throw new RuntimeException(this.getClass().getName() +
-                                   ": Not Yet Implemented.");
-    }
-
-    public org.llvm.Value llvmSave(LLVM l, org.llvm.Value v) {
-        throw new RuntimeException(this.getClass().getName() +
-                                   ": Not Yet Implemented.");
+    public org.llvm.TypeRef llvmTypeField() {
+        return type.llvmTypeField();
     }
 }

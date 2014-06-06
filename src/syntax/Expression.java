@@ -32,10 +32,7 @@ public abstract class Expression extends Syntax {
         super(pos);
     }
 
-    public org.llvm.Value llvmGen(LLVM l) {
-        throw new RuntimeException(this.getClass().getName() +
-                                   ": Not Yet Implemented.");
-    }
+    public abstract org.llvm.Value llvmGen(LLVM l);
 
     /** Check this expression and return an object that describes its
      *  type (or throw an exception if an unrecoverable error occurs).

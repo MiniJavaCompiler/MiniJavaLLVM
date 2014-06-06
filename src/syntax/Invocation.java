@@ -91,7 +91,8 @@ public abstract class Invocation extends StatementExpr {
 
         int i = 0;
         if (this_ptr != null) {
-            func_args.add(this_ptr);
+            func_args.add(l.getBuilder().buildBitCast(this_ptr,
+                          menv.getOwner().llvmTypeField(), "cast"));
             i++;
         }
 

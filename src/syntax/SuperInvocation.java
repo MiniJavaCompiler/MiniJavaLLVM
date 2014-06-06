@@ -31,18 +31,38 @@ public final class SuperInvocation extends Invocation {
     private String  name;
     private MethEnv menv;
     private int     size;
+    private boolean unnamed;
+    private boolean isFirst;
 
-    public SuperInvocation(Id id, Args args) {
-        super(id.getPos(), args);
-        this.name = id.getName();
+    public SuperInvocation(Position pos, Id id, Args args) {
+        super(pos, args);
+        this.unnamed = (id == null);
+        this.name = null;
+        this.isFirst = false;
+        if (!unnamed) {
+            this.name = id.getName();
+        }
     }
 
+    public void setFirst() {
+        this.isFirst = true;
+    }
     /** Calculate the type of this method invocation.
      */
     Type typeInvocation(Context ctxt, VarEnv env) throws Diagnostic {
         ClassType sup = ctxt.getCurrClass().getSuper();
+        if (sup != null && unnamed) {
+            this.name = sup.getId().getName();
+        }
         if (sup == null) {
             throw new Failure(pos, "Current class has no super class");
+        } else if (name == null) {
+            throw new Failure(pos, "No super constructor determined for super()");
+        } else if (!isFirst && unnamed) {
+            throw new Failure(pos,
+            "Super constructor must be first instruction in constructor.");
+        } else if (unnamed && ctxt.getCurrMethod() != null && !ctxt.getCurrMethod().isConstructor()) {
+            throw new Failure(pos, "Super constructor can only be in a constructor.");
         } else if (ctxt.isStatic()) {
             throw new Failure(pos,
             "Cannot access a super class in a static context");
@@ -68,5 +88,9 @@ public final class SuperInvocation extends Invocation {
      */
     public Value eval(State st) {
         return menv.call(st, st.getThis(size), args);
+    }
+
+    public org.llvm.Value llvmGen(LLVM l) {
+        return llvmInvoke(l, menv, menv.getFunctionVal(l), l.getFunction().getParam(0));
     }
 }

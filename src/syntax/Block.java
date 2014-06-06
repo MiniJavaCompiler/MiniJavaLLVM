@@ -35,7 +35,9 @@ public final class Block extends Statement {
         super(pos);
         this.stmts = stmts;
     }
-
+    public Statement [] getStmts() {
+        return stmts;
+    }
     public void appendStatement(Statement new_s) {
         Statement[] new_stmts = new Statement[stmts.length + 1];
         for (int x = 0; x < stmts.length; x++) {

@@ -35,6 +35,12 @@ public final class ExprStmt extends Statement {
         this.expr = expr;
     }
 
+    public StatementExpr getStmtExpr() {
+        return expr;
+    }
+    public void setStmtExpr(StatementExpr expr) {
+        this.expr = expr;
+    }
     /** Check whether this statement is valid and return a boolean
      *  indicating whether execution can continue at the next statement.
      */

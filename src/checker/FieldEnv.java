@@ -204,7 +204,7 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
         if (isStatic()) {
             return staticField;
         } else {
-            return l.getBuilder().buildStructGEP(object, offset, id.getName());
+            return l.getBuilder().buildStructGEP(object, fieldIndex, id.getName());
         }
     }
 }

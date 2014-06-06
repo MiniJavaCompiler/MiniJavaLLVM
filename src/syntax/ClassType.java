@@ -188,9 +188,8 @@ public class ClassType extends Type {
             for (; decls != null; decls = decls.getNext()) {
                 decls.addToClass(ctxt, this);
             }
-            MethEnv menv = methods;
             int constructor_count = 0;
-            for (; menv != null; menv = menv.getNext()) {
+            for (MethEnv menv = methods; menv != null; menv = menv.getNext()) {
                 if (menv.isConstructor()) {
                     constructor_count++;
                 }
@@ -206,8 +205,12 @@ public class ClassType extends Type {
                 Position pos = getPos();
                 Modifiers m = new Modifiers(pos);
                 m.set(Modifiers.PUBLIC);
-                MethDecl new_cons = new MethDecl(true, m, this, getId(), null, new Block(pos,
-                                                 new Statement[0]));
+                Statement maybe_cons = new Empty(pos);
+                if (extendsClass != null) {
+                    maybe_cons = new ExprStmt(getPos(), new SuperInvocation(getPos(), null, null));
+                }
+                MethDecl new_cons  = new MethDecl(true, m, this, getId(), null, new Block(pos,
+                                                  new Statement[0]));
                 new_cons.addToClass(ctxt, this);
             }
             ArrayList<Statement> init_stmts = new ArrayList<Statement>();
@@ -230,13 +233,32 @@ public class ClassType extends Type {
 
             Statement init_block = new Block(id.getPos(),
                                              init_stmts.toArray(new Statement[0]));
-            menv = methods;
-            for (; menv != null; menv = menv.getNext()) {
+            for (MethEnv menv = methods; menv != null; menv = menv.getNext()) {
                 if (menv.isConstructor()) {
                     /* add non-static initialization to constructor */
+                    StatementExpr super_cons = menv.removeSuperConstructor();
+                    MethEnv m = null;
+                    Statement maybe_cons = null;
+                    if (super_cons == null) {
+                        maybe_cons = new Empty(menv.getPos());
+                    } else {
+                        maybe_cons = new ExprStmt(menv.getPos(), super_cons);
+                    }
+                    if (extendsClass != null) {
+                        m = extendsClass.findMethod(extendsClass.getId().getName());
+                        if (super_cons == null && m != null && m.getParams() != null) {
+                            ctxt.report(new Failure(menv.getPos(),
+                                                    "Constructor needs a super class constructor (maybe it's not the first statement?)."));
+                        } else if (super_cons == null && extendsClass != null) {
+                            SuperInvocation super_invoke = new SuperInvocation(menv.getPos(), null, null);
+                            super_invoke.setFirst();
+                            maybe_cons = new ExprStmt(menv.getPos(), super_invoke);
+                        }
+                    }
                     menv.updateBody(
                         new Block(menv.getPos(),
                     new Statement[] {
+                        maybe_cons,
                         init_block,
                         menv.getBody()
                     }

@@ -68,9 +68,7 @@ public final class NameType extends Type {
     /** Test for equality with another type.
      */
     public boolean equal(Type type) {
-        // This method should never be called; it might be better
-        // to register some kind of internal error at this point.
-        return false;
+        throw new RuntimeException("Type has not been determined.");
     }
 
     public int getWidth() {
