@@ -2,10 +2,8 @@
   <property name="junit.jar" value="/usr/share/java/junit4.jar" />
   <property name="bridj.jar" value="build/libs/bridj-0.6.2.jar" />
   <property name="llvm-j.jar" value="build/libs/llvm-j.jar" />
-  <property name="asm.jar" value="build/libs/asm-3.0.jar" />
   <property name="commons.jar.system" value="/usr/share/java/commons-cli-1.2.jar" />
   <property name="commons.jar" value="build/libs/commons-cli-1.2.jar" />
-  <property name="sprintabout.jar" value="build/libs/sprintabout.jar" />
   <property name="dir.build" value="build/" />
   <property name="dir.libs" value="build/libs" />
   <property name="dir.classes" value="build/classes" />
@@ -24,8 +22,6 @@
   <path id="project.classpath">
     <pathelement location="${bridj.jar}"/>
     <pathelement location="${llvm-j.jar}"/>
-    <pathelement location="${asm.jar}"/>
-    <pathelement location="${sprintabout.jar}"/>
     <pathelement location="${commons.jar}"/>
   </path>
   <target name="git_setup">
@@ -149,26 +145,6 @@
         <jar destfile="${llvm-j.jar}" basedir="build/llvm-j/" />
       </else>
     </if>
-    <if>
-      <available file="${sprintabout.jar}"/>
-      <else>
-        <exec executable="wget" dir="${dir.build}" failonerror="true">         
-          <arg value="-N" />
-          <arg value="http://www-igm.univ-mlv.fr/~forax/works/sprintabout/sprintabout-src.zip" />
-        </exec>
-        <exec executable="unzip" dir="${dir.build}" failonerror="true">
-          <arg value="sprintabout-src.zip" />
-        </exec>
-        <exec executable="ant" dir="${dir.build}/sprintabout/" failonerror="true">
-          <arg value="jar" />
-          <arg value="-Dasm.lib.dir=lib/" />
-        </exec>
-        <copy todir="${dir.libs}">
-          <file file="build/sprintabout/lib/sprintabout.jar" />
-          <file file="build/sprintabout/lib/asm-3.0.jar" />
-        </copy>
-      </else>
-    </if>
   </target>
   <target name="llvm_j_test" depends="build_libs">
     <java classname="org.junit.runner.JUnitCore" fork="true" classpathref="llvm-j.run.classpath">
@@ -214,6 +190,20 @@
     <exec executable="./wrap" failonerror="true">
       <arg value="./runTests.py" />
       <arg value="show_diff" />
+    </exec>
+  </target>
+  <target name="license">
+    <exec executable="copyright-header">
+      <arg value="--add-path" /><arg value="src:runTests.py" />
+      <arg value="--license-file" /><arg value="GPL2.erb" />
+      <arg value="--copyright-holder" /><arg value="Mitch Souders" />
+      <arg value="--copyright-holder" /><arg value="Mark A. Smith" />
+      <arg value="--copyright-holder" /><arg value="Mark P. Jones" />
+      <arg value="--copyright-software" /><arg value="MiniJava Compiler" />
+      <arg value="--copyright-software-description" /><arg value="X86, LLVM Compiler/Interpreter for MiniJava." />
+      <arg value="--copyright-year" /> <arg value="2014" />
+      <arg value="--copyright-year" /> <arg value="2008" />
+      <arg value="--output-dir" /> <arg value="." />
     </exec>
   </target>
 </project>
