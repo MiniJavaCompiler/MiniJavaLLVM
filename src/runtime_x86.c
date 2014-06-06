@@ -8,7 +8,7 @@ void System_out(int x) {
     printf("%d\n",x);
 }
 
-#define HEAPLEN (4 * 1024 * 1024)
+#define HEAPLEN (16 * 1024 * 1024)
 int freeHeap = 0;
 int heap[HEAPLEN];
 
