@@ -1,3 +1,22 @@
+/*
+ * MiniJava Compiler - X86, LLVM Compiler/Interpreter for MiniJava.
+ * Copyright (C) 2014, 2008 Mitch Souders, Mark A. Smith, Mark P. Jones
+ *
+ * MiniJava Compiler is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * MiniJava Compiler is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with MiniJava Compiler; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+
 package codegen;
 import syntax.*;
 import org.llvm.Value;
@@ -182,9 +201,6 @@ public class LLVM {
         TypeRef gcroot_type = TypeRef.functionType(TypeRef.voidType(), gcroot_args);
         globalFns[GlobalFn.GCROOT.ordinal()] = mod.addFunction("llvm.gcroot",
                                                gcroot_type);
-
-        TypeRef program_entry_type = TypeRef.functionType(Type.VOID.llvmType(),
-                                     (List)Collections.emptyList());
     }
 
     public void markGCRoot(Value v, Type type) {
@@ -195,7 +211,7 @@ public class LLVM {
             org.llvm.Value meta =
                 TypeRef.int8Type().pointerType().constNull();  // TODO: replace with type data
             org.llvm.Value [] args = {res, meta};
-            org.llvm.Value gc = b.buildCall(getGlobalFn(LLVM.GlobalFn.GCROOT), "", args);
+            b.buildCall(getGlobalFn(LLVM.GlobalFn.GCROOT), "", args);
         }
     }
 
@@ -206,9 +222,6 @@ public class LLVM {
         buildGlobalFns(mod);
         //Entering a "GLOBAL" Scope, the home of static vars.
         enterScope();
-        TypeRef main_entry_type = TypeRef.functionType(Type.INT.llvmType(),
-                                  (List)Collections.emptyList());
-
         ClassType string = null;
         ClassType char_arr = null;
         for (ClassType c : classes) {

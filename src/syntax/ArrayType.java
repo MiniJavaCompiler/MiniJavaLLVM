@@ -1,6 +1,22 @@
-// Copyright (c) Mark P Jones, Portland State University
-// Subject to conditions of distribution and use; see LICENSE for details
-// February 3 2008 11:12 AM
+/*
+ * MiniJava Compiler - X86, LLVM Compiler/Interpreter for MiniJava.
+ * Copyright (C) 2014, 2008 Mitch Souders, Mark A. Smith, Mark P. Jones
+ *
+ * MiniJava Compiler is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * MiniJava Compiler is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with MiniJava Compiler; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+
 
 package syntax;
 
@@ -122,7 +138,6 @@ public final class ArrayType extends ClassType {
                                    elements.length), name + "_array");
         array.setInitializer(org.llvm.Value.constArray(TypeRef.int64Type(),
                              Arrays.asList(elements)));
-        org.llvm.Value [] indices = {Type.INT.llvmType().constInt(0, false), Type.INT.llvmType().constInt(0, false)};
         org.llvm.Value ary_ptr = l.getBuilder().buildStructGEP(array, 0, "array_loc");
         args.put("array", l.getBuilder().buildBitCast(ary_ptr, Type.PTR.llvmType(),
                  "ptr_cast"));

@@ -1,6 +1,22 @@
-// Copyright (c) Mark P Jones, Portland State University
-// Subject to conditions of distribution and use; see LICENSE for details
-// February 3 2008 11:12 AM
+/*
+ * MiniJava Compiler - X86, LLVM Compiler/Interpreter for MiniJava.
+ * Copyright (C) 2014, 2008 Mitch Souders, Mark A. Smith, Mark P. Jones
+ *
+ * MiniJava Compiler is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * MiniJava Compiler is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with MiniJava Compiler; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+
 
 package syntax;
 
@@ -15,7 +31,6 @@ public final class ArrayAccess extends FieldAccess {
     private Expression object;
     private Expression index;
     private ArrayType array_class;
-    private boolean check_enabled;
     private Expression array_check;
     public ArrayAccess(Position pos, Expression object, Expression index,
                        boolean check_enabled) {
@@ -23,7 +38,6 @@ public final class ArrayAccess extends FieldAccess {
         this.object = object;
         this.index = index;
         this.array_check = null;
-        this.check_enabled = check_enabled;
         if (check_enabled) {
             array_check = new NameInvocation(
                 new Name(new Name(new Id(pos, "Array")), new Id(pos, "boundsCheck")),

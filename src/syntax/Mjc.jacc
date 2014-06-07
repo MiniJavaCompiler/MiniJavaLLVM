@@ -254,8 +254,10 @@ field	: primary '.' IDENT	{ $$ = new ObjectAccess($1, $3); }
 call    : name '(' args ')'     { $$ = new NameInvocation($1, $3); }
         | primary '.' IDENT '(' args ')'
                                 { $$ = new ObjectInvocation($1, $3, $5); }
+        | SUPER '(' args ')'
+                                { $$ = new SuperInvocation(lexer.getPos(), null, $3); }        
         | SUPER '.' IDENT '(' args ')'
-                                { $$ = new SuperInvocation($3, $5); }
+                                { $$ = new SuperInvocation(lexer.getPos(), $3, $5); }
         ;
 args    : /* empty */           { $$ = null; }
         | args1                 { $$ = Args.reverse($1); }

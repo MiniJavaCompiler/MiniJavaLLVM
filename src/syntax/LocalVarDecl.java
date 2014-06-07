@@ -1,6 +1,22 @@
-// Copyright (c) Mark P Jones, Portland State University
-// Subject to conditions of distribution and use; see LICENSE for details
-// February 3 2008 11:12 AM
+/*
+ * MiniJava Compiler - X86, LLVM Compiler/Interpreter for MiniJava.
+ * Copyright (C) 2014, 2008 Mitch Souders, Mark A. Smith, Mark P. Jones
+ *
+ * MiniJava Compiler is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * MiniJava Compiler is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with MiniJava Compiler; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+
 
 package syntax;
 
@@ -94,12 +110,8 @@ public class LocalVarDecl extends Statement {
 
     public void llvmGen(LLVM l) {
         org.llvm.Builder b = l.getBuilder();
-        org.llvm.Value func = b.getInsertBlock().getParent();
-
         for (VarDecls vs = varDecls; vs != null; vs = vs.getNext()) {
             org.llvm.Value v = b.buildAlloca(type.llvmTypeField(), vs.getId().getName());
-            /* we only get away with setting the named values for all new frame items because
-               MJC doesn't support multiple decls with the same name in the same scope */
             l.setNamedValue(type.isClass() != null, type.llvmTypeField(),
                             vs.getId().getName(), v);
             l.markGCRoot(v, type);

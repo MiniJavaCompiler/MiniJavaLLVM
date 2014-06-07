@@ -1,0 +1,3 @@
+ERROR: "unitTests/badSuper5.j", line 16
+Super constructor must be first instruction in constructor.
+
