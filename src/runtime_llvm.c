@@ -384,7 +384,7 @@ char * MJC_arrayIndex(char *a, int32_t index) {
 /* gc uses during scan phase to determine if this is pointer to be forwarded */
 bool is_heap_pointer(uintptr_t *p, GCGenHeap region) {
   bool in_heap_range = false;
-
+ 
   // if minor collection - is this pointing back into the nursery heap?
   if (region == nursery) {
     in_heap_range = (p >= heap->end_reserve && p < heap->nursery_avail);
@@ -693,6 +693,8 @@ uintptr_t *forward(uintptr_t *p, GCGenHeap toHeap) {
 
 /* This is just copying a c_string into a Java char array */
 void load_string(int n, int * length, char * src, char * dst) {
+  if (length == 0 || src == 0 || dst == 0) die_w_msg("load_string called with invalid args");
+
   *length = n;
   strncpy(dst, src, n);
 }
