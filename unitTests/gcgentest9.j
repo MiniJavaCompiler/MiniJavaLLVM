@@ -1,49 +1,49 @@
 // Small program for testing garbage collector:
-//    Test nested loop for gc gen 
+//    Test nested loop for gc gen
 
 class A {
-      int x;
-      int y;
-      int z;
-      int [] o;
-      A () {
-         o = new int[100];
-      }
+    int x;
+    int y;
+    int z;
+    int [] o;
+    A() {
+        o = new int[100];
+    }
 }
 
 class B {
-      int [] b;
-      B () {
+    int [] b;
+    B() {
         b = new int[100];
-      }
+    }
 
-      int getBB() {
+    int getBB() {
         int x;
-	int loops;
-	x = 0;
-	loops = 100;
-	while (x < loops) {
-	    b[x] = x;
-	    x = x + 1;
-	}
-	return b[99];
-      }
+        int loops;
+        x = 0;
+        loops = 100;
+        while (x < loops) {
+            b[x] = x;
+            x = x + 1;
+        }
+        return b[99];
+    }
 }
 
 class Main {
     static void main() {
         A Ao;
-	B Bo;
+        B Bo;
         int x;
-	int y;
+        int y;
         int loops;
         int [] o;
         int [] old;
         old = new int[100];
-	old[0] = 42;
-	old[99] = 7;
-	
-	Bo = new B();
+        old[0] = 42;
+        old[99] = 7;
+
+        Bo = new B();
 
         x = 0;
         loops = 10000;
@@ -53,9 +53,9 @@ class Main {
             Ao.o[x % 10] = x;
         }
 
-	old[0] = Bo.getBB();
-	Ao.o[0] = x;
-	Ao.o[9] = x + 1;
+        old[0] = Bo.getBB();
+        Ao.o[0] = x;
+        Ao.o[9] = x + 1;
         System.out.println(Integer.toString(Ao.o[0]));
         System.out.println(Integer.toString(Ao.o[9]));
         System.out.println(Integer.toString(old[0]));

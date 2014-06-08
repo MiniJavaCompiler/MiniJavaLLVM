@@ -7,7 +7,7 @@ class Main {
         int x;
         int loops;
         int [] o;
-	int [] p;
+        int [] p;
         int [] old;
         old = new int[5];
         old[0] = 7;
@@ -23,12 +23,12 @@ class Main {
             x = x + 1;
             o[x % 10] = x;
         }
-	x = 0;
-	while (x < loops) {
+        x = 0;
+        while (x < loops) {
             p = new int[10];
             x = x + 1;
             p[x % 10] = x;
-	}
+        }
 
         o[0] = 42;
         o[9] = 8;

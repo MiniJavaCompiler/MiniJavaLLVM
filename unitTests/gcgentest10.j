@@ -1,5 +1,5 @@
 // Small program for testing gen garbage collector:
-//   Test two objects with gc.  
+//   Test two objects with gc.
 // Create one object and also assign it to a 2nd object
 
 class TestObjOne {
@@ -22,8 +22,8 @@ class Main {
         loops = 1000000;
         while (x < loops) {
             oo = new TestObjOne();
-	    oo.x = x;
-	    ocopy = oo;
+            oo.x = x;
+            ocopy = oo;
             x = x + 1;
         }
         System.out.println(Integer.toString(oo.x));

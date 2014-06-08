@@ -130,10 +130,10 @@ GlobalRootEntry *MJC_gc_global_root_chain = 0;
 
 
 
-/*             Heap allocation 
-*     [**old**|**reserve**|***nursery***|****free*****]  
+/*             Heap allocation
+*     [**old**|**reserve**|***nursery***|****free*****]
 * start       end_old     end_reserve   end_nursery   end_space
-*/      
+*/
 typedef struct space {          /* allocation space data              */
   uintptr_t *start;             /* first word of space                */
   uintptr_t *end_avail;         /* one past last pointer of old avail space - only used during major copy collection */
@@ -159,7 +159,7 @@ space *initspace(size_t words) {
   s->end_old = s->start;
   s->end_avail = s->end_old;
   s->reserve_avail = s->end_old;
-  s->end_reserve = s->start + (words/2);
+  s->end_reserve = s->start + (words / 2);
   s->nursery_avail = s->end_reserve;
   s->end = s->start + words;
   return s;
@@ -189,15 +189,16 @@ uintptr_t *heapalloc(size_t words) {
   if (heap->end - heap->nursery_avail < words) {
     // perform minor collection
     gc_minor();
-    if ((heap->end_old - heap->start) > ((heap->end - heap->start)/MAX_OLD_TO_HEAP_RATIO)) {
+    if ((heap->end_old - heap->start) > ((heap->end - heap->start) /
+                                         MAX_OLD_TO_HEAP_RATIO)) {
       // old generation has become too large - time to collect
-      gc_major(); 
+      gc_major();
     }
     // verify heap space is sufficient to continue
     // after major collection - if old space is larger than reserve than cannot continue
     // if nursery is not large enough to allocate the word - cannot continue
     if ((heap->end_old - heap->start) > (heap->end_reserve - heap->end_old)
-	 || (heap->end - heap->nursery_avail < words)) {
+        || (heap->end - heap->nursery_avail < words)) {
 
 #ifdef DEBUG_HEAP
       printf("heap end: %zu, heap avail: %zu\n", (uintptr_t)heap->end,
@@ -219,14 +220,18 @@ uintptr_t *heapalloc(size_t words) {
 
 /* debug function for listing heap content   */
 void print_heap_region() {
-  printf("    heap old     (%zu - %zu)\n", (uintptr_t)heap->start, (uintptr_t)heap->end_old);
-  printf("    heap reserve (%zu - %zu)\n", (uintptr_t)heap->end_old, (uintptr_t)heap->end_reserve);
-  printf("    heap nursery (%zu - %zu)\n", (uintptr_t)heap->end_reserve, (uintptr_t)heap->end);
+  printf("    heap old     (%zu - %zu)\n", (uintptr_t)heap->start,
+         (uintptr_t)heap->end_old);
+  printf("    heap reserve (%zu - %zu)\n", (uintptr_t)heap->end_old,
+         (uintptr_t)heap->end_reserve);
+  printf("    heap nursery (%zu - %zu)\n", (uintptr_t)heap->end_reserve,
+         (uintptr_t)heap->end);
 }
 
 void print_heap() {
   uintptr_t *pos = heap->start;
-  printf("    old heap     (start: %zu, end:   %zu)\n", (uintptr_t)heap->start, (uintptr_t)heap->end_old);
+  printf("    old heap     (start: %zu, end:   %zu)\n", (uintptr_t)heap->start,
+         (uintptr_t)heap->end_old);
 
   while (pos < heap->end_old) {
     if ((uintptr_t)OBJECT_HEADER_TYPE == (uintptr_t)(*pos)
@@ -239,10 +244,12 @@ void print_heap() {
     pos++;
   }
 
-  printf("    reserve heap (start: %zu, end:   %zu)\n", (uintptr_t)heap->end_old, (uintptr_t)heap->end_reserve);
+  printf("    reserve heap (start: %zu, end:   %zu)\n", (uintptr_t)heap->end_old,
+         (uintptr_t)heap->end_reserve);
   pos = heap->end_reserve;
 
-  printf("    nursery heap (start: %zu, avail: %zu)\n", (uintptr_t)heap->end_reserve,
+  printf("    nursery heap (start: %zu, avail: %zu)\n",
+         (uintptr_t)heap->end_reserve,
          (uintptr_t)heap->nursery_avail);
 
   while (pos < heap->nursery_avail) {
@@ -263,7 +270,8 @@ void verify_reserve_heap() {
   uintptr_t *pos = heap->end_old;
 
 #ifdef DEBUG_VERIFY
-  printf("verify reserve heap (start: %zu, avail: %zu)\n", (uintptr_t)heap->end_old,
+  printf("verify reserve heap (start: %zu, avail: %zu)\n",
+         (uintptr_t)heap->end_old,
          (uintptr_t)heap->reserve_avail);
 #endif
 
@@ -398,7 +406,7 @@ char * MJC_arrayIndex(char *a, int32_t index) {
 /* gc uses during scan phase to determine if this is pointer to be forwarded */
 bool is_heap_pointer(uintptr_t *p, GCGenHeap region) {
   bool in_heap_range = false;
- 
+
   // if minor collection - is this pointing back into the nursery heap?
   if (region == nursery) {
     in_heap_range = (p >= heap->end_reserve && p < heap->nursery_avail);
@@ -458,7 +466,7 @@ void gc_minor() {
 
 #ifdef DEBUG_GC
   printf("gc: minor collection initiated with nursery start %zu\n",
-	 (uintptr_t)(heap->end_reserve));
+         (uintptr_t)(heap->end_reserve));
 #endif
 
 
@@ -495,11 +503,11 @@ void gc_minor() {
 }
 
 
-void gc_major(){
+void gc_major() {
 
 #ifdef DEBUG_GC
   printf("gc: major collection initiated with end old region %zu\n",
-    (uintptr_t)(heap->end_old));
+         (uintptr_t)(heap->end_old));
 #endif
 
 #ifdef DEBUG_HEAP
@@ -554,7 +562,7 @@ void gc_copy(GCGenHeap fromHeap, GCGenHeap toHeap) {
   print_heap_region();
 #endif
 
-  
+
   uintptr_t *scan = 0;
   if (fromHeap == old || fromHeap == nursery) {
     scan = heap->end_old;
@@ -574,8 +582,7 @@ void gc_copy(GCGenHeap fromHeap, GCGenHeap toHeap) {
 #endif
 
       *(grootpos->root) = forward(*grootpos->root, toHeap);
-    }
-    else {
+    } else {
 #ifdef DEBUG_GC
       printf("gc:  global root not forwarded (wrong heap gen or type): %zu\n",
              (uintptr_t)(*grootpos->root));
@@ -597,10 +604,10 @@ void gc_copy(GCGenHeap fromHeap, GCGenHeap toHeap) {
 #endif
 
         rootpos->Roots[i] = forward((uintptr_t*)rootpos->Roots[i], toHeap);
-      }
-      else {
+      } else {
 #ifdef DEBUG_GC
-        printf("gc: root not forwarded (wrong heap gen or type): %zu\n", (uintptr_t)rootpos->Roots[i]);
+        printf("gc: root not forwarded (wrong heap gen or type): %zu\n",
+               (uintptr_t)rootpos->Roots[i]);
 #endif
       }
     }
@@ -629,9 +636,9 @@ void gc_copy(GCGenHeap fromHeap, GCGenHeap toHeap) {
 
       // update free
       if (fromHeap == old || fromHeap == nursery) {
-	free = heap->reserve_avail;
+        free = heap->reserve_avail;
       } else {
-	free = heap->end_avail;
+        free = heap->end_avail;
       }
     }
 
@@ -640,7 +647,7 @@ void gc_copy(GCGenHeap fromHeap, GCGenHeap toHeap) {
 }
 
 /**********************************************
- * forward always copies into the reserve space 
+ * forward always copies into the reserve space
  *********************************************/
 uintptr_t *forward(uintptr_t *p, GCGenHeap toHeap) {
   if (!p) {
@@ -649,25 +656,26 @@ uintptr_t *forward(uintptr_t *p, GCGenHeap toHeap) {
 
   uintptr_t *heap_start = 0;
   uintptr_t *heap_end = 0;
-  uintptr_t *heap_avail= 0;
+  uintptr_t *heap_avail = 0;
   if (toHeap == old) {
     heap_start = heap->start;
     heap_end = heap->end_old;
     heap_avail = heap->end_avail;
-  }
-  else if (toHeap == reserve) {
+  } else if (toHeap == reserve) {
     heap_start = heap->end_old;
     heap_end = heap->end_reserve;
     heap_avail = heap->reserve_avail;
   }
 
-  uintptr_t *fwdptr = (p) - OBJ_HEADER_SIZE;  // forward pointer start at offset -2
+  uintptr_t *fwdptr = (p) -
+                      OBJ_HEADER_SIZE;  // forward pointer start at offset -2
 
   /* check if object/array is already in the proper heap space */
   if (fwdptr >= heap_start && fwdptr < heap_end) {
     return fwdptr;
   } else if (*fwdptr == (uintptr_t)OBJECT_FORWARDED) {
-    uintptr_t * fwd_addr = (uintptr_t*) * ((p) - OBJ_HEADER_FWDPTR_OFFSET); // forwarded pointer location
+    uintptr_t * fwd_addr = (uintptr_t*) * ((p) -
+                                           OBJ_HEADER_FWDPTR_OFFSET); // forwarded pointer location
 
 #ifdef DEBUG_GC
     printf("gc: scanned object previously forwarded - updating to %zu\n",
@@ -676,7 +684,8 @@ uintptr_t *forward(uintptr_t *p, GCGenHeap toHeap) {
 
     return fwd_addr;
   } else {
-    size_t size = *((p) - OBJ_HEADER_SIZE_OFFSET) + OBJ_HEADER_SIZE; // size pointer is value at offset -1
+    size_t size = *((p) - OBJ_HEADER_SIZE_OFFSET) +
+                  OBJ_HEADER_SIZE; // size pointer is value at offset -1
 
     // copy data
 #ifdef DEBUG_GC
@@ -707,7 +716,9 @@ uintptr_t *forward(uintptr_t *p, GCGenHeap toHeap) {
 
 /* This is just copying a c_string into a Java char array */
 void load_string(int n, int * length, char * src, char * dst) {
-  if (length == 0 || src == 0 || dst == 0) die_w_msg("load_string called with invalid args");
+  if (length == 0 || src == 0 || dst == 0) {
+    die_w_msg("load_string called with invalid args");
+  }
 
   *length = n;
   strncpy(dst, src, n);

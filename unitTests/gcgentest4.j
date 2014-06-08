@@ -9,10 +9,10 @@ class Main {
         int [] o;
         o = new int[10];
 
-	int [] old;
-	old = new int[100];
-	old[0] = 77;
-	old[10] = 770;
+        int [] old;
+        old = new int[100];
+        old[0] = 77;
+        old[10] = 770;
 
         x = 0;
         loops = 1000;
@@ -25,8 +25,8 @@ class Main {
         o[9] = 8;
         System.out.println(Integer.toString(o[0]));
         System.out.println(Integer.toString(o[9]));
-	System.out.println(Integer.toString(old[0]));	
-	System.out.println(Integer.toString(old[10]));
+        System.out.println(Integer.toString(old[0]));
+        System.out.println(Integer.toString(old[10]));
     }
 }
 

@@ -15,10 +15,10 @@ class Main {
         int x;
         int loops;
         TestObjOne oo;
-	TestObjTwo old;
+        TestObjTwo old;
         TestObjTwo ot;
 
-	
+
         oo = new TestObjOne();
         oo.x = 42;
 
@@ -26,9 +26,9 @@ class Main {
         ot.too = new TestObjOne();
         ot.too.z = 42;
 
-	old = new TestObjTwo();
-	old.too = new TestObjOne();
-	old.too.z = 77;
+        old = new TestObjTwo();
+        old.too = new TestObjOne();
+        old.too.z = 77;
 
 
         x = 0;
@@ -43,7 +43,7 @@ class Main {
         }
         System.out.println(Integer.toString(oo.x));
         System.out.println(Integer.toString(ot.too.z));
-	System.out.println(Integer.toString(old.too.z));
+        System.out.println(Integer.toString(old.too.z));
     }
 }
 

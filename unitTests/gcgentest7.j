@@ -1,13 +1,13 @@
 // Small program for testing garbage collector:
-//    Test nested loop for gc gen 
+//    Test nested loop for gc gen
 
 class Main {
     static void main() {
         int x;
-	int y;
+        int y;
         int loops;
         int [] o;
-	int [] p;
+        int [] p;
         int [] old;
         old = new int[100];
         old[0] = 7;
@@ -23,11 +23,11 @@ class Main {
             x = x + 1;
             o[x % 10] = x;
 
-	    y = 0;
-	    while (y < loops) {
-            	  p = new int[10];
-            	  y = y + 1;
-            	  p[y % 10] = y;
+            y = 0;
+            while (y < loops) {
+                p = new int[10];
+                y = y + 1;
+                p[y % 10] = y;
             }
         }
 

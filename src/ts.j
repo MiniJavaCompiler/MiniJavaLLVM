@@ -47,7 +47,7 @@ class Main {
     static void main() {
         Expr e;
         e = AddExpr.make(IntExpr.make(1), IntExpr.make(2));
-        e = AddExpr.make(e,e);
+        e = AddExpr.make(e, e);
         System.out(e.eval());
     }
 }
