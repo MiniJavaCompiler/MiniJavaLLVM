@@ -44,6 +44,8 @@ typedef int GCGenHeap;
 enum GCGenHeap { nursery, old, reserve };
 
 /* forward declaration(s) */
+void print_heap_region();
+void print_heap();
 void gc_minor();
 void gc_major();
 void gc_copy(GCGenHeap fromHeap, GCGenHeap toHeap);
@@ -68,7 +70,7 @@ void MJC_die() {
     [length or fwd location]
     [data] <- alloc pointer 'a' points to data
 */
-#define DEF_HEAP_SIZE   2000     // heap size in words (4k bytes)
+#define DEF_HEAP_SIZE   3000     // heap size in words (4k bytes)
 #define MAX_OLD_TO_HEAP_RATIO    3
 #define OBJ_HEADER_SIZE          2
 #define OBJ_HEADER_TYPE_OFFSET   2
@@ -200,10 +202,8 @@ uintptr_t *heapalloc(size_t words) {
     if ((heap->end_old - heap->start) > (heap->end_reserve - heap->end_old)
         || (heap->end - heap->nursery_avail < words)) {
 
-#ifdef DEBUG_HEAP
-      printf("heap end: %zu, heap avail: %zu\n", (uintptr_t)heap->end,
-             (uintptr_t)heap->nursery_avail);
-#endif
+      print_heap_region();
+      printf("heap nursery avail: %zu\n", (uintptr_t)heap->nursery_avail);
 
       die_w_msg("out of heap space");
     }
@@ -246,6 +246,17 @@ void print_heap() {
 
   printf("    reserve heap (start: %zu, end:   %zu)\n", (uintptr_t)heap->end_old,
          (uintptr_t)heap->end_reserve);
+
+  while (pos < heap->reserve_avail) {
+    if ((uintptr_t)OBJECT_HEADER_TYPE == (uintptr_t)(*pos)
+        || (uintptr_t)ARRAY_HEADER_TYPE == (uintptr_t)(*pos)
+        || (uintptr_t)OBJECT_FORWARDED == (uintptr_t)(*pos)) {
+      printf("    heap @ %zu = %s\n", (uintptr_t)pos, (char*)*pos);
+    } else {
+      printf("    heap @ %zu = %zu\n", (uintptr_t)pos, *pos);
+    }
+    pos++;
+  }
   pos = heap->end_reserve;
 
   printf("    nursery heap (start: %zu, avail: %zu)\n",
@@ -512,17 +523,25 @@ void gc_major() {
 #endif
 
 #ifdef DEBUG_HEAP
-  printf("gc: before heap copy\n");
+  printf("gc: before heap copy: stage 1 major collection\n");
   print_heap();
 #endif
 
   // collect from old to reserve
   gc_copy(old, reserve);
 
+  // adjust heap pointers after collection
+  heap->end_reserve = heap->reserve_avail;
+
 #ifdef VERIFY_HEAP
   verify_reserve_heap();
 #endif
 
+
+#ifdef DEBUG_HEAP
+  printf("gc: before heap copy: stage 2 major collection\n");
+  print_heap();
+#endif
 
   // block move reserve region back to old heap
   heap->old_avail = heap->start;
@@ -565,7 +584,7 @@ void gc_copy(GCGenHeap fromHeap, GCGenHeap toHeap) {
 
 
   uintptr_t *scan = 0;
-  if (fromHeap == old || fromHeap == nursery) {
+  if (reserve == toHeap) {
     scan = heap->end_old;
   } else {
     scan = heap->start;
@@ -614,9 +633,11 @@ void gc_copy(GCGenHeap fromHeap, GCGenHeap toHeap) {
     }
   }
 
+  //printf("heap before scan\n");
+  //print_heap();
 
   uintptr_t *free = 0;
-  if (fromHeap == old || fromHeap == nursery) {
+  if (reserve == toHeap) {
     free = heap->reserve_avail;
   } else {
     free = heap->old_avail;
@@ -636,7 +657,7 @@ void gc_copy(GCGenHeap fromHeap, GCGenHeap toHeap) {
       *scan = (uintptr_t)forward((void *)(*scan), fromHeap, toHeap);
 
       // update free
-      if (fromHeap == old || fromHeap == nursery) {
+      if (reserve == toHeap) {
         free = heap->reserve_avail;
       } else {
         free = heap->old_avail;
@@ -662,13 +683,13 @@ uintptr_t *forward(uintptr_t *p, GCGenHeap fromHeap, GCGenHeap toHeap) {
   uintptr_t *heap_start = 0;
   uintptr_t *heap_end = 0;
   uintptr_t *heap_avail = 0;
-  if (toHeap == old) {
+  if (old == toHeap) {
     heap_start = heap->start;
     heap_end = heap->end_old;
     heap_avail = heap->old_avail;
-  } else if (toHeap == reserve) {
+  } else if (reserve == toHeap) {
     heap_start = heap->end_old;
-    if (fromHeap == old) {
+    if (old == fromHeap) {
       heap_end = heap->end; // set to heap->end for copies from old to reserve
     }
     else {
@@ -696,17 +717,12 @@ uintptr_t *forward(uintptr_t *p, GCGenHeap fromHeap, GCGenHeap toHeap) {
     size_t size = *((p) - OBJ_HEADER_SIZE_OFFSET) +
                   OBJ_HEADER_SIZE; // size pointer is value at offset -1
 
-    // copy data
-#ifdef DEBUG_GC
-    printf("  memcpy %zu to %zu, size=%zu\n", (uintptr_t)fwdptr,
-           (uintptr_t)heap_avail, size);
-#endif
 
     // this condition should never occur.  If it does it indicates a flaw
     // in the space allocation algorithm and should be considered a fatal
     // (unrecoverable) error
     if (heap_avail + size > heap_end) {
-      if (toHeap == old) {
+      if (old == toHeap) {
 	die_w_msg("insufficient space for collection to 'old' heap region");
       }
       else {
@@ -714,18 +730,24 @@ uintptr_t *forward(uintptr_t *p, GCGenHeap fromHeap, GCGenHeap toHeap) {
       }
     }
 
-    memcpy(heap_avail, fwdptr, size * sizeof(uintptr_t));
+// copy data
+#ifdef DEBUG_GC
+    printf("  memcpy %zu to %zu, size=%zu\n", (uintptr_t)fwdptr,
+           (uintptr_t)heap_avail, size);
+#endif
 
-    // mark the object as forwarded and it's new location
-    *(p - OBJ_HEADER_TYPE_OFFSET) = (uintptr_t)OBJECT_FORWARDED;
-    *(p - OBJ_HEADER_FWDPTR_OFFSET) = (uintptr_t)(heap_avail + OBJ_HEADER_SIZE);
+    memcpy(heap_avail, fwdptr, size * sizeof(uintptr_t));
 
     // reset fwd pointer to it's new location
     fwdptr = heap_avail + OBJ_HEADER_SIZE;
 
+    // mark the object as forwarded and it's new location
+    *(p - OBJ_HEADER_TYPE_OFFSET) = (uintptr_t)OBJECT_FORWARDED;
+    *(p - OBJ_HEADER_FWDPTR_OFFSET) = (uintptr_t)fwdptr;
+
 
     // reset global heap markers available space
-    if (toHeap == reserve) {
+    if (reserve == toHeap) {
       heap->reserve_avail += size;
     } else {
       heap->old_avail += size;

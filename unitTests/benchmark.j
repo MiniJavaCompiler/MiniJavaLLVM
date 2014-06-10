@@ -117,6 +117,12 @@ class benchArrayAndObj {
 }
 
 class benchList {
+    public static void cleanup(int depth, List node) {
+        if (node.next != null) {
+            cleanup(depth + 1, node.next);
+        }
+        node.next = null;
+    }
     static void run() {
         int mem = 100;
         /* this should keep allocated more than
@@ -136,6 +142,7 @@ class benchList {
                 prev = l;
                 j = j + 1;
             }
+	    cleanup(0, prev);
             i = i + 1;
         }
     }
