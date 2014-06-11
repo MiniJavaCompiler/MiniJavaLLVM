@@ -54,7 +54,6 @@ public class LLVM {
         PUTC,
         GCROOT,
         GCGBLROOT,
-        ARRAY_INDEX,
         DIE,
     };
     class LocalStackVar {
@@ -187,11 +186,6 @@ public class LLVM {
                                     gcglobalroot_args);
         globalFns[GlobalFn.GCGBLROOT.ordinal()] = mod.addFunction("MJC_globalRoot",
                 gcglobalroot_type);
-
-        TypeRef [] index_args = {Type.PTR.llvmType(), Type.INT.llvmType()};
-        TypeRef index_type = TypeRef.functionType(Type.PTR.llvmType(), index_args);
-        globalFns[GlobalFn.ARRAY_INDEX.ordinal()] = mod.addFunction("MJC_arrayIndex",
-                index_type);
 
         TypeRef [] die_args = {};
         TypeRef die_type = TypeRef.functionType(Type.VOID.llvmType(), die_args);

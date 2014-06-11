@@ -134,9 +134,10 @@ public final class ArrayType extends ClassType {
                                           org.llvm.Value [] elements) {
         Hashtable<String, org.llvm.Value> args = new
         Hashtable<String, org.llvm.Value>();
-        org.llvm.Value array = l.getModule().addGlobal(TypeRef.int64Type().arrayType(
-                                   elements.length), name + "_array");
-        array.setInitializer(org.llvm.Value.constArray(TypeRef.int64Type(),
+        org.llvm.Value array = l.getModule().addGlobal(
+                                   elementType.llvmTypeField().arrayType(
+                                       elements.length), name + "_array");
+        array.setInitializer(org.llvm.Value.constArray(elementType.llvmTypeField(),
                              Arrays.asList(elements)));
         org.llvm.Value ary_ptr = l.getBuilder().buildStructGEP(array, 0, "array_loc");
         args.put("array", l.getBuilder().buildBitCast(ary_ptr, Type.PTR.llvmType(),

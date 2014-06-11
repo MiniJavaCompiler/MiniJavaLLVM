@@ -173,8 +173,14 @@ class Test:
         compile_test = RunTest(mjc_file, ["java",
                                            "-jar", "build/jar/mjc.jar",
                                            "-i", self.testfile,
-                                           "--LLVM", BUILDDIR + bitcode_file,
+                                           "--LLVM", BUILDDIR + bitcode_file])
+
+
+        compile_test2 = RunTest(ignored, ["java",
+                                           "-jar", "build/jar/mjc.jar",
+                                           "-i", self.testfile,
                                            "--x86", BUILDDIR + x86_asm_file])
+
 
         if self.bad:
             self.compare_files = [CompareFile([mjc_file], testname + ".mjc.ref")]
@@ -190,7 +196,7 @@ class Test:
             CompareFile([out], "".join(os.path.splitext(out)[:-1]) + ".ref")
             for out in out_files]
 
-        all_tests = [compile_test,
+        all_tests = [compile_test, compile_test2,
                      RunTest(llvm_link_file, ["llc", 
                                               BUILDDIR + bitcode_file, 
                                              "-filetype=obj",

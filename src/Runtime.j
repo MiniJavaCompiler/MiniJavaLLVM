@@ -2,7 +2,6 @@ class MJC {
     static void putc(char s);
     static CPOINTER allocObject(int bytes);
     static CPOINTER allocArray(int bytes, int len);
-    static CPOINTER arrayIndex(CPOINTER array, int index);
     static void die();
 }
 

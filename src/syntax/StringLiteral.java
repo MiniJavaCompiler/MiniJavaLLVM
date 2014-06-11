@@ -92,7 +92,7 @@ public final class StringLiteral extends Literal {
         org.llvm.Value str = l.getModule().addGlobal(stringType.llvmType(), name);
         org.llvm.Value [] elements = new org.llvm.Value[value.length()];
         for (int x = 0; x < value.length(); x++) {
-            elements[x] = TypeRef.int64Type().constInt(value.charAt(x), false);
+            elements[x] = Type.CHAR.llvmType().constInt(value.charAt(x), false);
         }
         chars.setInitializer(charArrType.globalInitValue(l, name, elements));
 

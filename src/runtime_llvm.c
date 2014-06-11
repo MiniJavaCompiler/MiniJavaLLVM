@@ -374,10 +374,7 @@ void MJC_putc(char c) {
 uintptr_t *MJC_allocArray(int32_t elements, int32_t element_size) {
 
   // size request was # bytes - convert to words
-  if (WORDSIZE(element_size) > 1) {
-    die_w_msg("Array element should be 1 word");
-  }
-  int32_t size = elements * WORDSIZE(element_size);
+  int32_t size = WORDSIZE(elements * element_size);
 
   if (size < 0) {
     die_w_msg("Negative array size request");
@@ -408,10 +405,6 @@ uintptr_t *MJC_allocArray(int32_t elements, int32_t element_size) {
 
 int32_t array_length(uintptr_t *a) {
   return (int32_t)(*(a - OBJ_HEADER_SIZE_OFFSET));
-}
-
-char * MJC_arrayIndex(char *a, int32_t index) {
-  return (char *)(((uintptr_t *)a) + index);
 }
 
 /* gc uses during scan phase to determine if this is pointer to be forwarded */
