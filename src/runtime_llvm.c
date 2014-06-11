@@ -670,8 +670,8 @@ void gc_copy(GCGenHeap fromHeap, GCGenHeap toHeap) {
 
 /*********************************************
  * forward copies from the space specified to
- * destination space.  This is usually the 
- * reserve space except in the 2nd half of the 
+ * destination space.  This is usually the
+ * reserve space except in the 2nd half of the
  * major collection where it is copied back
  * from the reserve region to the old region
  *********************************************/
@@ -691,20 +691,21 @@ uintptr_t *forward(uintptr_t *p, GCGenHeap fromHeap, GCGenHeap toHeap) {
     heap_start = heap->end_old;
     if (old == fromHeap) {
       heap_end = heap->end; // set to heap->end for copies from old to reserve
-    }
-    else {
+    } else {
       heap_end = heap->end_reserve;
     }
     heap_avail = heap->reserve_avail;
   }
 
-  uintptr_t *fwdptr = (p) - OBJ_HEADER_SIZE;  // forward pointer start at offset -2
+  uintptr_t *fwdptr = (p) -
+                      OBJ_HEADER_SIZE;  // forward pointer start at offset -2
 
   /* check if object/array is already in the proper heap space */
   if (fwdptr >= heap_start && fwdptr < heap_end) {
     return fwdptr;
   } else if (*fwdptr == (uintptr_t)OBJECT_FORWARDED) {
-    uintptr_t * fwd_addr = (uintptr_t*) * ((p) -OBJ_HEADER_FWDPTR_OFFSET); // forwarded pointer location
+    uintptr_t * fwd_addr = (uintptr_t*) * ((p) -
+                                           OBJ_HEADER_FWDPTR_OFFSET); // forwarded pointer location
 
 #ifdef DEBUG_GC
     printf("gc: scanned object previously forwarded - updating to %zu\n",
@@ -723,14 +724,13 @@ uintptr_t *forward(uintptr_t *p, GCGenHeap fromHeap, GCGenHeap toHeap) {
     // (unrecoverable) error
     if (heap_avail + size > heap_end) {
       if (old == toHeap) {
-	die_w_msg("insufficient space for collection to 'old' heap region");
-      }
-      else {
-	die_w_msg("insufficient space for collection to 'reserve' heap region");
+        die_w_msg("insufficient space for collection to 'old' heap region");
+      } else {
+        die_w_msg("insufficient space for collection to 'reserve' heap region");
       }
     }
 
-// copy data
+    // copy data
 #ifdef DEBUG_GC
     printf("  memcpy %zu to %zu, size=%zu\n", (uintptr_t)fwdptr,
            (uintptr_t)heap_avail, size);

@@ -35,12 +35,20 @@
       <arg value="filter.c_code.clean" />
       <arg value="astyle --options=${basedir}/.cstyle &lt; %f" />
     </exec>
+    <exec executable="git">
+      <arg value="submodule" />
+      <arg value="update" />
+      <arg value="--init" />
+      <arg value="--recursive" />
+      </exec>
   </target>
   <target name="ubuntu_depends">
     <exec executable="sudo">
       <arg value="apt-get" />
       <arg value="-y" />
-      <arg value="install" />
+      <arg value="install" />          
+      <arg value="build-essential" />
+      <arg value="astyle" />
       <arg value="libjna-java" />
       <arg value="llvm-3.5-dev" />
       <arg value="clang-3.5" />
@@ -85,7 +93,7 @@
       </sequential>
     </outofdate>
   </target>
-  <target name="build_libs">
+  <target name="build_libs" depends="git_setup">
     <mkdir dir="${dir.libs}" />
     <if>
       <available file="llvm/Makefile.llvmbuild" />
@@ -101,10 +109,6 @@
     <if>
       <available file="${llvm.lib}" />
       <else>
-        <exec executable="git">
-          <arg value="submodule" />
-          <arg value="update" />
-        </exec>
         <exec executable="make" dir="llvm/" failonerror="true">
           <arg value="-j" />
           <arg value="4" />
@@ -130,10 +134,6 @@
     <if>
       <available file="${llvm-j.jar}"/>
       <else>
-        <exec executable="git">
-          <arg value="submodule" />
-          <arg value="update" />
-        </exec>
         <exec executable="make" dir="llvm-j" failonerror="true">
           <arg value="llvm" />
           <arg value="LLVM_HOME=/usr/" />
@@ -148,6 +148,7 @@
   </target>
   <target name="llvm_j_test" depends="build_libs">
     <java classname="org.junit.runner.JUnitCore" fork="true" classpathref="llvm-j.run.classpath">
+      <env key="LD_LIBRARY_PATH" value="./llvm/Debug+Asserts/lib"/>
       <arg value="org.llvm.test.TestJIT" />
       <arg value="org.llvm.test.TestLLVM" />
       <arg value="org.llvm.test.TestFactorial" />

@@ -226,12 +226,6 @@ public class LLVM {
         ClassType char_arr = null;
         for (ClassType c : classes) {
             c.llvmGenTypes(this);
-            String name = c.getId().getName();
-            if (name.equals("String")) {
-                string = c;
-            } else if (name.equals("char[]")) {
-                char_arr = c;
-            }
         }
 
         Builder builder = Builder.createBuilderInContext(Context.getModuleContext(mod));
