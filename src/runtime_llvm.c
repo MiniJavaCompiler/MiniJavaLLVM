@@ -666,21 +666,24 @@ void gc_copy(GCGenHeap fromHeap, GCGenHeap toHeap) {
 
   }
 
-  for (GlobalRootEntry *assignpos =  MJC_gc_assignment_chain; assignpos != NULL;
-       assignpos = (GlobalRootEntry*)assignpos->next) {
+  /* only need to evaluate assignment sets during minor collection */
+  if (nursery == fromHeap) {
+    for (GlobalRootEntry *assignpos =  MJC_gc_assignment_chain; assignpos != NULL;
+         assignpos = (GlobalRootEntry*)assignpos->next) {
 
-    if (is_heap_pointer(*assignpos->root, fromHeap)) {
+      if (is_heap_pointer(*assignpos->root, fromHeap)) {
 #ifdef DEBUG_GC
-      printf("gc: forwarding assignment root object at %zu\n",
-             (uintptr_t)(*assignpos->root));
+        printf("gc: forwarding assignment root object at %zu\n",
+               (uintptr_t)(*assignpos->root));
 #endif
 
-      *(assignpos->root) = forward(*assignpos->root, fromHeap, toHeap);
-    } else {
+        *(assignpos->root) = forward(*assignpos->root, fromHeap, toHeap);
+      } else {
 #ifdef DEBUG_GC
-      printf("gc:  assignment not forwarded (wrong heap gen or type): %zu\n",
-             (uintptr_t)(*assignpos->root));
+        printf("gc:  assignment not forwarded (wrong heap gen or type): %zu\n",
+               (uintptr_t)(*assignpos->root));
 #endif
+      }
     }
   }
 
