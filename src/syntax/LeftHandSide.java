@@ -40,5 +40,5 @@ public abstract class LeftHandSide extends Expression {
      */
     public abstract void save(State st, Value val);
 
-    public abstract org.llvm.Value llvmSave(LLVM l, org.llvm.Value v);
+    public abstract void llvmSave(LLVM l, org.llvm.Value v);
 }

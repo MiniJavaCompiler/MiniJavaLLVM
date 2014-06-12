@@ -140,9 +140,10 @@ public final class VarEnv extends Env {
         return l.getBuilder().buildLoad(v, getName());
     }
 
-    public org.llvm.Value llvmSave(LLVM l, org.llvm.Value r) {
+    public void llvmSave(LLVM l, org.llvm.Value r) {
         org.llvm.Value v = l.getNamedValue(getName());
-        return l.getBuilder().buildStore(r, v);
+        /* named values are always on the stack and do not need assign markers */
+        l.getBuilder().buildStore(r, v);
     }
 
 }

@@ -87,13 +87,11 @@ public final class SuperAccess extends FieldAccess {
         env.setField(st.getThis(size), val);
     }
 
-    public org.llvm.Value llvmSave(LLVM l, org.llvm.Value r) {
-        return l.getBuilder().buildStore(r, env.llvmField(l,
-                                         l.getFunction().getParam(0)));
+    public void llvmSave(LLVM l, org.llvm.Value r) {
+        env.llvmStore(l, r, l.getFunction().getParam(0));
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
-        return l.getBuilder().buildLoad(env.llvmField(l, l.getFunction().getParam(0)),
-                                        env.getName());
+        return env.llvmLoad(l, l.getFunction().getParam(0));
     }
 }

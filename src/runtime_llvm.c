@@ -41,7 +41,7 @@ enum bool { false, true };
 #endif
 
 typedef int GCGenHeap;
-enum GCGenHeap { nursery, old, reserve };
+enum GCGenHeap { none, nursery, old, reserve};
 
 /* forward declaration(s) */
 void print_heap_region();
@@ -50,6 +50,7 @@ void gc_minor();
 void gc_major();
 void gc_copy(GCGenHeap fromHeap, GCGenHeap toHeap);
 uintptr_t *forward(uintptr_t *p, GCGenHeap fromHeap, GCGenHeap toHeap);
+GCGenHeap which_heap(uintptr_t * p);
 void die_w_msg(char *m, ...) {
   va_list argptr;
   va_start(argptr, m);
@@ -59,7 +60,6 @@ void die_w_msg(char *m, ...) {
   va_end(argptr);
   exit(-1);
 }
-
 void MJC_die() {
   exit(-1);
 }
@@ -125,6 +125,8 @@ typedef struct {
       *next;           //< Link to next stack entry (the caller's).
 } GlobalRootEntry;
 GlobalRootEntry *MJC_gc_global_root_chain = 0;
+
+GlobalRootEntry *MJC_gc_assignment_chain = 0;
 
 /*
  * End of LLVM references
@@ -337,6 +339,64 @@ void MJC_globalRoot(uintptr_t **root) {
   return;
 }
 
+void MJC_assign(uintptr_t **assign) {
+#ifdef DEBUG_GC
+  printf("MJC_assign called with assign %zu\n", (uintptr_t)*assign);
+#endif
+  if (!heap) {
+    initialize_heap(DEF_HEAP_SIZE);
+  }
+
+  GCGenHeap heap = which_heap((uintptr_t *)assign);
+  if (heap == nursery || heap == none) {
+    /* if it's in the nursery, there has to be a gcroot */
+    /* if it's not in the heap, who cares? */
+  } else {
+    GlobalRootEntry *nextAssign = (GlobalRootEntry*)(malloc(sizeof(
+                                    GlobalRootEntry)));
+    nextAssign->root = assign;
+    nextAssign->next = (struct GlobalRootEntry *)MJC_gc_assignment_chain;
+    MJC_gc_assignment_chain = nextAssign;
+  }
+  return;
+}
+
+void nuke_assigns() {
+#ifdef DEBUG_GC
+  printf("nuking assignments\n");
+#endif
+  GlobalRootEntry * assign = MJC_gc_assignment_chain;
+  while (assign) {
+    GlobalRootEntry * next = (GlobalRootEntry *)assign->next;
+    free(assign);
+    assign = next;
+  }
+  MJC_gc_assignment_chain = NULL;
+#ifdef DEBUG_GC
+  printf("finished nuking assignments\n");
+#endif
+}
+
+void prune_assigns(GCGenHeap heap) {
+#ifdef DEBUG_GC
+  printf("pruning assignments\n");
+#endif
+  /* remove assigns in areas that have just been restructured */
+  GlobalRootEntry ** assign = &MJC_gc_assignment_chain;
+  while (*assign) {
+    GlobalRootEntry ** next = (GlobalRootEntry **) & (*assign)->next;
+    if (which_heap(*(*assign)->root) == heap) {
+      free(*assign);
+      *assign = *next;
+    } else {
+      assign = next;
+    }
+  }
+#ifdef DEBUG_GC
+  printf("finished pruning assignments\n");
+#endif
+}
+
 /* Object and field operations */
 
 uintptr_t *MJC_allocObject(size_t size) {
@@ -407,21 +467,24 @@ int32_t array_length(uintptr_t *a) {
   return (int32_t)(*(a - OBJ_HEADER_SIZE_OFFSET));
 }
 
+GCGenHeap which_heap(uintptr_t * p) {
+  if (p >= heap->end_reserve && p < heap->nursery_avail) {
+    return nursery;
+  } else if (p >= heap->start && p < heap->end_old) {
+    return old;
+  } else if (p >= heap->end_old && p < heap->end_reserve) {
+    return reserve;
+  } else {
+    return none;
+  }
+}
+
 /* gc uses during scan phase to determine if this is pointer to be forwarded */
 bool is_heap_pointer(uintptr_t *p, GCGenHeap region) {
   bool in_heap_range = false;
 
-  // if minor collection - is this pointing back into the nursery heap?
-  if (region == nursery) {
-    in_heap_range = (p >= heap->end_reserve && p < heap->nursery_avail);
-  }
-  // if major collection - is this pointing back into the old heap?
-  else if (region == old) {
-    in_heap_range = (p >= heap->start && p < heap->end_old);
-  }
-  // or check for pointers in the reserve region
-  else if (region == reserve) {
-    in_heap_range = (p >= heap->end_old && p < heap->end_reserve);
+  if (which_heap(p) == region) {
+    in_heap_range = true;
   }
 
   // and is the object pointed to a class obj?
@@ -483,7 +546,7 @@ void gc_minor() {
 
   // collect from nursery to reserve
   gc_copy(nursery, reserve);
-
+  prune_assigns(reserve);
 
 #ifdef VERIFY_HEAP
   verify_reserve_heap();
@@ -496,7 +559,6 @@ void gc_minor() {
   // reset partition of the reserve and nursery to half of non-old region
   heap->end_reserve = heap->end_old + heap_reserve_nursery_midpoint();
   heap->nursery_avail = heap->end_reserve;
-
 
 #ifdef DEBUG_HEAP
   printf("gc: after heap copy\n");
@@ -540,7 +602,7 @@ void gc_major() {
   heap->old_avail = heap->start;
   gc_copy(reserve, old);
 
-
+  nuke_assigns();
 
   // adjust heap pointers after collection
   heap->end_old = heap->old_avail;
@@ -604,6 +666,23 @@ void gc_copy(GCGenHeap fromHeap, GCGenHeap toHeap) {
 
   }
 
+  for (GlobalRootEntry *assignpos =  MJC_gc_assignment_chain; assignpos != NULL;
+       assignpos = (GlobalRootEntry*)assignpos->next) {
+
+    if (is_heap_pointer(*assignpos->root, fromHeap)) {
+#ifdef DEBUG_GC
+      printf("gc: forwarding assignment root object at %zu\n",
+             (uintptr_t)(*assignpos->root));
+#endif
+
+      *(assignpos->root) = forward(*assignpos->root, fromHeap, toHeap);
+    } else {
+#ifdef DEBUG_GC
+      printf("gc:  assignment not forwarded (wrong heap gen or type): %zu\n",
+             (uintptr_t)(*assignpos->root));
+#endif
+    }
+  }
 
   // forward roots
   for (StackEntry *rootpos =  llvm_gc_root_chain; rootpos != NULL;

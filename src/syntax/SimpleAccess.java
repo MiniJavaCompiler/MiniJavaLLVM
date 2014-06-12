@@ -85,26 +85,10 @@ public final class SimpleAccess extends FieldAccess {
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
-        org.llvm.Value field;
-        if (!env.isStatic()) {
-            org.llvm.Value obj = l.getFunction().getParam(0);
-            field = l.getBuilder().buildStructGEP(obj, env.getFieldIndex(),
-                                                  env.getName());
-        } else {
-            field = env.getStaticField();
-        }
-        return l.getBuilder().buildLoad(field, env.getName());
+        return env.llvmLoad(l, env.isStatic() ? null : l.getFunction().getParam(0));
     }
 
-    public org.llvm.Value llvmSave(LLVM l, org.llvm.Value v) {
-        org.llvm.Value field;
-        if (!env.isStatic()) {
-            org.llvm.Value obj = l.getFunction().getParam(0);
-            field = l.getBuilder().buildStructGEP(obj, env.getFieldIndex(),
-                                                  env.getName());
-        } else {
-            field = env.getStaticField();
-        }
-        return l.getBuilder().buildStore(v, field);
+    public void llvmSave(LLVM l, org.llvm.Value v) {
+        env.llvmStore(l, v, env.isStatic() ? null : l.getFunction().getParam(0));
     }
 }

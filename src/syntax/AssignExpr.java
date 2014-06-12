@@ -68,7 +68,8 @@ public final class AssignExpr extends StatementExpr {
 
     public org.llvm.Value llvmGen(LLVM l) {
         org.llvm.Value right = rhs.llvmGen(l);
-        return lhs.llvmSave(l, right);
+        lhs.llvmSave(l, right);
+        return right;
     }
 
     /** Evaluate this expression.

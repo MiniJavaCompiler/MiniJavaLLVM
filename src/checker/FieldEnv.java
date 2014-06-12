@@ -207,4 +207,15 @@ public final class FieldEnv extends MemberEnv implements Iterable<FieldEnv>,
             return l.getBuilder().buildStructGEP(object, fieldIndex, id.getName());
         }
     }
+
+    public void llvmStore(LLVM l, org.llvm.Value store, org.llvm.Value object) {
+        l.getBuilder().buildStore(store, llvmField(l, object));
+        if (getType().isClass() != null && object != null) {
+            l.gcAssign(llvmField(l, object));
+        }
+    }
+
+    public org.llvm.Value llvmLoad(LLVM l, org.llvm.Value object) {
+        return l.getBuilder().buildLoad(llvmField(l, object), getName());
+    }
 }

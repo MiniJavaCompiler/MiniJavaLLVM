@@ -87,16 +87,10 @@ public final class ObjectAccess extends FieldAccess {
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
-        org.llvm.Value obj = object.llvmGen(l);
-        org.llvm.Value res = l.getBuilder().buildStructGEP(obj, env.getFieldIndex(),
-                             env.getName());
-        return l.getBuilder().buildLoad(res, env.getName());
+        return env.llvmLoad(l, object.llvmGen(l));
     }
 
-    public org.llvm.Value llvmSave(LLVM l, org.llvm.Value r) {
-        org.llvm.Value obj = object.llvmGen(l);
-        org.llvm.Value field = l.getBuilder().buildStructGEP(obj, env.getFieldIndex(),
-                               env.getName());
-        return l.getBuilder().buildStore(r, field);
+    public void llvmSave(LLVM l, org.llvm.Value r) {
+        env.llvmStore(l, r, object.llvmGen(l));
     }
 }

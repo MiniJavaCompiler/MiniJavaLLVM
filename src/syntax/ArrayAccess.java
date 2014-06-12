@@ -133,7 +133,7 @@ public final class ArrayAccess extends FieldAccess {
         return l.getBuilder().buildLoad(elem, "elem");
     }
 
-    public org.llvm.Value llvmSave(LLVM l, org.llvm.Value r) {
+    public void llvmSave(LLVM l, org.llvm.Value r) {
         array_check.llvmGen(l);
         org.llvm.Value array_addr = l.getBuilder().buildStructGEP(
                                         object.llvmGen(l),
@@ -145,6 +145,8 @@ public final class ArrayAccess extends FieldAccess {
         org.llvm.Value elem = l.getBuilder().buildInBoundsGEP(array_cast, "elem",
                               indices);
         l.getBuilder().buildStore(r, elem);
-        return r;
+        if (array_class.getElementType().isClass() != null) {
+            l.gcAssign(elem);
+        }
     }
 }

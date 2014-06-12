@@ -54,6 +54,7 @@ public class LLVM {
         PUTC,
         GCROOT,
         GCGBLROOT,
+        GCASSIGN,
         DIE,
     };
     class LocalStackVar {
@@ -104,6 +105,14 @@ public class LLVM {
     public Value getGlobalFn(GlobalFn g) {
         return globalFns[g.ordinal()];
     }
+
+    public void gcAssign(org.llvm.Value v) {
+        org.llvm.Value res = getBuilder().buildBitCast(v,
+                             TypeRef.int8Type().pointerType(), "gcassign");
+        getBuilder().buildCall(getGlobalFn(LLVM.GlobalFn.GCASSIGN), "",
+                               new org.llvm.Value[] {res});
+    }
+
     public Value getNamedValue(String s) {
         Hashtable<String, LocalStackVar> locals = localVars.peek();
         LocalStackVar local = locals.get(s);
@@ -185,6 +194,9 @@ public class LLVM {
         TypeRef gcglobalroot_type = TypeRef.functionType(TypeRef.voidType(),
                                     gcglobalroot_args);
         globalFns[GlobalFn.GCGBLROOT.ordinal()] = mod.addFunction("MJC_globalRoot",
+                gcglobalroot_type);
+
+        globalFns[GlobalFn.GCASSIGN.ordinal()] = mod.addFunction("MJC_assign",
                 gcglobalroot_type);
 
         TypeRef [] die_args = {};
