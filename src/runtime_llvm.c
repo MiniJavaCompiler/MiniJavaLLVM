@@ -32,8 +32,8 @@
 
 extern void Main_main();
 extern void MJCStatic_init();
-extern void MJCStatic_roots();
-
+extern int MJCglobal_roots_size;
+extern uintptr_t ** MJCglobal_roots;
 
 #ifndef bool
 typedef int bool;
@@ -124,8 +124,6 @@ typedef struct {
   struct GlobalRootEntry
       *next;           //< Link to next stack entry (the caller's).
 } GlobalRootEntry;
-GlobalRootEntry *MJC_gc_global_root_chain = 0;
-
 GlobalRootEntry *MJC_gc_assignment_chain = 0;
 
 /*
@@ -314,38 +312,10 @@ void verify_reserve_heap() {
 #endif
 }
 
-
-/******************************************************************
-*
-*  Runtime operations for heap allocation and management
-*
-******************************************************************/
-void MJC_globalRoot(uintptr_t **root) {
-#ifdef DEBUG_GC
-  printf("MJC_globalRoot called with root %zu\n", (uintptr_t)*root);
-#endif
-
-  // initialize heap on first use
-  if (!heap) {
-    initialize_heap(DEF_HEAP_SIZE);
-  }
-
-  // insert new roots at head of chain
-  GlobalRootEntry *nextRoot = (GlobalRootEntry*)(malloc(sizeof(GlobalRootEntry)));
-  nextRoot->root = root;
-  nextRoot->next = (struct GlobalRootEntry *)MJC_gc_global_root_chain;
-  MJC_gc_global_root_chain = nextRoot;
-
-  return;
-}
-
 void MJC_assign(uintptr_t **assign) {
 #ifdef DEBUG_GC
   printf("MJC_assign called with assign %zu\n", (uintptr_t)*assign);
 #endif
-  if (!heap) {
-    initialize_heap(DEF_HEAP_SIZE);
-  }
 
   GCGenHeap heap = which_heap((uintptr_t *)assign);
   if (heap == nursery || heap == none) {
@@ -401,11 +371,6 @@ void prune_assigns(GCGenHeap heap) {
 
 uintptr_t *MJC_allocObject(size_t size) {
 
-  // initialize heap on first use
-  if (!heap) {
-    initialize_heap(DEF_HEAP_SIZE);
-  }
-
 #ifdef DEBUG_ALLOC
   printf("MJC alloc object size %zu bytes (%zu words)\n", size, WORDSIZE(size));
 #endif
@@ -440,10 +405,6 @@ uintptr_t *MJC_allocArray(int32_t elements, int32_t element_size) {
     die_w_msg("Negative array size request");
   }
 
-  // initialize heap on first use
-  if (!heap) {
-    initialize_heap(DEF_HEAP_SIZE);
-  }
 
 #ifdef DEBUG_ALLOC
   printf("MJC alloc array: num elements %d, size %d bytes (%d words)\n", elements,
@@ -508,11 +469,9 @@ uintptr_t heap_reserve_nursery_midpoint(void) {
 
 void gc_printroots() {
   // forward global roots
-  for (GlobalRootEntry *grootpos =  MJC_gc_global_root_chain; grootpos != NULL;
-       grootpos = (GlobalRootEntry*)grootpos->next) {
-    printf("Global Root Chain : %zu\n", *(uintptr_t *)grootpos->root);
+  for (int i = 0; i < MJCglobal_roots_size; i++) {
+    printf("Global Root Chain : %zu\n", (uintptr_t)MJCglobal_roots[i]);
   }
-
 
   // forward roots
   for (StackEntry *rootpos =  llvm_gc_root_chain; rootpos != NULL;
@@ -647,20 +606,19 @@ void gc_copy(GCGenHeap fromHeap, GCGenHeap toHeap) {
 
 
   // forward global roots
-  for (GlobalRootEntry *grootpos =  MJC_gc_global_root_chain; grootpos != NULL;
-       grootpos = (GlobalRootEntry*)grootpos->next) {
+  for (int i = 0; i < MJCglobal_roots_size; i++) {
 
-    if (is_heap_pointer(*grootpos->root, fromHeap)) {
+    if (is_heap_pointer(MJCglobal_roots[i], fromHeap)) {
 #ifdef DEBUG_GC
       printf("gc: forwarding global root object at %zu\n",
-             (uintptr_t)(*grootpos->root));
+             (uintptr_t)(MJCglobal_roots[i]));
 #endif
 
-      *(grootpos->root) = forward(*grootpos->root, fromHeap, toHeap);
+      MJCglobal_roots[i] = forward(MJCglobal_roots[i], fromHeap, toHeap);
     } else {
 #ifdef DEBUG_GC
       printf("gc:  global root not forwarded (wrong heap gen or type): %zu\n",
-             (uintptr_t)(*grootpos->root));
+             (uintptr_t)(MJCglobal_roots[i]));
 #endif
     }
 
@@ -847,11 +805,9 @@ void printc(char c) {
 }
 
 int main() {
-  //    printf("Starting:\n");
-  MJCStatic_roots();
+  initialize_heap(DEF_HEAP_SIZE);
   MJCStatic_init();
   Main_main();
-  //    printf("Finishing (%d words allocated).\n",freeHeap);
   return 0;
 }
 

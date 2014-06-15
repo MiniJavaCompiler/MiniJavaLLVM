@@ -241,32 +241,27 @@ public class LLVM {
             s.emitStaticString(this);
         }
 
-        //add statics to gcroot
-        org.llvm.Value static_gcroots = mod.addFunction("MJCStatic_roots",
-                                        TypeRef.functionType(Type.VOID.llvmType(), (List)Collections.emptyList()));
-        BasicBlock entry = static_gcroots.appendBasicBlock("entry");
-        builder.positionBuilderAtEnd(entry);
-
-
+        TypeRef gbl_ptr = Type.PTR.llvmType().pointerType();
+        ArrayList<Value> global_roots_entries = new ArrayList<Value>();
         for (ClassType c : classes) {
             if (c.getFields() != null) {
                 for (FieldEnv f : c.getFields()) {
                     if (f.isStatic()) {
                         org.llvm.Value v = f.getStaticField();
-                        Type type = f.getType();
-                        // CALL SOME GLOBAL ROOT REGISTRATION
-                        // LLVM explicitly states they don't handle global roots
-                        // with this method.
-                        Builder b = getBuilder();
-                        org.llvm.Value res = b.buildBitCast(v,
-                                                            TypeRef.int8Type().pointerType(), "gcgbltmp");
-                        org.llvm.Value [] args = {res};
-                        org.llvm.Value gc = b.buildCall(getGlobalFn(LLVM.GlobalFn.GCGBLROOT), "", args);
+                        global_roots_entries.add(getBuilder().buildBitCast(v,
+                                                 gbl_ptr, "gcgbltmp"));
                     }
                 }
             }
         }
-        builder.buildRetVoid();
+
+        Value global_roots = getModule().addGlobal(gbl_ptr.arrayType(
+                                 global_roots_entries.size()), "MJCglobal_roots");
+        global_roots.setInitializer(Value.constArray(gbl_ptr, global_roots_entries));
+        Value global_roots_size = getModule().addGlobal(Type.INT.llvmType(),
+                                  "MJCglobal_roots_size");
+        global_roots_size.setInitializer(Type.INT.llvmType().constInt(
+                                             global_roots_entries.size(), true));
 
         for (ClassType c : classes) {
             c.llvmGen(this);
