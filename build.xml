@@ -10,8 +10,13 @@
   <property name="commons.jar" value="build/libs/commons-cli-1.2.jar" />
   <property name="dir.build" value="build/" />
   <property name="dir.libs" value="build/libs" />
+  <property name="dir.bin" value="build/bin" />
   <property name="dir.classes" value="build/classes" />
   <property name="dir.runtime" value="build/runtime" />
+  <property name="jacc.download.name" value="jacc.tar.gz" />
+  <property name="jacc.url" value="http://web.cecs.pdx.edu/~mpj/jacc/${jacc.download.name}" />
+  <property name="jacc.download" value="${dir.libs}/${jacc.download.name}" />
+  <property name="jacc.jar" value="${dir.libs}/jacc/jacc.jar" />
   <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>  
   <path id="llvm-j.build.classpath">
     <pathelement location="${junit.jar}" />
@@ -54,6 +59,7 @@
       <arg value="astyle" />
       <arg value="libjna-java" />
       <arg value="llvm-3.5-dev" />
+      <arg value="llvm-dev" />
       <arg value="clang-3.5" />
       <arg value="gcc-4.7-multilib" />
       <arg value="g++-4.7-multilib" />
@@ -86,12 +92,30 @@
     </outofdate>
   </target>
   <target name="build_libs" depends="git_setup">
+    <mkdir dir="${dir.bin}" />
     <mkdir dir="${dir.libs}" />
     <if>
       <available file="${bridj.jar}"/>
       <else>
         <exec executable="wget" dir="${dir.libs}" failonerror="true">
           <arg value="${bridj.url}" />
+        </exec>
+      </else>
+    </if>
+    <if>
+      <available file="${jacc.jar}" />
+      <else>
+        <if>
+          <available file="${jacc.download}" />
+          <else>
+            <exec executable="wget" dir="${dir.libs}" failonerror="true">
+              <arg value="${jacc.url}" />
+            </exec>
+          </else>
+        </if>
+        <exec executable="tar" dir="${dir.libs}" failonerror="true">
+          <arg value="xvf" />
+          <arg value="${jacc.download.name}" />
         </exec>
       </else>
     </if>
@@ -108,7 +132,6 @@
       <else>
         <exec executable="make" dir="llvm-j" failonerror="true">
           <arg value="llvm" />
-          <arg value="LLVM_HOME=/usr/" />
           <arg value="LLVM_VERSION=3.5" />
         </exec>
         <mkdir dir="build/llvm-j/"/>
@@ -136,9 +159,9 @@
         <pathelement path="src/syntax/MjcTokens.java"/>
       </targetfiles>
       <sequential>
-        <exec executable="jacc" failonerror="true">
+        <java jar="${jacc.jar}" fork="true">
           <arg value="src/syntax/Mjc.jacc" />
-        </exec>
+        </java>
       </sequential>
     </outofdate>
     <javac debug="on" includeantruntime="false" srcdir="src" destdir="${dir.classes}" classpathref="project.classpath" />
