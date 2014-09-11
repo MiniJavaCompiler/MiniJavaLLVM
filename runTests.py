@@ -173,14 +173,8 @@ class Test:
         compile_test = RunTest(mjc_file, ["java",
                                            "-jar", "build/jar/mjc.jar",
                                            "-i", self.testfile,
-                                           "--LLVM", BUILDDIR + bitcode_file])
-
-
-        compile_test2 = RunTest(ignored, ["java",
-                                           "-jar", "build/jar/mjc.jar",
-                                           "-i", self.testfile,
+                                           "--LLVM", BUILDDIR + bitcode_file,
                                            "--x86", BUILDDIR + x86_asm_file])
-
 
         if self.bad:
             self.compare_files = [CompareFile([mjc_file], testname + ".mjc.ref")]
@@ -196,7 +190,7 @@ class Test:
             CompareFile([out], "".join(os.path.splitext(out)[:-1]) + ".ref")
             for out in out_files]
 
-        all_tests = [compile_test, compile_test2,
+        all_tests = [compile_test,
                      RunTest(llvm_link_file, ["llc", 
                                               BUILDDIR + bitcode_file, 
                                              "-filetype=obj",
@@ -236,9 +230,6 @@ def doTest(test):
     return test
 
 if __name__ == '__main__':
-    if not ('LD_LIBRARY_PATH' in os.environ):
-        print("LD_LIBRARY_PATH is not set (did you forget to run ./wrap around it?)");
-        sys.exit(1);
     ignore_ref = False
     create_ref = False
     show_diff = False

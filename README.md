@@ -31,14 +31,11 @@ MiniJava requires the following dependencies on Ubuntu:
 * ant-contrib
 * libcommons-cli-java
 
-Due to an existing memory bug in the release libraries, the LLVM libraries are compiled from source.
-
 The MiniJava compiler can be built with:
 
     ant jar
 
 ## Usage:
-Using the MJC with the debug LLVM libraries requires that `LD_LIBRARY_PATH=./llvm/Debug+Asserts/lib`. This can be sourced from `./mjc_env` or any invocations of MJC be run with the `./wrap` script.
 
 ```
 java -jar build/jar/mjc.jar -help
@@ -87,7 +84,6 @@ src/         Contains sources for miniJava interpreter/compiler with
              modifications to support output to llvm assembly
  
 unitTests/   Directory containing unit tests and output
-llvm/        Git submodule for the LLVM libraries
 llvm-j/      Git submodule for LLVM-J library.
 runTests.py  Script to run all existing test infrastructure.
              Also can be invoked via "ant test"

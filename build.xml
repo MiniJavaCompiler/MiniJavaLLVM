@@ -1,6 +1,10 @@
 <project name="MJC">
   <property name="junit.jar" value="/usr/share/java/junit4.jar" />
-  <property name="bridj.jar" value="build/libs/bridj-0.6.2.jar" />
+  <!-- The stable 0.6.2 bridj seems to be responsible for strange crashes,
+       so use the newest 0.7 snapshot. -->
+  <property name="bridj.name" value="bridj-0.7-20140629.160052-71.jar" />
+  <property name="bridj.url" value="https://oss.sonatype.org/content/groups/public/com/nativelibs4java/bridj/0.7-SNAPSHOT/${bridj.name}" />
+  <property name="bridj.jar" value="build/libs/${bridj.name}" />
   <property name="llvm-j.jar" value="build/libs/llvm-j.jar" />
   <property name="commons.jar.system" value="/usr/share/java/commons-cli-1.2.jar" />
   <property name="commons.jar" value="build/libs/commons-cli-1.2.jar" />
@@ -8,7 +12,6 @@
   <property name="dir.libs" value="build/libs" />
   <property name="dir.classes" value="build/classes" />
   <property name="dir.runtime" value="build/runtime" />
-  <property name="llvm.lib" value="llvm/Debug+Asserts/lib/libLLVM-3.5svn.so" />
   <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>  
   <path id="llvm-j.build.classpath">
     <pathelement location="${junit.jar}" />
@@ -62,17 +65,6 @@
   <target name="clean">
     <delete dir="build"/>
   </target>
-  <target name="fullclean" depends="clean">
-    <exec executable="git" dir="llvm/" failonerror="true">
-      <arg value="reset" />
-      <arg value="--hard" />
-    </exec>
-    <exec executable="git" dir="llvm/" failonerror="true">
-      <arg value="clean" />
-      <arg value="-f" />
-      <arg value="-d" />
-    </exec>
-  </target>
   <target name="runtime">
     <mkdir dir="${dir.runtime}"/>
     <outofdate>
@@ -96,30 +88,10 @@
   <target name="build_libs" depends="git_setup">
     <mkdir dir="${dir.libs}" />
     <if>
-      <available file="llvm/Makefile.llvmbuild" />
-      <else>
-        <exec executable="./configure" dir="llvm/" failonerror="true">
-          <arg value="--enable-assertions" />
-          <arg value="--enable-debug-symbols" />
-          <arg value="--disable-optimized" />
-          <arg value="--enable-shared" />
-        </exec>
-      </else>
-    </if>
-    <if>
-      <available file="${llvm.lib}" />
-      <else>
-        <exec executable="make" dir="llvm/" failonerror="true">
-          <arg value="-j" />
-          <arg value="4" />
-        </exec>
-      </else>
-    </if>
-    <if>
       <available file="${bridj.jar}"/>
       <else>
         <exec executable="wget" dir="${dir.libs}" failonerror="true">
-          <arg value="https://bridj.googlecode.com/files/bridj-0.6.2.jar" />
+          <arg value="${bridj.url}" />
         </exec>
       </else>
     </if>
@@ -137,7 +109,7 @@
         <exec executable="make" dir="llvm-j" failonerror="true">
           <arg value="llvm" />
           <arg value="LLVM_HOME=/usr/" />
-          <arg value="LLVM_VERSION=3.5svn" />
+          <arg value="LLVM_VERSION=3.5" />
         </exec>
         <mkdir dir="build/llvm-j/"/>
         <javac includeantruntime="false" srcdir="llvm-j/src/" 
@@ -148,7 +120,6 @@
   </target>
   <target name="llvm_j_test" depends="build_libs">
     <java classname="org.junit.runner.JUnitCore" fork="true" classpathref="llvm-j.run.classpath">
-      <env key="LD_LIBRARY_PATH" value="./llvm/Debug+Asserts/lib"/>
       <arg value="org.llvm.test.TestJIT" />
       <arg value="org.llvm.test.TestLLVM" />
       <arg value="org.llvm.test.TestFactorial" />
@@ -188,8 +159,7 @@
     <java jar="build/jar/mjc.jar" fork="true"/>
   </target>
   <target name="test" depends="jar">
-    <exec executable="./wrap" failonerror="true">
-      <arg value="./runTests.py" />
+    <exec executable="./runTests.py" failonerror="true">
       <arg value="show_diff" />
     </exec>
   </target>
