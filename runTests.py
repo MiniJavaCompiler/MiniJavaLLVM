@@ -171,7 +171,8 @@ class Test:
                 os.remove(o)
 
         compile_test = RunTest(mjc_file, ["java",
-                                           "-jar", "build/jar/mjc.jar",
+                                          "-Xms512m", "-Xmx1024m",
+                                          "-jar", "build/jar/mjc.jar",
                                            "-i", self.testfile,
                                            "--LLVM", BUILDDIR + bitcode_file,
                                            "--x86", BUILDDIR + x86_asm_file])
