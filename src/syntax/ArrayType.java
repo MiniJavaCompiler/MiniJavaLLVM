@@ -41,36 +41,38 @@ public final class ArrayType extends ClassType {
     public Type getElementType() {
         return elementType;
     }
-    static private Id buildArrayName(Id id) {
-        return new Id(id.getPos(), id.getName() + "[]");
+    static private Id buildArrayName(Position pos, Type t) {
+        return new Id(pos, t.toString() + "[]");
     }
-    static private Type buildArrayExtends(Id id) {
-        return new NameType(new Name(new Id(id.getPos(), "Object")));
+    static private Type buildArrayExtends(Position pos) {
+        return new NameType(new Name(new Id(pos, "Object")));
     }
-
-    static private Decls buildDecls(Id id, Type elementType) {
+    public Type check(Context ctxt) {
+        elementType = elementType.check(ctxt);
+        return super.check(ctxt);
+    }
+    static private Decls buildDecls(Position pos, Type elementType) {
         Decls d = null;
-        Position pos = id.getPos();
-        Modifiers m = new Modifiers(id.getPos());
+        Modifiers m = new Modifiers(pos);
         m.set(Modifiers.PUBLIC);
-        Modifiers m2 = new Modifiers(id.getPos());
+        Modifiers m2 = new Modifiers(pos);
         m2.set(Modifiers.PRIVATE);
-        Id length = new Id(id.getPos(), "length");
-        Id array = new Id(id.getPos(), "array");
-        Id size = new Id(id.getPos(), "size");
+        Id length = new Id(pos, "length");
+        Id array = new Id(pos, "array");
+        Id size = new Id(pos, "size");
         VarDecls v = new VarDecls(length);
         VarDecls v2 = new VarDecls(array);
         d = new FieldDecl(m, Type.INT, v).link(d);
         d = new FieldDecl(m2, Type.PTR, v2).link(d);
 
-        Type thisType = new NameType(new Name(buildArrayName(id)));
+        Type thisType = new NameType(new Name(buildArrayName(pos, elementType)));
         Statement [] body = {
             new ExprStmt(pos, new AssignExpr(pos, new ObjectAccess(new This(pos), length), new NameAccess(new Name(size)))),
             new ExprStmt(pos, new AssignExpr(pos, new ObjectAccess(new This(pos), array),
             new AllocArrayInvocation(pos, thisType, elementType, new NameAccess(new Name(size)))))
         };
 
-        d = new MethDecl(true, m, Type.VOID, buildArrayName(id),
+        d = new MethDecl(true, m, Type.VOID, buildArrayName(pos, elementType),
                          new Formals(Type.INT, size),
                          new Block(pos, body)).link(d);
 
@@ -91,12 +93,12 @@ public final class ArrayType extends ClassType {
                          new Block(pos, initElem_body)).link(d);
         return d;
     }
-    public ArrayType(Modifiers mods, Id id, Type elementType) {
+    public ArrayType(Modifiers mods, Position pos, Type elementType) {
         super(mods,
-              buildArrayName(id),
-              buildArrayExtends(id),
+              buildArrayName(pos, elementType),
+              buildArrayExtends(pos),
               new Type[0],
-              buildDecls(id, elementType));
+              buildDecls(pos, elementType));
         this.elementType = elementType;
     }
 

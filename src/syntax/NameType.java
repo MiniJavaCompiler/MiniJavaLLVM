@@ -42,16 +42,16 @@ public final class NameType extends Type {
     }
 
     public TypeRef llvmType() {
-        throw new RuntimeException("Type has not been determined.");
+        throw new RuntimeException("Type has not been determined. " + this);
     }
     public org.llvm.Value defaultValue() {
-        throw new RuntimeException("Type has not been determined.");
+        throw new RuntimeException("Type has not been determined. " + this);
     }
     public void llvmGenTypes(LLVM l) {
-        throw new RuntimeException("Type has not been determined.");
+        throw new RuntimeException("Type has not been determined. " + this);
     }
     public Expression defaultExpr(Position pos) {
-        throw new RuntimeException("Type has not been determined.");
+        throw new RuntimeException("Type has not been determined. " + this);
     }
     /** Check to ensure that this is a valid type.  Used to deal with
      *  types that are specified by name, which cannot be properly
@@ -68,7 +68,7 @@ public final class NameType extends Type {
     /** Test for equality with another type.
      */
     public boolean equal(Type type) {
-        throw new RuntimeException("Type has not been determined.");
+        throw new RuntimeException("Type has not been determined. " + this);
     }
 
     public int getWidth() {

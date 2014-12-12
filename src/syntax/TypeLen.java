@@ -40,6 +40,7 @@ public class TypeLen extends Expression {
      *  type (or throw an exception if an unrecoverable error occurs).
      */
     public Type typeOf(Context ctxt, VarEnv env) throws Diagnostic {
+        type = type.check(ctxt);
         return Type.INT;
     }
 
