@@ -71,10 +71,10 @@ public final class ArrayAccess extends FieldAccess {
      *  leave the result in the specified free variable.
      */
     public void compileExpr(Assembly a, int free) {
+        a.spill(free + 1);
         array_check.compileExpr(a, free + 1);
         index.compileExpr(a, free);
         a.emit("imull",  a.immed(array_class.getElementType().getWidth()), a.reg(free));
-        a.spill(free + 1);
         object.compileExpr(a, free + 1);
         FieldEnv f = array_class.findField("array");
         a.emit("movl", a.indirect(f.getOffset(), a.reg(free + 1)), a.reg(free + 1));
@@ -87,8 +87,8 @@ public final class ArrayAccess extends FieldAccess {
      *  this expression.
      */
     void saveVar(Assembly a, int free) {
-        array_check.compileExpr(a, free + 1);
         a.spill(free + 1);
+        array_check.compileExpr(a, free + 1);
         index.compileExpr(a, free + 1);
         a.emit("imull", a.immed(array_class.getElementType().getWidth()),
                a.reg(free + 1));
@@ -98,6 +98,7 @@ public final class ArrayAccess extends FieldAccess {
         a.emit("movl", a.indirect(f.getOffset(), a.reg(free + 2)), a.reg(free + 2));
         a.emit("addl", a.reg(free + 1), a.reg(free + 2));
         a.emit("movl", a.reg(free), a.indirect(0, a.reg(free + 2)));
+        a.unspill(free + 2);
         a.unspill(free + 1);
     }
 

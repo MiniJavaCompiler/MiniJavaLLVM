@@ -12,10 +12,11 @@ class Exception {
         MJC.die();
     }
     public static void throwLoc(String file, int lineno, String message) {
-        String [] items = new String[3];
-        items[0] = file;
-        items[1] = Integer.toString(lineno);
-        items[2] = message;
+        String [] items = new String[] {
+            file,
+            Integer.toString(lineno),
+            message
+        };
         Exception.throw(String.format("%:% %", items));
     }
 }
@@ -99,9 +100,10 @@ class ClassPool {
         System.out.println(Integer.toString(used));
 
         while (x < used) {
-            String [] items = new String[2];
-            items[0] = pool[x].getName();
-            items[1] = Integer.toString(pool[x].getClassRefId());
+            String [] items = new String[] {
+                pool[x].getName(),
+                Integer.toString(pool[x].getClassRefId())
+            };
             System.out.println(String.format("Name: % Id: %", items));
             x = x + 1;
         }
@@ -137,9 +139,10 @@ class Array {
             return true;
         } else {
             String msg = "";
-            String [] items = new String[2];
-            items[0] = Integer.toString(index);
-            items[1] = Integer.toString(length);
+            String [] items = new String[] {
+                Integer.toString(index),
+                Integer.toString(length)
+            };
             Exception.throwLoc(filename, lineno,
                                String.format("Array access out of bounds (index %, length %).", items));
             return false;
@@ -252,28 +255,11 @@ class Boolean {
 
 class Integer {
     public static char digitToChar(int x) {
-        if (x == 0) {
-            return '0';
-        } else if (x == 1) {
-            return '1';
-        } else if (x == 2) {
-            return '2';
-        } else if (x == 3) {
-            return '3';
-        } else if (x == 4) {
-            return '4';
-        } else if (x == 5) {
-            return '5';
-        } else if (x == 6) {
-            return '6';
-        } else if (x == 7) {
-            return '7';
-        } else if (x == 8) {
-            return '8';
-        } else if (x == 9) {
-            return '9';
+        String digits = "0123456789";
+        if (x < digits.length()) {
+            return digits.charAt(x);
         } else {
-            System.out.println("Digit not between 0-9");
+            Exception.throw("Digit not between 0-9");
         }
         return 'X';
     }

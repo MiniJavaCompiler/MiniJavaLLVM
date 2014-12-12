@@ -25,26 +25,42 @@ import checker.*;
 import codegen.*;
 import interp.*;
 
+import java.util.ArrayList;
 /** Provides a representation for integer literals.
  */
-public final class ArrayLiteral extends Literal {
+public final class ArrayLiteral extends StatementExpr {
     private Type type;
     private Expression [] literals;
-    private Expression initialization;
+    private TmpAccess tmp;
+    private Expression object;
+    private Expression [] inits;
+
+    private void buildInits(TmpAccess tmp) {
+
+    }
+
+    private void commonCons(Type type, Expression [] literals) {
+        this.type = type;
+        this.literals = literals;
+        this.tmp = new TmpAccess(pos, type);
+        this.object = new ConstructorInvocation(
+            new Name(new Id(pos, type.toString())),
+            new Args(new IntLiteral(pos, literals.length), null));
+    }
+    public ArrayLiteral(Position pos, Type type, Args args) {
+        super(pos);
+        ArrayList<Expression> list = new ArrayList<Expression>();
+        if (args != null) {
+            for (Args a : args) {
+                list.add(a.getArg());
+            }
+        }
+        commonCons(type, list.toArray(new Expression[0]));
+    }
 
     public ArrayLiteral(Position pos, Type type, Expression [] literals) {
         super(pos);
-        this.type = type;
-        this.literals = literals;
-        this.initialization = new ConstructorInvocation(
-            new Name(new Id(pos, type.toString())),
-            new Args(new IntLiteral(pos, literals.length), null));
-
-        for (int x = 0; x < literals.length; x++) {
-            this.initialization = new ObjectInvocation(this.initialization, new Id(pos,
-                    "initElem"),
-                    new Args(new IntLiteral(pos, x), new Args(literals[x], null)));
-        }
+        commonCons(type, literals);
     }
 
     /** Check this expression and return an object that describes its
@@ -64,19 +80,37 @@ public final class ArrayLiteral extends Literal {
                     "One or more elements of array literal does not match array type");
                 }
             }
+            inits = new Expression[literals.length];
+            for (int x = 0; x < literals.length; x++) {
+                inits[x] = new AssignExpr(pos, new ArrayAccess(pos, tmp, new IntLiteral(pos, x),
+                                          false), literals[x]);
+                inits[x].typeOf(ctxt, env);
+            }
         }
-        return this.initialization.typeOf(ctxt, env);
+        return this.object.typeOf(ctxt, env);
     }
 
     /** Generate code to evaluate this expression and
      *  leave the result in the specified free variable.
      */
     public void compileExpr(Assembly a, int free) {
-        this.initialization.compileExpr(a, free);
+        this.object.compileExpr(a, free);
+        tmp.setTmp(free);
+        a.spill(free + 1);
+        for (Expression e : inits) {
+            e.compileExpr(a, free + 1);
+        }
+        a.unspill(free + 1);
     }
 
     void compileExprOp(Assembly a, String op, int free) {
-        this.initialization.compileExprOp(a, op, free);
+        this.object.compileExprOp(a, op, free);
+        tmp.setTmp(free);
+        a.spill(free + 1);
+        for (Expression e : inits) {
+            e.compileExpr(a, free + 1);
+        }
+        a.unspill(free + 1);
     }
 
     /** Generate code to evaluate this expression and
@@ -97,9 +131,19 @@ public final class ArrayLiteral extends Literal {
     /** Evaluate this expression.
      */
     public Value eval(State st) {
-        return this.initialization.eval(st);
+        Value v = this.object.eval(st);
+        tmp.setTmp(v);
+        for (Expression e : inits) {
+            e.eval(st);
+        }
+        return v;
     }
     public org.llvm.Value llvmGen(LLVM l) {
-        return this.initialization.llvmGen(l);
+        org.llvm.Value v = this.object.llvmGen(l);
+        tmp.setTmp(v);
+        for (Expression e : inits) {
+            e.llvmGen(l);
+        }
+        return v;
     }
 }

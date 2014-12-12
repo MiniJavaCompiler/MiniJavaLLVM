@@ -176,6 +176,20 @@ public class Assembly {
         emit("movl", indirect(thisOffset(size), "%ebp"), reg(free));
     }
 
+    /*loads the value from tmp into free */
+    public void loadTmp(int x86_tmp, int free) {
+        out.println("// Attempting to load " + x86_tmp + " into " + free);
+        int diff = free - x86_tmp;
+        if (diff >= numRegs) {
+            emit("movl", indirect((free - x86_tmp) * 4, "%esp"), reg(free));
+        } else if (diff > 0) {
+            emit("movl", reg(x86_tmp), reg(free));
+        } else if (diff == 0) {
+            /* same register ? */
+        } else {
+            assert(false); /* cannot reference a tmp that doesn't exist */
+        }
+    }
     //- emit individual instructions, with varying numbers of arguments ------
 
     public void emit(String op) {
