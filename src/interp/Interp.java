@@ -60,8 +60,9 @@ public class Interp {
         Source fake = new JavaSource(null, "<MJCInternal>", null);
         Position fake_pos = new SourcePosition(fake, 0, 0);
         Parser      parser  = new Parser(handler, lexer);
-        ClassType[] classes = parser.getClasses();
-        Context     context = new Context(fake_pos, handler, classes);
+        Context     context = new Context(fake_pos, handler);
+        parser.setContext(context);
+        parser.parseNow();
         MethEnv     main    = context.check();
         MethEnv init = context.findClass("MJCStatic").findMethod("init");
         if (main != null) {
