@@ -127,6 +127,18 @@ public class Assembly {
         }
     }
 
+    public int spillTo(int free, String target_reg) {
+        int orig_free = free;
+        while (!target_reg.equals(reg(free))) {
+            spill(++free);
+        }
+        return free;
+    }
+    public void unspillTo(int free, int orig_free) {
+        while (free > orig_free) {
+            unspill(free--);
+        }
+    }
     public void spillAll(int free) {
         int toSpill = Math.min(free, numRegs - 1);
         for (int i = 1; i <= toSpill; i++) {
@@ -180,14 +192,14 @@ public class Assembly {
     public void loadTmp(int x86_tmp, int free) {
         out.println("// Attempting to load " + x86_tmp + " into " + free);
         int diff = free - x86_tmp;
-        if (diff >= numRegs) {
-            emit("movl", indirect((free - x86_tmp) * 4, "%esp"), reg(free));
-        } else if (diff > 0) {
+        if (diff < 0) {
+            assert(false); /* reg is higher on stack ? */
+        } else if (diff < numRegs) {
             emit("movl", reg(x86_tmp), reg(free));
-        } else if (diff == 0) {
-            /* same register ? */
+        } else if (diff > 0) {
+            emit("movl", indirect(diff * WORDSIZE, "%esp"), reg(free));
         } else {
-            assert(false); /* cannot reference a tmp that doesn't exist */
+            /* same register ? */
         }
     }
     //- emit individual instructions, with varying numbers of arguments ------

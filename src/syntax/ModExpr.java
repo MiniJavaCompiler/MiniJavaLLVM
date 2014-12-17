@@ -42,19 +42,15 @@ public final class ModExpr extends NumericOpExpr {
      *  leave the result in the specified free variable.
      */
     public void compileExpr(Assembly a, int free) {
-        int orig_free = free;
-        while (!a.reg(free).equals("%eax")) {
-            free++;
-        }
-        a.spill(free);
-        left.compileExpr(a, free);
-        a.spill(free + 1);
-        right.compileExpr(a, free + 1);
+        int freed = a.spillTo(free, "%eax");
+        left.compileExpr(a, freed);
+        a.spill(freed + 1);
+        right.compileExpr(a, freed + 1);
         a.emit("movl", a.immed(0), "%edx");
-        a.emit("idivl", a.reg(free + 1));
+        a.emit("idivl", a.reg(freed + 1));
 
         /* %edx will not be touched by this */
-        a.unspillAll(orig_free);
+        a.unspillTo(freed + 1, free);
         a.emit("movl", "%edx", a.reg(free));
     }
 

@@ -94,7 +94,9 @@ public final class ArrayLiteral extends StatementExpr {
      *  leave the result in the specified free variable.
      */
     public void compileExpr(Assembly a, int free) {
+        a.emit("//compiling tmp to " + free);
         this.object.compileExpr(a, free);
+        a.emit("//setting tmp to " + free);
         tmp.setTmp(free);
         a.spill(free + 1);
         for (Expression e : inits) {

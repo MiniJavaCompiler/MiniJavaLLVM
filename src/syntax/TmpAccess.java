@@ -58,6 +58,7 @@ public final class TmpAccess extends FieldAccess {
      *  leave the result in the specified free variable.
      */
     public void compileExpr(Assembly a, int free) {
+        //a.emit("int", "$3");
         a.loadTmp(x86_tmp, free);
     }
 
