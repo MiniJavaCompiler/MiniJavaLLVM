@@ -229,8 +229,15 @@ mulExpr : mulExpr '*' unary     { $$ = new MulExpr($2, $1, $3); }
         ;
 unary   : name			{ $$ = new NameAccess($1); }
         | primary
-	| '-' unary		{ $$ = new NegExpr($1, $2); }
 	| '!' unary		{ $$ = new NotExpr($1, $2); }
+	| '-' unary		{ //If there is a negative integer literal, we modify the string for the integer
+                                  // rather than create a negative expr (allows MIN_INT values).
+                                  if ($2 instanceof IntLiteral && ((IntLiteral)$2).setNegative()) {
+                                      $$ = $2; 
+                                  } else { 
+                                      $$ = new NegExpr($1, $2);
+                                  }
+                                }
         ;
 primary : literal
         | THIS                  { $$ = new This($1); }

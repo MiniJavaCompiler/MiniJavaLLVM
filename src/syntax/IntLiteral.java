@@ -29,19 +29,51 @@ import interp.*;
  */
 public final class IntLiteral extends Literal {
     private int value;
+    private String str_value;
+    private boolean resolved;
+
     public int getValue() {
         return value;
     }
+    public boolean setNegative() {
+        if (resolved) {
+            assert(false); /* cannot change sign of resolved integer */
+        }
+        if (str_value.charAt(0) >= '0' && str_value.charAt(0) <= '9') {
+            str_value = '-' + str_value;
+            return true;
+        } else if (str_value.charAt(0) == '-') {
+            return false;
+        } else {
+            // unhandled character
+            assert(false);
+            return false;
+        }
+    }
+
     public IntLiteral(Position pos, int value) {
         super(pos);
         this.value = value;
+        resolved = true;
     }
-
+    public IntLiteral(Position pos, String str) {
+        super(pos);
+        this.str_value = str;
+        resolved = false;
+    }
     /** Check this expression and return an object that describes its
      *  type (or throw an exception if an unrecoverable error occurs).
      */
     public Type typeOf(Context ctxt, VarEnv env)
     throws Diagnostic {
+        if (!resolved) {
+            try {
+                this.value = Integer.parseInt(str_value);
+            } catch (NumberFormatException e) {
+                throw new Failure(pos, "Invalid Integer Literal: " + this.str_value + ".");
+            }
+            resolved = true;
+        }
         return Type.INT;
     }
 

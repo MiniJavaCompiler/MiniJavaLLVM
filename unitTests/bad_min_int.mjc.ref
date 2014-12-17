@@ -1,0 +1,3 @@
+ERROR: "unitTests/bad_min_int.j", line 4
+Invalid Integer Literal: -2147483649.
+

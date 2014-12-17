@@ -333,15 +333,15 @@ public class MjcLexer extends SourceLexer implements Tokens {
 
     //- Numeric integer literals ----------------------------------------------
 
-    private int number() {              // Assumes c is a digit
-        int n = 0;
-        int d = Character.digit((char)c, 10);
+    private int number() {
+        // We defer computing the value of the intliteral until later
+        // to allow min and max int values (minus sign may be added later).
+        StringBuilder b = new StringBuilder();
         do {
-            n = 10 * n + d;
+            b.append((char)c);
             nextChar();
-            d = Character.digit((char)c, 10);
-        } while (d >= 0);
-        semantic = new IntLiteral(getPos(), n);
+        } while ((char)c >= '0' && (char)c <= '9');
+        semantic = new IntLiteral(getPos(), b.toString());
         return token = INTLIT;
     }
 
