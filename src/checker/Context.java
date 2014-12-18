@@ -30,7 +30,7 @@ import java.util.Hashtable;
 /** Provides a representation for contexts used during type checking.
  */
 public final class Context extends Phase {
-    private ClassType[] classes;
+    private ArrayList<ClassType> classes;
     private ClassType   currClass;
     private MethEnv     currMethod;
     private int         localBytes;
@@ -40,13 +40,16 @@ public final class Context extends Phase {
     private int staticStringCount;
     private Id static_class_id;
 
-    public Context(Position pos, Handler handler, ClassType[] classes) {
+    public Context(Position pos, Handler handler) {
         super(handler);
-        this.classes = classes;
         this.pos = pos;
         this.uniqueStrings = new Hashtable<String, StringLiteral>();
         this.staticStringCount = 0;
         this.static_class_id = new Id(pos, "MJCStatic");
+        this.classes = new ArrayList<ClassType>();
+    }
+    public void addClass(ClassType cls) {
+        classes.add(cls);
     }
     public StringLiteral [] getUniqueStrings() {
         return uniqueStrings.values().toArray(new StringLiteral[0]);
@@ -62,14 +65,14 @@ public final class Context extends Phase {
     }
 
     public ClassType [] getClasses() {
-        return classes;
+        return classes.toArray(new ClassType[0]);
     }
     /** Look for the definition of a class by its name.
      */
     public ClassType findClass(String name) {
-        for (int i = 0; i < classes.length; i++) {
-            if (name.equals(classes[i].getId().getName())) {
-                return classes[i];
+        for (ClassType c : classes) {
+            if (name.equals(c.getId().getName())) {
+                return c;
             }
         }
         return null;
@@ -126,18 +129,19 @@ public final class Context extends Phase {
      *  in the input program.
      */
     private boolean checkClasses() {
-        ClassType[] classes = this.classes;
-        for (int i = classes.length - 1; i >= 0; i--) {
+        for (int i = classes.size() - 1; i >= 0; i--) {
+            ClassType c_i = classes.get(i);
             for (int j = 0; j < i; j++) {
-                if (classes[i].getId().sameId(classes[j].getId())) {
-                    report(new Failure(classes[i].getPos(),
+                ClassType c_j = classes.get(j);
+                if (c_i.getId().sameId(c_j.getId())) {
+                    report(new Failure(c_i.getPos(),
                                        "Multiple definitions for class " +
-                                       classes[i].getId()));
+                                       c_i.getId()));
                     break;
                 }
             }
             try {
-                classes[i].checkClass(this);
+                c_i.checkClass(this);
             } catch (Diagnostic d) {
                 report(d);
                 return noFailures();
@@ -203,14 +207,7 @@ public final class Context extends Phase {
                                  null, new Block(pos, static_body.toArray(new Statement[0]))).link(decls);
 
             staticClass = new ClassType(m, static_class_id, null, new Type[0], decls);
-            ClassType [] new_classes = new ClassType[classes.length + 1];
-            int x = 0;
-            for (ClassType c : classes) {
-                new_classes[x] = c;
-                x++;
-            }
-            new_classes[classes.length] = staticClass;
-            this.classes = new_classes;
+            classes.add(staticClass);
             try {
                 staticClass.checkClass(this);
             } catch (Diagnostic d) {
@@ -226,10 +223,9 @@ public final class Context extends Phase {
      *  methods) of the classes in this program.
      */
     private boolean checkMembers() {
-        ClassType[] classes = this.classes;
-        for (int i = 0; i < classes.length; i++) {
-            setCurrClass(classes[i]);
-            classes[i].checkMembers(this);
+        for (ClassType c : classes) {
+            setCurrClass(c);
+            c.checkMembers(this);
         }
         setCurrClass(null);
         return noFailures();

@@ -127,6 +127,18 @@ public class Assembly {
         }
     }
 
+    public int spillTo(int free, String target_reg) {
+        int orig_free = free;
+        while (!target_reg.equals(reg(free))) {
+            spill(++free);
+        }
+        return free;
+    }
+    public void unspillTo(int free, int orig_free) {
+        while (free > orig_free) {
+            unspill(free--);
+        }
+    }
     public void spillAll(int free) {
         int toSpill = Math.min(free, numRegs - 1);
         for (int i = 1; i <= toSpill; i++) {
@@ -176,6 +188,34 @@ public class Assembly {
         emit("movl", indirect(thisOffset(size), "%ebp"), reg(free));
     }
 
+    private String whereIsTmp(int x86_tmp, int free) {
+        int diff = free - x86_tmp;
+        if (diff < 0) {
+            throw new RuntimeException("Saved Tmp is higher than stack free");
+        } else if (diff < numRegs) {
+            return reg(x86_tmp);
+        } else {
+            return indirect((diff - numRegs) * WORDSIZE, "%esp");
+        }
+    }
+    /*loads the value from tmp into free */
+    public void loadTmp(int x86_tmp, int free) {
+        String where = whereIsTmp(x86_tmp, free);
+        if (!where.equals(reg(free))) {
+            emit("movl", where, reg(free));
+        } else {
+            /* oddly, it's already in the correct reg */
+        }
+    }
+
+    public void setTmp(int x86_tmp, int free) {
+        String where = whereIsTmp(x86_tmp, free);
+        if (!where.equals(reg(free))) {
+            emit("movl", reg(free), where);
+        } else {
+            /* oddly, it's already in the correct reg */
+        }
+    }
     //- emit individual instructions, with varying numbers of arguments ------
 
     public void emit(String op) {

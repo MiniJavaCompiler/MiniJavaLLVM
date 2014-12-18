@@ -24,41 +24,67 @@ import compiler.*;
 import checker.*;
 import codegen.*;
 import interp.*;
-import org.llvm.Builder;
 
-/** Provides a representation for "new" expressions that allocate an
- *  instance of a class.
+/** Represents an access to a field through a simple identifier.
  */
-public class TypeLen extends Expression {
-    private Type type;
-    public TypeLen(Position pos, Type type) {
+public final class TmpAccess extends FieldAccess {
+    Type type;
+    org.llvm.Value llvm_tmp;
+    Value interp_tmp;
+    int x86_tmp;
+
+    public TmpAccess(Position pos, Type t) {
         super(pos);
-        this.type = type;
+        type = t;
     }
 
     /** Check this expression and return an object that describes its
      *  type (or throw an exception if an unrecoverable error occurs).
      */
     public Type typeOf(Context ctxt, VarEnv env) throws Diagnostic {
-        type = type.check(ctxt);
-        return Type.INT;
+        return type.check(ctxt);
     }
 
+    public void setTmp(org.llvm.Value v) {
+        llvm_tmp = v;
+    }
+    public void setTmp(Value v) {
+        interp_tmp = v;
+    }
+    public void setTmp(int free) {
+        x86_tmp = free;
+    }
     /** Generate code to evaluate this expression and
      *  leave the result in the specified free variable.
      */
     public void compileExpr(Assembly a, int free) {
-        a.emit("movl", a.immed(type.getWidth()), a.reg(free));
+        a.loadTmp(x86_tmp, free);
+    }
+
+    /** Save the value in the free register in the variable specified by
+     *  this expression.
+     */
+    void saveVar(Assembly a, int free) {
+        a.setTmp(x86_tmp, free);
     }
 
     /** Evaluate this expression.
      */
     public Value eval(State st) {
-        return new IntValue(type.getWidth());
+        return interp_tmp;
+    }
+
+    /** Save a value in the location specified by this left hand side.
+     */
+    public void save(State st, Value val) {
+        interp_tmp = val;
     }
 
     public org.llvm.Value llvmGen(LLVM l) {
-        return l.getBuilder().buildTrunc(type.llvmTypeField().sizeOf(),
-                                         Type.INT.llvmType(), "typelen_cast");
+        return llvm_tmp;
+    }
+
+    public void llvmSave(LLVM l, org.llvm.Value r) {
+        l.getBuilder().buildStore(r, llvm_tmp);
     }
 }

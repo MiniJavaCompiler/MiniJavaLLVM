@@ -1,0 +1,3 @@
+ERROR: "unitTests/bad_max_int.j", line 4
+Invalid Integer Literal: 2147483648.
+

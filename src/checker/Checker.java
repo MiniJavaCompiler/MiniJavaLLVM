@@ -56,12 +56,15 @@ public class Checker {
      */
     static void check(Handler handler, Reader reader, String inputFile) {
         Source fake = new JavaSource(null, "<MJCInternal>", null);
+        ClassType [] classes = new ClassType[] {};
         Position fake_pos = new SourcePosition(fake, 0, 0);
+        Context context = new Context(fake_pos, handler);
         Source      source  = new JavaSource(handler, inputFile, reader);
         MjcLexer    lexer   = new MjcLexer(handler, source);
         Parser      parser  = new Parser(handler, lexer);
-        ClassType[] classes = parser.getClasses();
-        if (new Context(fake_pos, handler, classes).check() != null) {
+        parser.setContext(context);
+        parser.parseNow();
+        if (context.check() != null) {
             System.out.println(
                 "No static errors found in \"" + inputFile + "\"");
         }

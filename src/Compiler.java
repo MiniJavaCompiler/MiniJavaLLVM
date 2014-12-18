@@ -92,34 +92,27 @@ public class Compiler {
      */
     static void compile(String inputFile, CommandLine cmd) {
         String [] input_files = {inputFile, "src/Runtime.j"};
-        ArrayList<ClassType> class_list = new ArrayList<ClassType>();
         Source fake = new JavaSource(null, "<MJCInternal>", null);
         Position fake_pos = new SourcePosition(fake, 0, 0);
-        for (Type p : Type.getArrayPrimitives()) {
-            class_list.add(
-                new ArrayType(new Modifiers(fake_pos), new Id(fake_pos, p.toString()), p));
-        }
         Handler handler = new SimpleHandler();
+        Context context = new Context(fake_pos, handler);
+
         for (String i : input_files) {
             try {
                 Reader  reader = new FileReader(i);
                 Source      source  = new JavaSource(handler, i, reader);
                 MjcLexer    lexer   = new MjcLexer(handler, source);
                 syntax.Parser parser  = new syntax.Parser(handler, lexer);
-                if (parser.getClasses() != null) {
-                    class_list.addAll(Arrays.asList(parser.getClasses()));
-                }
+                parser.setContext(context);
+                parser.parseNow();
             } catch (FileNotFoundException e) {
                 handler.report(new Failure("Cannot open input file " +
                                            i));
             }
         }
-
-        ClassType [] classes = class_list.toArray(new ClassType[0]);
         MethEnv main = null;
-        Context context = new Context(fake_pos, handler, classes);
         if ((main = context.check()) != null) {
-            classes = context.getClasses();
+            ClassType [] classes = context.getClasses();
             if (cmd.hasOption("x")) {
                 String assemblyFile = cmd.getOptionValue("x");
                 Assembly assembly = Assembly.assembleToFile(assemblyFile);

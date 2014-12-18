@@ -43,7 +43,7 @@ public class NewExpr extends StatementExpr {
     public Type typeOf(Context ctxt, VarEnv env) throws Diagnostic {
         cls = name.asClass(ctxt);
         if (cls == null) {
-            throw new Failure(pos, "Undefined name " + name);
+            throw new Failure(pos, "Undefined constructor name " + name);
         } else if (cls.getMods().includes(Modifiers.ABSTRACT)) {
             throw new Failure(pos, "Unable to instantiate abstract class or interface " +
             name);

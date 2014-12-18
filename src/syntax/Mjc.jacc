@@ -14,10 +14,13 @@ import compiler.Handler;
 import compiler.Failure;
 import compiler.Warning;
 import compiler.Position;
+import compiler.Source;
+import compiler.JavaSource;
+import compiler.SourcePosition;
 import lexer.MjcLexer;
 import syntax.MjcList;
 import java.util.ArrayList;
-
+import checker.Context;
 %}
 %semantic Object
 
@@ -68,7 +71,7 @@ import java.util.ArrayList;
 %type  <AssignExpr>     assign 
 %type  <NewExpr>        new
 %type  <StatementExpr>  exprstmt
-
+%type  <int>         multi_array
 %%
 
 program : toplevels
@@ -83,7 +86,6 @@ class   : modifiers CLASS IDENT extends implements '{' decls '}'
                                 { checkClassModifiers($1);
                                   checkClassDecls($7);
                                   ClassType c = new ClassType($1, $3, $4, $5.toArray(), $7);
-                                  addClass(new ArrayType($1, $3, c));
                                   $$ = c; }
         ;
 extends : /* empty */           { $$ = null; }
@@ -129,9 +131,12 @@ modifiers
 pos     : /* empty */           { $$ = lexer.getPos(); }
         ;
 
+multi_array : ARRAY { $$ = 1; }
+            | ARRAY multi_array { $$ = $2 + 1; }
+            ;
+
 type    : d_type                { $$ = $1; }
-        | d_type ARRAY          { Id array = new Id(lexer.getPos(), $1.toString() + "[]");
-                                  $$ = new NameType(new Name(array)); }
+        | d_type multi_array    { $$ = addArrayClass($1, $2); }
         ;
 d_type  : INT                   { $$ = Type.INT; }
         | BOOLEAN               { $$ = Type.BOOLEAN; }
@@ -224,8 +229,15 @@ mulExpr : mulExpr '*' unary     { $$ = new MulExpr($2, $1, $3); }
         ;
 unary   : name			{ $$ = new NameAccess($1); }
         | primary
-	| '-' unary		{ $$ = new NegExpr($1, $2); }
 	| '!' unary		{ $$ = new NotExpr($1, $2); }
+	| '-' unary		{ //If there is a negative integer literal, we modify the string for the integer
+                                  // rather than create a negative expr (allows MIN_INT values).
+                                  if ($2 instanceof IntLiteral && ((IntLiteral)$2).setNegative()) {
+                                      $$ = $2; 
+                                  } else { 
+                                      $$ = new NegExpr($1, $2);
+                                  }
+                                }
         ;
 primary : literal
         | THIS                  { $$ = new This($1); }
@@ -242,8 +254,10 @@ literal : INTLIT
         | NULL                  { $$ = new NullLiteral($1); }
         ;
 new     : NEW name '(' args ')'   { $$ = new ConstructorInvocation($2, $4); }
-        | NEW d_type '[' expr ']' { Name n = new Name(new Id(lexer.getPos(), $2.toString() + "[]"));
-                                    $$ = new ConstructorInvocation(n, new Args($4, null));}
+        | NEW type '[' expr ']' { 
+            Type t = addArrayClass($2, 1);
+            $$ = new ConstructorInvocation(new Name(new Id(lexer.getPos(), t.toString())), new Args($4, null));}
+        | NEW type '{' args '}' { $$ = new ArrayLiteral(lexer.getPos(), $2, $4); }
         ;
 field	: primary '.' IDENT	{ $$ = new ObjectAccess($1, $3); }
         | SUPER '.' IDENT       { $$ = new SuperAccess($3); }
@@ -268,28 +282,47 @@ args1   : args1 ',' expr        { $$ = new Args($3, $1); }
 
 %%
     private MjcLexer    lexer;
-    private ArrayList<ClassType> classes;
+    private Context context;
     private int         used = 0;
     private boolean     parsed = false;
-
+    private Position fake_pos;
+    public void setContext(Context c) {
+        context = c;
+    }    
     public MjcParser(Handler handler, MjcLexer lexer) {
         super(handler);
-        classes = new ArrayList<ClassType>();
+        Source fake = new JavaSource(null, "<MJCInternal>", null);
+        fake_pos = new SourcePosition(fake, 0, 0);
+        this.context = context;
         this.lexer = lexer;
-        lexer.nextToken();
-        parsed = parse();
     }
-
+    public void parseNow() {
+        lexer.nextToken();
+        parsed = parse();       
+    }
     private void yyerror(String msg) {
         report(new Failure(lexer.getPos(), msg));
     }
 
-    private void addClass(ClassType cls) {
-        classes.add(cls);
+    private ClassType addClass(ClassType cls) {
+        context.addClass(cls);
+        return cls;
     }
-
-    public ClassType[] getClasses() {
-        return classes.toArray(new ClassType[0]);
+    private Type addArrayClass(Type element, int n) {
+        if (n == 0) {
+            return element;
+        } else {
+            String s = element.toString() + new String(new char[n]).replace("\0","[]");
+            ClassType found = context.findClass(s);
+            if (found == null) {
+                Type sub = addArrayClass(element, n - 1);
+                Modifiers ary_mods = new Modifiers(fake_pos);
+                ary_mods.set(Modifiers.PUBLIC);
+                return addClass(new ArrayType(ary_mods, fake_pos, sub));
+            } else {
+                return found;
+            }
+        }
     }
     void setPublic(Modifiers mods) {
       dontRepeat (mods, Modifiers.PUBLIC,    "public");

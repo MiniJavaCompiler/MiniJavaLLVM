@@ -342,6 +342,7 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
         if (isStatic()) {
             a.call(methName(a), free, size);
         } else {
+            a.unspill(0);
             a.call(a.aindirect(a.reg(0)), free, size);
         }
     }
