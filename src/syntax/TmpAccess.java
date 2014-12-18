@@ -58,7 +58,6 @@ public final class TmpAccess extends FieldAccess {
      *  leave the result in the specified free variable.
      */
     public void compileExpr(Assembly a, int free) {
-        //a.emit("int", "$3");
         a.loadTmp(x86_tmp, free);
     }
 
@@ -66,6 +65,7 @@ public final class TmpAccess extends FieldAccess {
      *  this expression.
      */
     void saveVar(Assembly a, int free) {
+        a.setTmp(x86_tmp, free);
     }
 
     /** Evaluate this expression.
@@ -84,7 +84,7 @@ public final class TmpAccess extends FieldAccess {
         return llvm_tmp;
     }
 
-    public void llvmSave(LLVM l, org.llvm.Value v) {
-        /* should we allow ? */
+    public void llvmSave(LLVM l, org.llvm.Value r) {
+        l.getBuilder().buildStore(r, llvm_tmp);
     }
 }

@@ -188,18 +188,32 @@ public class Assembly {
         emit("movl", indirect(thisOffset(size), "%ebp"), reg(free));
     }
 
-    /*loads the value from tmp into free */
-    public void loadTmp(int x86_tmp, int free) {
-        out.println("// Attempting to load " + x86_tmp + " into " + free);
+    private String whereIsTmp(int x86_tmp, int free) {
         int diff = free - x86_tmp;
         if (diff < 0) {
-            assert(false); /* reg is higher on stack ? */
+            throw new RuntimeException("Saved Tmp is higher than stack free");
         } else if (diff < numRegs) {
-            emit("movl", reg(x86_tmp), reg(free));
-        } else if (diff > 0) {
-            emit("movl", indirect(diff * WORDSIZE, "%esp"), reg(free));
+            return reg(x86_tmp);
         } else {
-            /* same register ? */
+            return indirect((diff - numRegs) * WORDSIZE, "%esp");
+        }
+    }
+    /*loads the value from tmp into free */
+    public void loadTmp(int x86_tmp, int free) {
+        String where = whereIsTmp(x86_tmp, free);
+        if (!where.equals(reg(free))) {
+            emit("movl", where, reg(free));
+        } else {
+            /* oddly, it's already in the correct reg */
+        }
+    }
+
+    public void setTmp(int x86_tmp, int free) {
+        String where = whereIsTmp(x86_tmp, free);
+        if (!where.equals(reg(free))) {
+            emit("movl", reg(free), where);
+        } else {
+            /* oddly, it's already in the correct reg */
         }
     }
     //- emit individual instructions, with varying numbers of arguments ------
