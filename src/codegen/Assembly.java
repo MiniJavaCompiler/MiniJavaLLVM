@@ -134,6 +134,12 @@ public class Assembly {
         }
         return free;
     }
+    public void spillTo(int free, int new_free) {
+        int orig_free = free;
+        while (new_free > free) {
+            spill(++free);
+        }
+    }
     public void unspillTo(int free, int orig_free) {
         while (free > orig_free) {
             unspill(free--);
@@ -227,6 +233,9 @@ public class Assembly {
     public void emit(String op, String op1, String op2) {
         out.println("\t" + op + "\t" + op1 + "," + op2);
     }
+    public void emit(String op, String op1, String op2, String op3) {
+        out.println("\t" + op + "\t" + op1 + "," + op2 + "," + op3);
+    }
 
     public String number(int v) {
         return Integer.toString(v);
@@ -243,6 +252,25 @@ public class Assembly {
     }
     public String aindirect(String s) {
         return "*" + s;
+    }
+    public void emitIndexAddr(
+        int dst_reg, int base_reg, int elem_size,
+        int index_reg, int offset) {
+        /* in the non-lea emit, dst_reg will be mutated during computation
+           and thus cannot be one of the of the input registers */
+        assert(dst_reg != base_reg && dst_reg != index_reg);
+        if (elem_size == 1
+            || elem_size == 2
+            || elem_size == 4
+            || elem_size == 8) {
+            String addr = indirect(offset,
+                                   reg(base_reg) + "," + reg(index_reg) + ","  + elem_size);
+            emit("leal", addr, reg(dst_reg));
+        } else {
+            emit("imull", immed(elem_size), reg(index_reg), reg(dst_reg));
+            emit("addl", reg(base_reg), reg(dst_reg));
+            emit("addl", immed(offset), reg(dst_reg));
+        }
     }
     public String vtName(ClassType cls) {
         return name(cls.getVTName());

@@ -75,22 +75,6 @@ public final class ArrayType extends ClassType {
         d = new MethDecl(true, m, Type.VOID, buildArrayName(pos, elementType),
                          new Formals(Type.INT, size),
                          new Block(pos, body)).link(d);
-
-        Id index = new Id(pos, "index");
-        Id element = new Id(pos, "element");
-        Statement [] initElem_body = {
-            new ExprStmt(pos, new AssignExpr(pos,
-            new ArrayAccess(pos, new This(pos), new NameAccess(new Name(index)), true),
-            new NameAccess(new Name(element)))),
-            new Return(pos, new This(pos)),
-        };
-
-        /* formals in reverse order */
-        Formals initElemFormals = new Formals(elementType, element);
-        initElemFormals = initElemFormals.link(new Formals(Type.INT, index));
-        d = new MethDecl(false, m, thisType, new Id(pos, "initElem"),
-                         initElemFormals,
-                         new Block(pos, initElem_body)).link(d);
         return d;
     }
     public ArrayType(Modifiers mods, Position pos, Type elementType) {

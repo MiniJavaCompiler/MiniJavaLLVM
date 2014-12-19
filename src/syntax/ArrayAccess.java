@@ -73,14 +73,16 @@ public final class ArrayAccess extends FieldAccess {
     public void compileExpr(Assembly a, int free) {
         a.spill(free + 1);
         array_check.compileExpr(a, free + 1);
-        index.compileExpr(a, free);
-        a.emit("imull",  a.immed(array_class.getElementType().getWidth()), a.reg(free));
-        object.compileExpr(a, free + 1);
+        index.compileExpr(a, free + 1);
+        a.spill(free + 2);
+        object.compileExpr(a, free + 2);
         FieldEnv f = array_class.findField("array");
-        a.emit("movl", a.indirect(f.getOffset(), a.reg(free + 1)), a.reg(free + 1));
-        a.emit("addl", a.reg(free), a.reg(free + 1));
-        a.emit("movl", a.indirect(0, a.reg(free + 1)), a.reg(free));
-        a.unspill(free + 1);
+        a.emit("movl", a.indirect(f.getOffset(), a.reg(free + 2)), a.reg(free + 2));
+        a.emitIndexAddr(free, free + 2,
+                        array_class.getElementType().getWidth(),
+                        free + 1, 0);
+        a.emit("movl", a.indirect(0, a.reg(free)), a.reg(free));
+        a.unspillTo(free + 2, free);
     }
 
     /** Save the value in the free register in the variable specified by
@@ -90,16 +92,16 @@ public final class ArrayAccess extends FieldAccess {
         a.spill(free + 1);
         array_check.compileExpr(a, free + 1);
         index.compileExpr(a, free + 1);
-        a.emit("imull", a.immed(array_class.getElementType().getWidth()),
-               a.reg(free + 1));
         a.spill(free + 2);
         object.compileExpr(a, free + 2);
         FieldEnv f = array_class.findField("array");
         a.emit("movl", a.indirect(f.getOffset(), a.reg(free + 2)), a.reg(free + 2));
-        a.emit("addl", a.reg(free + 1), a.reg(free + 2));
-        a.emit("movl", a.reg(free), a.indirect(0, a.reg(free + 2)));
-        a.unspill(free + 2);
-        a.unspill(free + 1);
+        a.spill(free + 3);
+        a.emitIndexAddr(free + 3, free + 2,
+                        array_class.getElementType().getWidth(),
+                        free + 1, 0);
+        a.emit("movl", a.reg(free),  a.indirect(0, a.reg(free + 3)));
+        a.unspillTo(free + 3, free);
     }
 
     /** Evaluate this expression.
