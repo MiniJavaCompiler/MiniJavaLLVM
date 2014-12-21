@@ -21,7 +21,7 @@ class Main {
             o.arr[0] = 42;
             o.arr[9] = x;
         }
-        System.out.println(Integer.toString(o.arr[0]));
-        System.out.println(Integer.toString(o.arr[9]));
+        System.out.println(o.arr[0]);
+        System.out.println(o.arr[9]);
     }
 }

@@ -32,15 +32,19 @@ import org.llvm.Builder;
 public final class ThisInvocation extends Invocation {
     private MethEnv menv;
     private int     size;
+    private Expression object;
 
     public ThisInvocation(Id id, Args args, MethEnv menv) {
         super(id.getPos(), args);
         this.menv = menv;
+        this.object = menv.isStatic() ? new IntLiteral(id.getPos(),
+                      0) : new This(id.getPos());
     }
 
     /** Calculate the type of this method invocation.
      */
     Type typeInvocation(Context ctxt, VarEnv env) throws Diagnostic {
+        object.typeOf(ctxt, env);
         size = ctxt.getCurrMethod().getSize();
         return checkInvocation(ctxt, env, this.menv);
     }
@@ -49,10 +53,7 @@ public final class ThisInvocation extends Invocation {
      *  the result in the specified free variable.
      */
     void compileInvocation(Assembly a, int free) {
-        if (!menv.isStatic()) {
-            a.loadThis(size, 0);
-        }
-        menv.compileInvocation(a, args, free);
+        menv.compileInvocation(a, object, args, free);
     }
 
     /** Evaluate this expression.

@@ -23,7 +23,7 @@ class Main {
             o.x = x;
             x = x + 1;
         }
-        System.out.println(Integer.toString(o.x));
+        System.out.println(o.x);
     }
 }
 

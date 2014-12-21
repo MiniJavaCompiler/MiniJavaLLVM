@@ -21,31 +21,106 @@ class Exception {
     }
 }
 
-class Class {
-    private int [] instancesof;
+interface Comparable {
+    int compareTo(Comparable o);
+    int compareToKey();
+}
+
+class Arrays {
+    public static int binarySearchRange(Comparable[] ary, Comparable key, int low,
+                                        int high) {
+        do {
+            int mid = low + (high - low) / 2;
+            int cmp = ary[mid].compareTo(key);
+
+            if (cmp > 0) {
+                high = mid - 1;
+            } else if (cmp < 0) {
+                low = mid + 1;
+            } else {
+                return mid;
+            }
+        } while (high > low);
+
+        if (ary[high].compareTo(key) == 0) {
+            return high;
+        } else {
+            /* not found */
+            return -1;
+        }
+    }
+    public static int binarySearch(Comparable[] ary, Comparable key) {
+        return binarySearchRange(ary, key, 0, ary.length - 1);
+    }
+    public static void swap(Comparable [] ary, int a, int b) {
+        Comparable tmp = ary[a];
+        ary[a] = ary[b];
+        ary[b] = tmp;
+    }
+    private static int quicksort_partition(Comparable [] ary, int low, int high) {
+        int pivot = low + (high - low) / 2;
+        Comparable pval = ary[pivot];
+        int storeIndex = low;
+        int i = low;
+        swap(ary, pivot, high);
+
+        while (i < high) {
+            if (ary[i].compareTo(pval) < 0) {
+                swap(ary, i, storeIndex);
+                storeIndex = storeIndex + 1;
+            }
+            i = i + 1;
+        }
+        swap(ary, storeIndex, high);
+        return storeIndex;
+    }
+    private static void quicksort(Comparable [] ary, int low, int high) {
+        if (low < high) {
+            int partition = quicksort_partition(ary, low, high);
+            quicksort(ary, low, partition - 1);
+            quicksort(ary, partition + 1, high);
+        }
+    }
+    public static void sort(Comparable [] ary) {
+        quicksort(ary, 0, ary.length - 1);
+    }
+}
+
+class Char {
+    private char c;
+    public Char(char c) {
+        this.c = c;
+    }
+    public static String toString(char c) {
+        return String.makeStringChar(new char[] {c});
+    }
+    public String toString() {
+        return Char.toString(c);
+    }
+}
+
+class Class implements Comparable {
+    private Integer [] instancesof;
     private String name;
     private int classRefId;
     public Class(String name, int classRefId, int [] instancesof) {
         this.name = name;
-        this.instancesof = instancesof;
         this.classRefId = classRefId;
+        this.instancesof = Integer.boxInt(instancesof);
+        Arrays.sort(this.instancesof);
+    }
+    public int compareToKey() {
+        return this.classRefId;
+    }
+    public int compareTo(Comparable o) {
+        return this.compareToKey() - o.compareToKey();
     }
     public String getName() {
         return name;
     }
     public boolean isInstance(Object obj) {
-        int x;
-        if (classRefId == obj.classId) {
-            return true;
-        }
-        x = 0;
-        while (x < instancesof.length) {
-            if (instancesof[x] == obj.classId) {
-                return true;
-            }
-            x = x + 1;
-        }
-        return false;
+        return classRefId == obj.classId
+               || !(Arrays.binarySearch(instancesof, new Integer(obj.classId)) < 0);
     }
     public int getClassRefId() {
         return classRefId;
@@ -55,7 +130,6 @@ class Class {
 class ClassPool {
     private static ClassPool classPool = null;
     private Class [] pool;
-    private int size;
     private int used;
     private ClassPool() {
         pool = new Class[16];
@@ -67,7 +141,17 @@ class ClassPool {
         }
         return classPool;
     }
+    public static void addClasses(String [] names, int [] classRefIds,
+                                  int [][] instancesof) {
+        int i = 0;
+        ClassPool pool = ClassPool.getInstance();
+        while (i < names.length) {
+            pool.addClass(new Class(names[i], classRefIds[i], instancesof[i]));
+            i = i + 1;
+        }
+    }
     public void addClass(Class c) {
+        int i = 0;
         if (!(pool.length > used)) {
             int size = pool.length * 2;
             Class [] new_pool = new Class[size];
@@ -78,26 +162,35 @@ class ClassPool {
             }
             pool = new_pool;
         }
+        /* place at end of list */
         pool[used] = c;
+
+        /* perform insertion sort to sort the new element*/
+        i = used;
+        while (i > 0 && pool[i - 1].compareTo(c) > 0) {
+            pool[i] = pool[i - 1];
+            i = i - 1;
+        }
+        pool[i] = c;
         used = used + 1;
     }
     public Class findClass(int classId) {
-        int x = 0;
-        while (x < used) {
-            if (pool[x].getClassRefId() == classId) {
-                return pool[x];
-            }
-            x = x + 1;
+        int i = 0;
+        int ix = 0;
+        ix = Arrays.binarySearchRange(pool, new Integer(classId), 0, used - 1);
+        if (ix < 0) {
+            return null;
+        } else {
+            return pool[ix];
         }
-        return null;
     }
     public void printDebug() {
         int x = 0;
         System.out.println("Size");
-        System.out.println(Integer.toString(pool.length));
+        System.out.println(pool.length);
 
         System.out.println("Used");
-        System.out.println(Integer.toString(used));
+        System.out.println(used);
 
         while (x < used) {
             String [] items = new String[] {
@@ -227,11 +320,29 @@ class String {
 }
 
 class PrintStream {
-    public static void println(String o) {
-        print(o);
+    public static void println(char c) {
+        println(Char.toString(c));
+    }
+    public static void print(char c) {
+        print(Char.toString(c));
+    }
+    public static void println(boolean b) {
+        println(Boolean.toString(b));
+    }
+    public static void print(boolean b) {
+        print(Boolean.toString(b));
+    }
+    public static void println(int i) {
+        println(Integer.toString(i));
+    }
+    public static void print(int i) {
+        print(Integer.toString(i));
+    }
+    public static void println(Object o) {
+        print(o.toString());
         print("\n");
     }
-    public static void print(String o) {
+    public static void print(Object o) {
         String s;
         s = o.toString();
         int x;
@@ -243,7 +354,7 @@ class PrintStream {
     }
 }
 
-class Boolean {
+class Boolean implements Comparable {
     public static String toString(boolean b) {
         if (b) {
             return "true";
@@ -251,22 +362,68 @@ class Boolean {
             return "false";
         }
     }
+    private boolean b;
+    public Boolean(boolean b) {
+        this.b = b;
+    }
+    public String toString() {
+        return Boolean.toString(b);
+    }
+    public int compareToKey() {
+        if (b) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+    public int compareTo(Comparable o) {
+        return this.compareToKey() - o.compareToKey();
+    }
 }
 
-class Integer {
+class Integer implements Comparable {
+    public static int MAX_VALUE =  2147483647;
+    public static int MIN_VALUE = -2147483648;
+    public static int SIZE = 32;
+    private int i;
+    public Integer(int i) {
+        this.i = i;
+    }
+    public int compareTo(Comparable o) {
+        return compareToKey() - o.compareToKey();
+    }
+    public int compareToKey() {
+        return this.i;
+    }
+    public static Integer[] boxInt(int[] ary) {
+        int i = 0;
+        Integer[] ints = new Integer[ary.length];
+        while (i < ary.length) {
+            ints[i] = new Integer(ary[i]);
+            i = i + 1;
+        }
+        return ints;
+    }
     public static char digitToChar(int x) {
         String digits = "0123456789";
-        if (x < digits.length()) {
+        if (x < digits.length() && x > -1) {
             return digits.charAt(x);
         } else {
             Exception.throw("Digit not between 0-9");
         }
         return 'X';
     }
+    public String toString() {
+        return Integer.toString(i);
+    }
     public static String toString(int convert) {
         int size = 0;
         int num = convert;
         boolean neg = false;
+        if (convert == Integer.MIN_VALUE) {
+            /* for now, a special case is easiest, we can't represent -MIN_VALUE */
+            return "-2147483648";
+        }
         if (num < 0) {
             neg = true;
             num = 0 - num;

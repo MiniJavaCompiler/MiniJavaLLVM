@@ -42,7 +42,7 @@ public final class ClassInvocation extends Invocation {
      */
     Type typeInvocation(Context ctxt, VarEnv env)
     throws Diagnostic {
-        this.menv = cls.findMethod(name);
+        this.menv = cls.findMethodCall(name, ctxt, env, args);
         if (this.menv == null) {
             throw new Failure(pos,
             "Cannot find method " + name + " in class " + cls);
@@ -58,7 +58,7 @@ public final class ClassInvocation extends Invocation {
      *  the result in the specified free variable.
      */
     void compileInvocation(Assembly a, int free) {
-        menv.compileInvocation(a, args, free);
+        menv.compileInvocation(a, null, args, free);
     }
 
     /** Evaluate this expression.

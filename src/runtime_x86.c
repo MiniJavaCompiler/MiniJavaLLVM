@@ -22,7 +22,7 @@
 extern void Main_main();
 extern void MJCStatic_init();
 
-void System_out(int x) {
+void System_out_int(int x) {
   printf("%d\n", x);
 }
 
@@ -35,7 +35,7 @@ void MJC_globalRoot(void *root) {
   return;
 }
 
-int* MJC_allocObject(int size) {
+int* MJC_allocObject_int(int size) {
   int* newObj = heap + freeHeap;
   if (size + freeHeap >= HEAPLEN) {
     fprintf(stderr, "Out of memory!");
@@ -49,7 +49,7 @@ void MJC_die() {
   exit(-1);
 }
 
-int* MJC_allocArray(int elementSize, int len) {
+int* MJC_allocArray_int_int(int elementSize, int len) {
   int size = elementSize * len;
   int* newArr = heap + freeHeap;
   if (size + freeHeap >= HEAPLEN) {
@@ -61,7 +61,7 @@ int* MJC_allocArray(int elementSize, int len) {
 
 }
 
-void MJC_putc(char c) {
+void MJC_putc_char(char c) {
   printf("%c", c);
 }
 int main() {
@@ -71,4 +71,3 @@ int main() {
   //    printf("Finishing (%d words allocated).\n",freeHeap);
   return 0;
 }
-

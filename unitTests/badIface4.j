@@ -6,13 +6,13 @@ interface Iface {
 class SomeClass implements Iface {
     void other(int xyz, SomeClass FORGOTTEN) {
         System.out.println("Something else");
-        System.out.println(Integer.toString(xyz));
+        System.out.println(xyz);
     }
 }
 class SomeOtherClass implements Iface {
     void test(int xyz, int FORGOTTEN) {
         System.out.println("XXXX Does something");
-        System.out.println(Integer.toString(xyz));
+        System.out.println(xyz);
     }
 }
 

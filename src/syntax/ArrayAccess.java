@@ -79,7 +79,7 @@ public final class ArrayAccess extends FieldAccess {
         FieldEnv f = array_class.findField("array");
         a.emit("movl", a.indirect(f.getOffset(), a.reg(free + 2)), a.reg(free + 2));
         a.emitIndexAddr(free, free + 2,
-                        array_class.getElementType().getWidth(),
+                        array_class.getElementType().size(),
                         free + 1, 0);
         a.emit("movl", a.indirect(0, a.reg(free)), a.reg(free));
         a.unspillTo(free + 2, free);
@@ -98,7 +98,7 @@ public final class ArrayAccess extends FieldAccess {
         a.emit("movl", a.indirect(f.getOffset(), a.reg(free + 2)), a.reg(free + 2));
         a.spill(free + 3);
         a.emitIndexAddr(free + 3, free + 2,
-                        array_class.getElementType().getWidth(),
+                        array_class.getElementType().size(),
                         free + 1, 0);
         a.emit("movl", a.reg(free),  a.indirect(0, a.reg(free + 3)));
         a.unspillTo(free + 3, free);

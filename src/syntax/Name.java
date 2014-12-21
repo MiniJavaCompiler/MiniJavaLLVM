@@ -115,7 +115,8 @@ public class Name {
      */
     public Invocation asMethod(Context ctxt, VarEnv env, Args args) {
         if (prefix == null) {
-            MethEnv menv = ctxt.getCurrClass().findMethod(id.getName());
+            MethEnv menv = ctxt.getCurrClass().findMethodCall(id.getName(), ctxt, env,
+                           args);
             if (menv != null) {
                 return new ThisInvocation(id, args, menv);
             }

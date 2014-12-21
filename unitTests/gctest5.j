@@ -48,12 +48,12 @@ class Main {
             x = x + 1;
         }
 
-        System.out.println(Integer.toString(oo.a));
-        System.out.println(Integer.toString(oo.b));
-        System.out.println(Integer.toString(ot.c));
-        System.out.println(Integer.toString(ot.d));
-        System.out.println(Integer.toString(of.g));
-        System.out.println(Integer.toString(of.h));
+        System.out.println(oo.a);
+        System.out.println(oo.b);
+        System.out.println(ot.c);
+        System.out.println(ot.d);
+        System.out.println(of.g);
+        System.out.println(of.h);
     }
 }
 

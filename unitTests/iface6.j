@@ -9,7 +9,7 @@ class Test {
 
 class Main {
     public static void main() {
-        System.out.println(Integer.toString(Test.test_num));
-        System.out.println(Integer.toString(Iface2.test_num));
+        System.out.println(Test.test_num);
+        System.out.println(Iface2.test_num);
     }
 }

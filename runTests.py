@@ -17,13 +17,15 @@
 # along with MiniJava Compiler; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import os;
-import glob;
-import multiprocessing;
-import re;
-import subprocess;
+import os
+import glob
+import multiprocessing
+import re
+import subprocess
 import sys
 import shutil
+import argparse
+import filecmp
 
 BUILDDIR = "build/test/"
 RUNTIMEFILE = "build/runtime/runtime_llvm.o"
@@ -38,8 +40,7 @@ class CompareFile:
         if self.fileCheck():
             result = True
             for o in self.__outFiles:
-                result = result and subprocess.call(
-                    ["diff", self.__refFile, o]) == 0
+                result = result and filecmp.cmp(self.__refFile, o, False)
             return result
         else:
             return False
@@ -208,7 +209,7 @@ class Test:
                                            "-jar", "build/jar/mjc.jar",
                                            "-I",
                                            "-i", self.testfile]),
-                     RunTest(gcc_file, ["gcc", "-m32", "src/runtime_x86.c",
+                     RunTest(gcc_file, ["gcc", "-ggdb3", "-m32", "src/runtime_x86.c",
                                         BUILDDIR + x86_asm_file,
                                         "-o", BUILDDIR + x86_compiled]),
                      RunTest(x86_file, ["./" + BUILDDIR + x86_compiled])
@@ -231,40 +232,35 @@ def doTest(test):
     return test
 
 if __name__ == '__main__':
-    ignore_ref = False
-    create_ref = False
-    show_diff = False
-    verbose = False
-    parallel = True
-    for a in sys.argv[1:]:
-        if (a == "ignore_ref"):
-            ignore_ref = True
-        elif (a == "create_ref"):
-            create_ref = True
-        elif (a == "show_diff"):
-            show_diff = True
-        elif (a == "verbose"):
-            verbose = True
-        elif (a == "single"):
-            parallel = False
-        else:
-            print("Unknown Argument: " + a)
-            sys.exit(1)
+    parser = argparse.ArgumentParser(description="Runs test suite");
+    parser.add_argument("--ignore_ref", help="Ignores Ref Results", action='store_true');
+    parser.add_argument("--create_ref", help="Creates References (if valid)", action='store_true');
+    parser.add_argument("--show_diff", help="Shows the Diffs for failing tests", action='store_true');
+    parser.add_argument("--verbose", help="verbose", action='store_true');
+    parser.add_argument("--single", help="sequentially run tests", action='store_true');
 
-    if parallel:
-        jobs = 8
-    else:
+    parser.add_argument("--test", help="run only this test")
+
+    args = parser.parse_args()
+
+    if args.single:
         jobs = 1
+    else:
+        jobs = 8
 
     if not os.path.exists(os.path.dirname(BUILDDIR)):
         os.mkdir(os.path.dirname(BUILDDIR))
 
 
     pool = multiprocessing.Pool(processes=jobs);
-    testFiles = glob.glob(TESTDIR + "/*.j");
-    args = [Test(t, ignore_ref, verbose) for t in testFiles]
-    testResults = pool.map(doTest, args)
-    if create_ref:
+    if args.test:
+        testFiles = [TESTDIR +  args.test + ".j"]
+    else:
+        testFiles = glob.glob(TESTDIR + "/*.j");
+
+    tests = [Test(t, args.ignore_ref, args.verbose) for t in testFiles]
+    testResults = pool.map(doTest, tests)
+    if args.create_ref:
         for t in testResults:
             t.createRefs()
         print("Refs created. Rerun to verify.\n")
@@ -272,10 +268,10 @@ if __name__ == '__main__':
 
     failed = list(filter(lambda p : p.passed == False, testResults))
     if (len(failed) > 0):
-        print("Failing Tests:")
+        print("Failing Tests (%s):" % len(failed))
         for t in failed:
             print("========== %s" % (t.testfile))
-            if show_diff:
+            if args.show_diff:
                 for c in t.compare_files:
                     c.showDiff()
 

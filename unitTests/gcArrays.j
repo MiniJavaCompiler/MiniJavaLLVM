@@ -49,6 +49,6 @@ class Main {
             x = x + 1;
         }
         System.out.println("Completed Successfully");
-        System.out.println(Integer.toString(x));
+        System.out.println(x);
     }
 }

@@ -31,8 +31,8 @@ class Main {
             ot.a = x;
             x = x + 1;
         }
-        System.out.println(Integer.toString(oo.x));
-        System.out.println(Integer.toString(ot.a));
+        System.out.println(oo.x);
+        System.out.println(ot.a);
     }
 }
 

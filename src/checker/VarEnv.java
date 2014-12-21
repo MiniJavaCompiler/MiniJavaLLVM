@@ -41,7 +41,9 @@ public final class VarEnv extends Env {
     public VarEnv(Id id, Type type, VarEnv next) {
         this(id, type, 0, next);
     }
-
+    public int getOffset() {
+        return offset;
+    }
     public VarEnv getNext() {
         return next;
     }
@@ -53,6 +55,20 @@ public final class VarEnv extends Env {
             env = env.next;
         }
         return env;
+    }
+
+    public static VarEnv argsToVarEnv(Context ctxt, VarEnv env, Args args) {
+        VarEnv next = null;
+        if (args != null) {
+            Type t = Type.NULL;
+            try {
+                t = args.getArg().typeOf(ctxt, env);
+            } catch (Diagnostic d) {
+                /* we are not going to report these errors here, the user will be notified later */
+            }
+            next = new VarEnv(null, t, argsToVarEnv(ctxt, env, args.getNext()));
+        }
+        return next;
     }
 
     /** Check the arguments for an invocation against the formal parameters.
@@ -93,9 +109,17 @@ public final class VarEnv extends Env {
             ps = ps.next;
             qs = qs.next;
         }
+
         return (ps == null) && (qs == null);
     }
 
+    static boolean eqCall(VarEnv ps, VarEnv qs) {
+        while (ps != null && qs != null && qs.getType().isSuperOf(ps.getType())) {
+            ps = ps.next;
+            qs = qs.next;
+        }
+        return (ps == null) && (qs == null);
+    }
     /** Assign offsets that map the identifiers in this environment
      *  to appropriate locations in a stack frame.
      */

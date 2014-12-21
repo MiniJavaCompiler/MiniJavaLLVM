@@ -77,7 +77,8 @@ public final class ArrayLiteral extends StatementExpr {
                 Type expr_type = e.typeOf(ctxt, env);
                 if (!element.isSuperOf(expr_type)) {
                     throw new Failure(pos,
-                    "One or more elements of array literal does not match array type");
+                    "One or more elements of array literal does not match array type. " + element +
+                    " != " + expr_type);
                 }
             }
             inits = new Expression[literals.length];
@@ -95,7 +96,7 @@ public final class ArrayLiteral extends StatementExpr {
      */
     public void compileExpr(Assembly a, int free) {
         this.object.compileExpr(a, free);
-        tmp.setTmp(free);
+        tmp.setTmp(a, free);
         a.spill(free + 1);
         for (Expression e : inits) {
             e.compileExpr(a, free + 1);
@@ -105,7 +106,7 @@ public final class ArrayLiteral extends StatementExpr {
 
     void compileExprOp(Assembly a, String op, int free) {
         this.object.compileExprOp(a, op, free);
-        tmp.setTmp(free);
+        tmp.setTmp(a, free);
         a.spill(free + 1);
         for (Expression e : inits) {
             e.compileExpr(a, free + 1);

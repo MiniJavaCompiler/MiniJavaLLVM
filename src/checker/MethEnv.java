@@ -27,7 +27,7 @@ import interp.*;
 import util.*;
 import java.lang.Iterable;
 import java.util.Iterator;
-
+import java.util.ArrayList;
 
 import org.llvm.BasicBlock;
 import org.llvm.Builder;
@@ -133,8 +133,35 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
     /** Look for the entry corresponding to a particular identifier
      *  in a given environment.
      */
-    public static MethEnv find(String name, MethEnv env) {
-        while (env != null && !name.equals(env.id.getName())) {
+    public static MethEnv findByName(String name, MethEnv env) {
+        while (env != null) {
+            if (name.equals(env.id.getName())) {
+                return env;
+            }
+            env = env.next;
+        }
+        return env;
+    }
+    public static MethEnv find(String name, VarEnv params, MethEnv env) {
+        while (env != null) {
+            if (name.equals(env.id.getName()) && env.eqSig(false, Type.VOID, params)) {
+                return env;
+            }
+            env = env.next;
+        }
+        return env;
+    }
+    public static MethEnv findCall(String name, VarEnv params, MethEnv env) {
+        while (env != null) {
+            if (name.equals(env.id.getName()) && env.eqCall(params)) {
+                return env;
+            }
+            env = env.next;
+        }
+        return env;
+    }
+    public static MethEnv find(MethEnv search, MethEnv env) {
+        while (env != null && !search.eqMethSig(false, env)) {
             env = env.next;
         }
         return env;
@@ -149,16 +176,22 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
     /** Test to see whether another signature matches the signature of this
      *  method.
      */
-    public boolean eqMethSig(MethEnv other) {
-        return eqSig(other.type, other.params);
+    public boolean eqMethSig(boolean match_return, MethEnv other) {
+        return eqSig(match_return, other.type, other.params);
     }
 
-    public boolean eqSig(Type type, VarEnv params) {
-        return ((this.type == null && type == null) ||
-                (this.type != null && type != null && this.type.equal(type))) &&
-               VarEnv.eqTypes(this.params, params);
+    public boolean eqSig(boolean match_return, Type type, VarEnv params) {
+        boolean return_matched = true;
+        if (match_return) {
+            return_matched = ((this.type == null && type == null) ||
+                              (this.type != null && type != null && this.type.equal(type)));
+        }
+        return return_matched && VarEnv.eqTypes(this.params, params);
     }
 
+    public boolean eqCall(VarEnv params) {
+        return VarEnv.eqCall(params, this.params);
+    }
     /** Static analysis on a list of method definitions.
      */
     public static void checkMethods(Context ctxt, MethEnv menv) {
@@ -231,6 +264,14 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
     public void compileMethod(Assembly a) {
         if (body != null) {
             a.emitPrologue(methName(a), localBytes);
+            a.emit("// Expected Arguments");
+            if (!isStatic()) {
+                a.emit("// THIS: " + a.indirect(a.thisOffset(size), "%ebp"));
+            }
+            for (VarEnv p = params; p != null; p = p.getNext()) {
+                a.emit("//" + p.id.getName() + ":" + p.getType()
+                       + " " + a.indirect(p.getOffset(), "%ebp"));
+            }
             body.compileRet(a);
         }
     }
@@ -322,36 +363,53 @@ public final class MethEnv extends MemberEnv implements Iterable<MethEnv>,
      *  registers that were in use have been spilled onto the stack before
      *  this method is invoked.
      */
-    public void compileInvocation(Assembly a, Args args, int free) {
+    public void compileInvocation(Assembly a, Expression object, Args args,
+                                  int free) {
         int argReg = 0;
+        int orig_free = free;
+        TmpAccess t = new TmpAccess(getPos(), Type.VOID);
+        int nargs = 0;
         if (!isStatic()) {
-            a.emit("pushl", a.reg(0));
-            InterfaceType iface = owner.isInterface();
-            if (iface == null) {
-                a.emit("movl", a.indirect(0, a.reg(0)), a.reg(0));
-            } else {
-                a.emit("movl", a.vtAddr(iface), a.reg(0));
-            }
-            a.emit("movl", a.indirect(a.vtOffset(slot), a.reg(0)), a.reg(0));
-            argReg = 1;
+            t.setTmp(a, free);
+            object.compileExpr(a, free);
+            a.spill(++free);
+            nargs++;
         }
         for (; args != null; args = args.getNext()) {
-            args.getArg().compileExpr(a, argReg);
-            a.emit("pushl", a.reg(argReg));
+            args.getArg().compileExpr(a, free);
+            a.spill(++free);
+            nargs++;
         }
+        free = a.spillAll(free);
         if (isStatic()) {
-            a.call(methName(a), free, size);
+            a.call(methName(a), orig_free, size);
         } else {
-            a.unspill(0);
-            a.call(a.aindirect(a.reg(0)), free, size);
+            InterfaceType iface = owner.isInterface();
+            t.compileExpr(a, free);
+            if (iface == null) {
+                a.emit("movl", a.indirect(0, a.reg(free)), a.reg(free));
+            } else {
+                a.emit("movl", a.vtAddr(iface), a.reg(free));
+            }
+            a.emit("movl", a.indirect(a.vtOffset(slot), a.reg(free)), a.reg(free));
+            a.emit("//Calling " + methName(a));
+            a.call(a.aindirect(a.reg(free)), orig_free, size);
         }
+        a.unspillTo(free - nargs, orig_free);
     }
 
     /** Mangle the class and method name to make a label for the entry
      *  point to this method.
      */
     public String methName(Assembly a) {
-        return a.mangle(owner.toString(), getName());
+        ArrayList<String> items = new ArrayList<String>();
+        items.add(owner.toString());
+        items.add(getName());
+        for (VarEnv p = params; p != null; p = p.getNext()) {
+            items.add(p.getType().toString());
+        }
+
+        return a.mangle(items.toArray(new String[0]));
     }
 
     /** Call this method with a particular object and set of arguments.

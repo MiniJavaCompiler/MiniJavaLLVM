@@ -120,11 +120,7 @@ public class Compiler {
                     handler.report(new Failure("Cannot open file " +
                                                assemblyFile + " for output"));
                 } else {
-                    assembly.emitStart(inputFile, classes, context.getUniqueStrings());
-                    for (int i = 0; i < classes.length; i++) {
-                        classes[i].compile(assembly);
-                    }
-                    assembly.close();
+                    assembly.emitStart(inputFile, context);
                 }
             }
             if (cmd.hasOption("L") || cmd.hasOption("l")) {
@@ -134,7 +130,7 @@ public class Compiler {
             }
             if (cmd.hasOption("I")) {
                 State s = new State();
-                MethEnv init = context.findClass("MJCStatic").findMethod("init");
+                MethEnv init = context.findClass("MJCStatic").findMethod("init", null);
                 s.call(init);
                 s.call(main);
             }

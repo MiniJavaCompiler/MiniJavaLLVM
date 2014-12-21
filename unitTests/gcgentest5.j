@@ -34,12 +34,12 @@ class Main {
         o[9] = 8;
         p[0] = x;
         p[9] = x + 1;
-        System.out.println(Integer.toString(o[0]));
-        System.out.println(Integer.toString(o[9]));
-        System.out.println(Integer.toString(p[0]));
-        System.out.println(Integer.toString(p[9]));
-        System.out.println(Integer.toString(old[0]));
-        System.out.println(Integer.toString(old[4]));
+        System.out.println(o[0]);
+        System.out.println(o[9]);
+        System.out.println(p[0]);
+        System.out.println(p[9]);
+        System.out.println(old[0]);
+        System.out.println(old[4]);
     }
 }
 

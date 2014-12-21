@@ -33,6 +33,7 @@ public final class SuperInvocation extends Invocation {
     private int     size;
     private boolean unnamed;
     private boolean isFirst;
+    private Expression object;
 
     public SuperInvocation(Position pos, Id id, Args args) {
         super(pos, args);
@@ -42,6 +43,7 @@ public final class SuperInvocation extends Invocation {
         if (!unnamed) {
             this.name = id.getName();
         }
+        this.object = null;
     }
 
     public void setFirst() {
@@ -66,9 +68,14 @@ public final class SuperInvocation extends Invocation {
         } else if (ctxt.isStatic()) {
             throw new Failure(pos,
             "Cannot access a super class in a static context");
-        } else if ((this.menv = sup.findMethod(name)) == null) {
+        } else if ((this.menv = sup.findMethodCall(name, ctxt, env, args)) == null) {
             throw new Failure(pos,
-            "Cannot find method " + name + " in superclass");
+            "Cannot find corresponding superclass constructor.");
+        }
+
+        if (this.menv != null && !this.menv.isStatic()) {
+            this.object = new This(pos);
+            this.object.typeOf(ctxt, env);
         }
         size = ctxt.getCurrMethod().getSize();
         return checkInvocation(ctxt, env, this.menv);
@@ -78,10 +85,7 @@ public final class SuperInvocation extends Invocation {
      *  the result in the specified free variable.
      */
     void compileInvocation(Assembly a, int free) {
-        if (!menv.isStatic()) {
-            a.loadThis(size, 0);
-        }
-        menv.compileInvocation(a, args, free);
+        menv.compileInvocation(a, object, args, free);
     }
 
     /** Evaluate this expression.

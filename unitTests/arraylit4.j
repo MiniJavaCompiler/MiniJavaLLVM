@@ -1,18 +1,18 @@
 class Main {
     static void main() {
         int [][] test2 = new int[][] {
-            new int[]{2147483647 / 2 / 2 / 2 / 2 / 2 / 2 / 2 / 2 / 2 / 2 / 2, 2, 3, 4, 5, 6},
-            new int[]{1, 2, 3},
-            new int[]{9, 2, 3, 4},
-            new int[]{},
-            new int[]{1, 2, 3, 4, 5, 6, 7, 8}
+            new int[]{Integer.MIN_VALUE, Integer.MAX_VALUE}
         };
         int x = 0;
         while (x < test2.length) {
             int y = 0;
             while (y < test2[x].length) {
-                System.out.print(test2[x][y]);
+                System.out.print(x);
                 System.out.print(" ");
+                System.out.print(y);
+                System.out.print(": ");
+                System.out.print(test2[x][y]);
+                System.out.print(", ");
                 y = y + 1;
             }
             System.out.println("");

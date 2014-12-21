@@ -51,7 +51,7 @@ public final class TmpAccess extends FieldAccess {
     public void setTmp(Value v) {
         interp_tmp = v;
     }
-    public void setTmp(int free) {
+    public void setTmp(Assembly a, int free) {
         x86_tmp = free;
     }
     /** Generate code to evaluate this expression and

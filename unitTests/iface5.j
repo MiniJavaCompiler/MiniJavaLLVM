@@ -9,12 +9,12 @@ interface Iface extends Iface2 {
 class SomeClass implements Iface {
     int test(int xyz) {
         System.out.println("Does something");
-        System.out.println(Integer.toString(xyz));
+        System.out.println(xyz);
         return 12834;
     }
     int other(int xyz) {
         System.out.println("Something else");
-        System.out.println(Integer.toString(xyz));
+        System.out.println(xyz);
         return 12738;
     }
 }
@@ -22,12 +22,12 @@ class SomeClass implements Iface {
 class SomeOtherClass implements Iface, Iface2 {
     int test(int xyz) {
         System.out.println("XXXX Does something");
-        System.out.println(Integer.toString(xyz));
+        System.out.println(xyz);
         return 123;
     }
     int other(int xyz) {
         System.out.println("XXX Something else");
-        System.out.println(Integer.toString(xyz));
+        System.out.println(xyz);
         return 100;
     }
 }
@@ -37,8 +37,8 @@ class Main {
     public static void main() {
         Iface x;
         Iface2 y = new SomeClass();
-        System.out.println(Integer.toString(y.test(200)));
+        System.out.println(y.test(200));
         x = new SomeOtherClass();
-        System.out.println(Integer.toString(x.other(15)));
+        System.out.println(x.other(15));
     }
 }

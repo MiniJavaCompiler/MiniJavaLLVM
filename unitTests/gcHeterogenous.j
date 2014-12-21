@@ -18,7 +18,7 @@ class Main {
     public static void print_array(int [] ary) {
         int x = 0;
         while (x < ary.length) {
-            System.out.print(Integer.toString(ary[x]));
+            System.out.print(ary[x]);
             System.out.print(" ");
             x = x + 1;
         }

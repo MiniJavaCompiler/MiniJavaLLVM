@@ -79,9 +79,7 @@ public abstract class Invocation extends StatementExpr {
      *  leave the result in the specified free variable.
      */
     public void compileExpr(Assembly a, int free) {
-        a.spillAll(free);
         compileInvocation(a, free);
-        a.unspillAll(free);
     }
 
     public org.llvm.Value llvmInvoke(LLVM l, MethEnv menv, org.llvm.Value function,

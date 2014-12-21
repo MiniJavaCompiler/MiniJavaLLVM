@@ -2,11 +2,11 @@ class Constructed {
     public Constructed() {
 
     }
-    public Constructed(int x) {
+    public Constructed() {
     }
 }
 
 class Main {
-    public void main() {
+    public static void main() {
     }
 }

@@ -25,10 +25,10 @@ class Main {
         }
         o[0] = 42;
         o[9] = 8;
-        System.out.println(Integer.toString(o[0]));
-        System.out.println(Integer.toString(o[9]));
-        System.out.println(Integer.toString(p[0]));
-        System.out.println(Integer.toString(p[4]));
+        System.out.println(o[0]);
+        System.out.println(o[9]);
+        System.out.println(p[0]);
+        System.out.println(p[4]);
     }
 }
 

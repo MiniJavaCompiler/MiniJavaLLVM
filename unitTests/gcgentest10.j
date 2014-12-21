@@ -26,8 +26,8 @@ class Main {
             ocopy = oo;
             x = x + 1;
         }
-        System.out.println(Integer.toString(oo.x));
-        System.out.println(Integer.toString(ocopy.x));
+        System.out.println(oo.x);
+        System.out.println(ocopy.x);
     }
 }
 

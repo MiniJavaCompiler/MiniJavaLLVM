@@ -16,8 +16,8 @@ class Main {
         pp = new TestObjTwo();
         System.out.println("Class Name");
         System.out.println(oo.getClass().getName());
-        System.out.println(Boolean.toString(oo.getClass().isInstance(pp)));
-        System.out.println(Boolean.toString(pp.getClass().isInstance(oo)));
+        System.out.println(oo.getClass().isInstance(pp));
+        System.out.println(pp.getClass().isInstance(oo));
     }
 }
 

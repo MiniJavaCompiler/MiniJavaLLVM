@@ -50,7 +50,7 @@ public class ObjectInvocation extends Invocation {
             throw new Failure(pos,
             "Cannot access field " + name +
             " in a value of type " + receiver);
-        } else if ((this.menv = cls.findMethod(name)) == null) {
+        } else if ((this.menv = cls.findMethodCall(name, ctxt, env, args)) == null) {
             throw new Failure(pos,
             "Cannot find method " + name + " in class " + cls);
         }
@@ -61,8 +61,7 @@ public class ObjectInvocation extends Invocation {
      *  the result in the specified free variable.
      */
     void compileInvocation(Assembly a, int free) {
-        object.compileExpr(a, 0);
-        menv.compileInvocation(a, args, free);
+        menv.compileInvocation(a, object, args, free);
     }
 
     public Expression getObject() {

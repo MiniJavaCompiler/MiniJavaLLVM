@@ -73,6 +73,7 @@ public final class Block extends Statement {
      */
     void compileThen(Assembly a, String lab) {
         for (Statement s : stmts) {
+            a.emit("// " + s.getPos().describe());
             s.compile(a);
         }
         a.emit("jmp", lab);

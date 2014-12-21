@@ -32,6 +32,8 @@ import org.llvm.Builder;
 public class NewExpr extends StatementExpr {
     private Name      name;
     private ClassType cls;
+    private MethEnv alloc_object;
+
     public NewExpr(Position pos, Name name) {
         super(pos);
         this.name = name;
@@ -42,7 +44,9 @@ public class NewExpr extends StatementExpr {
      */
     public Type typeOf(Context ctxt, VarEnv env) throws Diagnostic {
         cls = name.asClass(ctxt);
-        if (cls == null) {
+        alloc_object = ctxt.findClass("MJC").findMethod("allocObject", new VarEnv(null, Type.INT, null));
+
+        if (cls == null)  {
             throw new Failure(pos, "Undefined constructor name " + name);
         } else if (cls.getMods().includes(Modifiers.ABSTRACT)) {
             throw new Failure(pos, "Unable to instantiate abstract class or interface " +
@@ -55,12 +59,16 @@ public class NewExpr extends StatementExpr {
      *  leave the result in the specified free variable.
      */
     public void compileExpr(Assembly a, int free) {
-        a.spillAll(free);
-        a.emit("movl", a.vtAddr(cls), a.reg(free));
-        a.emit("pushl", a.indirect(0, a.reg(free)));
-        a.call(a.name("MJC_allocObject"), free, a.WORDSIZE);
+        int spilled = a.spillAll(free);
+        a.emit("movl", a.vtAddr(cls), a.reg(spilled));
+        a.emit("pushl", a.indirect(0, a.reg(spilled)));
+        a.call(alloc_object.methName(a), spilled, a.WORDSIZE);
         a.emit("movl", a.vtAddr(cls), a.indirect(0, "%eax"));
-        a.unspillAll(free);
+        if (spilled != free) {
+            a.emit("movl", "%eax", "%edx");
+            a.unspillTo(spilled, free);
+            a.emit("movl", "%edx", a.reg(free));
+        }
     }
 
     /** Evaluate this expression.

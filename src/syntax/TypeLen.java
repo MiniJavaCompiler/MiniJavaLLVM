@@ -48,7 +48,7 @@ public class TypeLen extends Expression {
      *  leave the result in the specified free variable.
      */
     public void compileExpr(Assembly a, int free) {
-        a.emit("movl", a.immed(type.getWidth()), a.reg(free));
+        a.emit("movl", a.immed(type.size()), a.reg(free));
     }
 
     /** Evaluate this expression.

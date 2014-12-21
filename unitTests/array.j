@@ -12,7 +12,7 @@ class Main {
         String biggest = big.append(big2);
         System.out.println(biggest);
 
-        System.out.println(Integer.toString(1742));
-        System.out.println(Integer.toString(-253));
+        System.out.println(1742);
+        System.out.println(-253);
     }
 }

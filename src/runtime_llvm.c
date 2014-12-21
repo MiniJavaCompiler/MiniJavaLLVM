@@ -70,7 +70,7 @@ void MJC_die() {
     [length or fwd location]
     [data] <- alloc pointer 'a' points to data
 */
-#define DEF_HEAP_SIZE   3000     // heap size in words (4k bytes)
+#define DEF_HEAP_SIZE   4000     // heap size in words (4k bytes)
 #define MAX_OLD_TO_HEAP_RATIO    3
 #define OBJ_HEADER_SIZE          2
 #define OBJ_HEADER_TYPE_OFFSET   2
@@ -203,6 +203,7 @@ uintptr_t *heapalloc(size_t words) {
         || (heap->end - heap->nursery_avail < words)) {
 
       print_heap_region();
+      printf("heapalloc request num words: %zu\n", words);
       printf("heap nursery avail: %zu\n", (uintptr_t)heap->nursery_avail);
 
       die_w_msg("out of heap space");

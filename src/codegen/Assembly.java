@@ -21,8 +21,7 @@
 package codegen;
 
 import syntax.ClassType;
-import checker.FieldEnv;
-import checker.MethEnv;
+import checker.*;
 
 import syntax.StringLiteral;
 import java.io.PrintWriter;
@@ -97,6 +96,14 @@ public class Assembly {
     public String mangle(String prefix, String suffix) {
         return name(prefix + "_" + suffix);
     }
+    public String mangle(String [] names) {
+        String result = "";
+        for (String s : names) {
+            result += name(s) + "_";
+        }
+        return result.substring(0,
+                                result.length() > 1 ? result.length() - 1 : result.length());
+    }
 
     //- Items related to registers -------------------------------------------
 
@@ -145,18 +152,12 @@ public class Assembly {
             unspill(free--);
         }
     }
-    public void spillAll(int free) {
-        int toSpill = Math.min(free, numRegs - 1);
+    public int spillAll(int free) {
+        int toSpill = numRegs - 1;
         for (int i = 1; i <= toSpill; i++) {
-            emit("pushl", reg(free - i));
+            spill(free + i);
         }
-    }
-
-    public void unspillAll(int free) {
-        int toSpill = Math.min(free, numRegs - 1);
-        for (int i = toSpill; i >= 1; i--) {
-            emit("popl", reg(free - i));
-        }
+        return free + toSpill;
     }
 
     public void call(String lab, int free, int size) {
@@ -287,17 +288,29 @@ public class Assembly {
         return (FRAMEHEAD + sizeParams) - WORDSIZE;
     }
 
-
-    public void emitStart(String filename, ClassType [] classes,
-                          StringLiteral [] strings) {
-        emit(".file",  "\"" + filename + "\"");
-        emit(".globl", mangle("Main", "main"), mangle("MJCStatic", "init"));
-        emit(".data");
+    public void emitStart(String filename, Context ctxt) {
+        ClassType main = ctxt.findClass("Main");
+        ClassType mjc_static = ctxt.findClass("MJCStatic");
+        MethEnv main_main = main.findMethod("main", null);
+        MethEnv mjc_static_init = mjc_static.findMethod("init", null);
+        //emit(".file",  "\"" + filename + "\"");
+        emit(".globl", main_main.methName(this), mjc_static_init.methName(this));
+        emit(".code32");
         int n = 0;
-        for (StringLiteral s : strings) {
+        emit(".data");
+        for (StringLiteral s : ctxt.getUniqueStrings()) {
             s.emitStaticString(this, n);
             n++;
         }
+        for (ClassType c : ctxt.getClasses()) {
+            emitVTable(c, c.getWidth(), c.getVtable());
+        }
+        emit(".text");
+        for (ClassType c : ctxt.getClasses()) {
+            c.compile(this);
+        }
+
+        close();
     }
 
     public void emitPrologue(String fname, int localBytes) {

@@ -7,7 +7,7 @@ class Main {
         int [] test2 = new int[] {1, 2, 3, 4, 5, 6};
         int x = 0;
         while (x < test2.length) {
-            System.out.println(Integer.toString(test2[x]));
+            System.out.println(test2[x]);
             x = x + 1;
         }
     }

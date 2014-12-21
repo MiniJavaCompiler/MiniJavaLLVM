@@ -3,10 +3,10 @@ class Main {
         if (true) {
             int p;
             p = 2;
-            System.out.println(Integer.toString(p));
+            System.out.println(p);
         }
         int p;
         p = 5;
-        System.out.println(Integer.toString(p));
+        System.out.println(p);
     }
 }

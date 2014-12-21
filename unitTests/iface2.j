@@ -12,28 +12,28 @@ class SomeClass implements Iface, Iface2 {
     }
     void test(int xyz) {
         System.out.println("Does something");
-        System.out.println(Integer.toString(xyz));
+        System.out.println(xyz);
     }
     void ignored2() {
 
     }
     void other(int xyz) {
         System.out.println("Something else");
-        System.out.println(Integer.toString(xyz));
+        System.out.println(xyz);
     }
 }
 
 class SomeOtherClass implements Iface, Iface2 {
     void test(int xyz) {
         System.out.println("XXXX Does something");
-        System.out.println(Integer.toString(xyz));
+        System.out.println(xyz);
     }
     void ignored() {
 
     }
     void other(int xyz) {
         System.out.println("XXX Something else");
-        System.out.println(Integer.toString(xyz));
+        System.out.println(xyz);
     }
     void ignored2() {
 

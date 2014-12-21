@@ -11,7 +11,7 @@ class Main {
         while (x < test2.length) {
             int y = 0;
             while (y < test2[x].length) {
-                System.out.print(Integer.toString(test2[x][y]));
+                System.out.print(test2[x][y]);
                 System.out.print(" ");
                 y = y + 1;
             }

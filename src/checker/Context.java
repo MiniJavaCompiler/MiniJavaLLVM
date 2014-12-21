@@ -171,36 +171,53 @@ public final class Context extends Phase {
 
             /* all static initialization of fields */
             for (ClassType c : classes) {
+                ArrayList<Statement> static_init = new ArrayList<Statement>();
                 if (c.getFields() != null) {
                     for (FieldEnv f : c.getFields()) {
                         Statement s = f.staticInit();
                         if (s != null) {
-                            static_body.add(s);
+                            static_init.add(s);
                         }
                     }
                 }
+                Id id = new Id(pos, "__static_init");
+                c.addMethod(this, false, m, id, Type.VOID,
+                            (VarEnv)null, new Block(pos, static_init.toArray(new Statement[0])));
+                static_body.add(new ExprStmt(pos, new ClassInvocation(c, id, null)));
+
+            }
+            Id names_array = new Id(pos, "names_array");
+            Id instances_array = new Id(pos, "instances_array");
+            Id class_ids_array = new Id(pos, "class_ids_array");
+            Expression [] names = new Expression[classes.size()];
+            Expression [] instances = new Expression[classes.size()];
+            Expression [] class_ids = new Expression[classes.size()];
+            int i = 0;
+            for (ClassType c : classes) {
+                names[i] = new StringLiteral(pos, c.getId().getName());
+                class_ids[i] = new IntLiteral(pos, c.getClassId());
+                instances[i] = new ArrayLiteral(pos, new NameType(new Name(new Id(pos,
+                                                "int[]"))), c.instancesExpr());
+                i++;
             }
 
             /* creating "Class" classes for all the classes */
-            static_body.add(new LocalVarDecl(pos, new NameType(new Name(new Id(pos,
-                                             "ClassPool"))),
-                                             new VarDecls(new Id(pos, "class_pool"),
-                                                     new NameInvocation(new Name(new Name(new Id(pos, "ClassPool")), new Id(pos,
-                                                             "getInstance")), null))));
+            static_body.add(new LocalVarDecl(pos, findClass("int[][]"),
+                                             new VarDecls(instances_array,
+                                                     new ArrayLiteral(pos, findClass("int[][]"), instances))));
+            static_body.add(new LocalVarDecl(pos, findClass("String[]"),
+                                             new VarDecls(names_array,
+                                                     new ArrayLiteral(pos, findClass("String[]"), names))));
+            static_body.add(new LocalVarDecl(pos, findClass("int[]"),
+                                             new VarDecls(class_ids_array,
+                                                     new ArrayLiteral(pos, findClass("int[]"), class_ids))));
 
-            for (ClassType c : classes) {
-                static_body.add(
-                    new ExprStmt(pos,
-                                 new NameInvocation(new Name(new Name(new Id(pos, "class_pool")), new Id(pos,
-                                                    "addClass")),
-                                                    new Args(
-                                                        new ConstructorInvocation(new Name(new Id(pos, "Class")),
-                                                                new Args(new StringLiteral(pos, c.getId().getName()),
-                                                                        new Args(new IntLiteral(pos, c.getClassId()),
-                                                                                new Args(new ArrayLiteral(pos, new NameType(new Name(new Id(pos, "int[]"))),
-                                                                                        c.instancesExpr()), null)))), null))));
-            }
-
+            static_body.add(new ExprStmt(pos,
+                                         new NameInvocation(
+                                             new Name(new Name(new Id(pos, "ClassPool")), new Id(pos, "addClasses")),
+                                             new Args(new NameAccess(new Name(names_array)),
+                                                     new Args(new NameAccess(new Name(class_ids_array)),
+                                                             new Args(new NameAccess(new Name(instances_array)), null))))));
             static_body.add(new Return(pos));
 
             decls = new MethDecl(false, m, Type.VOID, method_id,
@@ -241,13 +258,13 @@ public final class Context extends Phase {
             report(new Failure(
                        "Program does not contain a definition for class Main"));
         } else {
-            MethEnv mainMeth = mainClass.findMethod("main");
+            MethEnv mainMeth = mainClass.findMethod("main", null);
             if (mainMeth == null) {
                 report(new Failure("No method main in class Main"));
             } else if (!mainMeth.isStatic()) {
                 report(new Failure(mainMeth.getPos(),
                                    "Main.main is not static"));
-            } else if (!mainMeth.eqSig(Type.VOID, null)) {
+            } else if (!mainMeth.eqSig(true, Type.VOID, null)) {
                 report(new Failure(mainMeth.getPos(),
                                    "Main.main does not have the right type"));
             } else {

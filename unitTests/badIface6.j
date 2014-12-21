@@ -7,13 +7,13 @@ class SomeClass implements Iface {
     int test(int test123) {}
     int other(int xyz) {
         System.out.println("Something else");
-        System.out.println(Integer.toString(xyz));
+        System.out.println(xyz);
     }
 }
 class SomeOtherClass implements Iface {
     void test(int xyz) {
         System.out.println("XXXX Does something");
-        System.out.println(Integer.toString(xyz));
+        System.out.println(xyz);
     }
     String other(int test123) {}
 }

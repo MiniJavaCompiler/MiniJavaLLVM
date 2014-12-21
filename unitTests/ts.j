@@ -40,7 +40,7 @@ class Main {
         Expr e;
         e = AddExpr.make(IntExpr.make(1), IntExpr.make(2));
         e = AddExpr.make(e, e);
-        System.out.println(Integer.toString(e.eval()));
+        System.out.println(e.eval());
     }
 }
 

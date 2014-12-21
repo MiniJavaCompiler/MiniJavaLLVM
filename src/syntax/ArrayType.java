@@ -75,6 +75,7 @@ public final class ArrayType extends ClassType {
         d = new MethDecl(true, m, Type.VOID, buildArrayName(pos, elementType),
                          new Formals(Type.INT, size),
                          new Block(pos, body)).link(d);
+
         return d;
     }
     public ArrayType(Modifiers mods, Position pos, Type elementType) {

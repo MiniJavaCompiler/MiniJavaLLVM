@@ -26,6 +26,6 @@ class Main {
             x = x + 1;
         }
         /* o should exist, but does o.o? */
-        System.out.println(Integer.toString(o.o.x));
+        System.out.println(o.o.x);
     }
 }

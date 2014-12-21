@@ -64,7 +64,7 @@ public class Interp {
         parser.setContext(context);
         parser.parseNow();
         MethEnv     main    = context.check();
-        MethEnv init = context.findClass("MJCStatic").findMethod("init");
+        MethEnv init = context.findClass("MJCStatic").findMethod("init", null);
         if (main != null) {
             State s = new State();
             s.call(init);

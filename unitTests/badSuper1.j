@@ -5,7 +5,7 @@ class Test {
     }
     public void test() {
         System.out.println("Test");
-        System.out.println(Integer.toString(x));
+        System.out.println(x);
     }
 }
 
@@ -18,7 +18,7 @@ class Test2 extends Test {
         super.test();
         super.x = 10;
         super.test();
-        System.out.println(Integer.toString(super.x));
+        System.out.println(super.x);
     }
 }
 

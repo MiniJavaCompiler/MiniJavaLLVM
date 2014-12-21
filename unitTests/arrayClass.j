@@ -19,8 +19,8 @@ class Main {
             x = x + 1;
         } while (x < elem_size);
 
-        System.out.println(Integer.toString(elems[5].x));
-        System.out.println(Integer.toString(elems[7].y));
-        System.out.println(Integer.toString(elems[2].z));
+        System.out.println(elems[5].x);
+        System.out.println(elems[7].y);
+        System.out.println(elems[2].z);
     }
 }

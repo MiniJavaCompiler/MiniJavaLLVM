@@ -32,10 +32,10 @@ class Main {
         }
         Ao.o[0] = x;
         Ao.o[9] = x + 1;
-        System.out.println(Integer.toString(Ao.o[0]));
-        System.out.println(Integer.toString(Ao.o[9]));
-        System.out.println(Integer.toString(old[0]));
-        System.out.println(Integer.toString(old[99]));
+        System.out.println(Ao.o[0]);
+        System.out.println(Ao.o[9]);
+        System.out.println(old[0]);
+        System.out.println(old[99]);
     }
 }
 

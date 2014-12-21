@@ -194,10 +194,7 @@ public class ClassType extends Type {
                     constructor_count++;
                 }
             }
-            if (constructor_count > 1) {
-                ctxt.report(new Failure(id.getPos(),
-                                        "Only one constructor is allowed per class."));
-            }
+
             boolean has_constructor = constructor_count != 0;
 
             if (!has_constructor && this.isInterface() == null) {
@@ -245,11 +242,11 @@ public class ClassType extends Type {
                         maybe_cons = new ExprStmt(menv.getPos(), super_cons);
                     }
                     if (extendsClass != null) {
-                        m = extendsClass.findMethod(extendsClass.getId().getName());
-                        if (super_cons == null && m != null && m.getParams() != null) {
+                        m = extendsClass.findMethod(extendsClass.getId().getName(), null);
+                        if (super_cons == null && m == null) {
                             ctxt.report(new Failure(menv.getPos(),
                                                     "Constructor needs a super class constructor (maybe it's not the first statement?)."));
-                        } else if (super_cons == null && extendsClass != null) {
+                        } else if (super_cons == null && extendsClass != null && m != null) {
                             SuperInvocation super_invoke = new SuperInvocation(menv.getPos(), null, null);
                             super_invoke.setFirst();
                             maybe_cons = new ExprStmt(menv.getPos(), super_invoke);
@@ -290,13 +287,14 @@ public class ClassType extends Type {
             } else {
                 iface.checkClass(ctxt);
                 for (MethEnv iface_meth : iface.getVtable()) {
-                    MethEnv this_meth = findMethod(iface_meth.getName());
-                    if (this_meth == null) {
+                    MethEnv this_meth = findMethod(iface_meth.getName(), iface_meth.getParams());
+                    MethEnv this_meth_name = findMethodByName(iface_meth.getName());
+                    if (this_meth_name == null) {
                         ctxt.report(new Failure(id.getPos(),
                                                 id.getName() + " does not implement method " + iface_meth.getName() + " from " +
                                                 iface_meth.getOwner()));
-                    } else if (!this_meth.eqMethSig(iface_meth)) {
-                        ctxt.report(new Failure(this_meth.getPos(),
+                    } else if (this_meth == null || !this_meth.eqMethSig(true, iface_meth)) {
+                        ctxt.report(new Failure(this_meth == null ? getPos() : this_meth.getPos(),
                                                 id.getName() + " does not match signature of " + iface_meth.getName() + " from "
                                                 + iface_meth.getOwner()));
                     }
@@ -380,7 +378,8 @@ public class ClassType extends Type {
     public void addMethod(Context ctxt, Boolean is_constructor, Modifiers mods,
                           Id id, Type type,
                           VarEnv params, Statement body) {
-        if (MethEnv.find(id.getName(), methods) != null) {
+        MethEnv found = MethEnv.find(id.getName(), params, methods);
+        if (found != null) {
             ctxt.report(new Failure(id.getPos(),
                                     "Multiple definitions for method " + id));
         } else {
@@ -390,8 +389,8 @@ public class ClassType extends Type {
                 size += Assembly.WORDSIZE;      // add `this' pointer
                 if (extendsType != null) {
                     // TODO: Need to check for modifiers in override
-                    MethEnv env = getSuper().findMethod(id.getName());
-                    if (env != null && env.eqSig(type, params)) {
+                    MethEnv env = getSuper().findMethod(id.getName(), params);
+                    if (env != null && env.eqSig(false, type, params)) {
                         slot = env.getSlot();
                     } else {
                         slot = vfuns++;
@@ -417,14 +416,31 @@ public class ClassType extends Type {
 
     /** Look for a method by name in this class.
      */
-    public MethEnv findMethod(String name) {
-        MethEnv env = MethEnv.find(name, methods);
+    public MethEnv findMethodByName(String name) {
+        MethEnv env = MethEnv.findByName(name, methods);
         if (env == null && extendsType != null) {
-            env = extendsType.isClass().findMethod(name);
+            env = extendsType.isClass().findMethodByName(name);
         }
         return env;
     }
 
+    public MethEnv findMethod(String name, VarEnv params) {
+        MethEnv env = MethEnv.find(name, params, methods);
+        if (env == null && extendsType != null) {
+            env = extendsType.isClass().findMethod(name, params);
+        }
+        return env;
+    }
+
+    public MethEnv findMethodCall(String name, Context ctxt, VarEnv env,
+                                  Args args) {
+        VarEnv params = VarEnv.argsToVarEnv(ctxt, env, args);
+        MethEnv menv = MethEnv.findCall(name, params, methods);
+        if (menv == null && extendsType != null) {
+            menv = extendsType.isClass().findMethodCall(name, ctxt, env, args);
+        }
+        return menv;
+    }
     /** Check (static analysis) the definitions of the fields and
      *  methods in this class.
      */
@@ -440,7 +456,6 @@ public class ClassType extends Type {
     public void compile(Assembly a) {
         FieldEnv.compileFields(a, fields);
         MethEnv.compileMethods(a, methods);
-        a.emitVTable(this, width, vtable);
     }
 
     public ArrayList<FieldEnv> nonStaticFields() {
