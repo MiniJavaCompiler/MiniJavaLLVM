@@ -94,9 +94,15 @@ class RunTest:
         if verbose:
             print("Running Test: %s > %s" % (" ".join(self.__cmd), self.__output))
         
-        test_result = subprocess.call(self.__cmd,
-                               stdout=tmp_file,
-                               stderr=tmp_file)
+        try:
+            test_result = subprocess.call(self.__cmd,
+                                          stdout=tmp_file,
+                                          stderr=tmp_file)
+        except subprocess.CalledProcessError as c:
+            print(" ".join(cmd))
+            print(c.output.decode("utf-8"))
+            test_result = -1
+
         if verbose:
             print("Process Pass? Code:%d Pass:%s" % (test_result, test_result == 0))
         return test_result == 0
