@@ -131,9 +131,15 @@
     <if>
       <available file="${llvm-j.jar}"/>
       <else>
+        <exec executable="llvm-config" outputproperty="llvm.version" >
+          <arg value="--version" />
+        </exec>
+        <exec executable="llvm-config" outputproperty="llvm.include">
+          <arg value="--includedir" />
+        </exec>
         <exec executable="make" dir="llvm-j" failonerror="true">
-          <arg value="LLVM_C=/usr/include/llvm-c-3.4/llvm-c" />
-          <arg value="LLVM_VERSION=3.4" />
+          <arg value="LLVM_C=${llvm.include}/llvm-c" />
+          <arg value="LLVM_VERSION=${llvm.version}" />
           <arg value="llvm" />
         </exec>
         <mkdir dir="build/llvm-j/"/>
