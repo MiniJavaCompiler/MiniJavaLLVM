@@ -9,11 +9,12 @@ RUN apt-get install -y \
             astyle \
             wget \
             git
-RUN ant deps
 RUN adduser --disabled-password --gecos '' mjc
 ADD . /project
 RUN chown -R mjc:mjc /project
-USER mjc
 
 WORKDIR /project
+RUN ant deps
+USER mjc
+RUN ant clean
 RUN ant test

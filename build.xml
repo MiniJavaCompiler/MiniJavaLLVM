@@ -67,6 +67,7 @@
       <arg value="astyle" />
       <arg value="clang-3.4" />
       <arg value="llvm-3.4-dev" />
+      <arg value="llvm" />
       <arg value="libc6-dev-i386" />
       <arg value="python" />
       <arg value="python3" />
