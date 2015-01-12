@@ -4,9 +4,8 @@ before_install:
   - sudo ln -s /usr/share/java/ant-contrib.jar /usr/share/ant/lib/
   - ant deps
 install: "ant -v jar"
-script: "./runTests.py --verbose --single"
+script: "ant test"
 jdk:
   - oraclejdk8
   - oraclejdk7
   - openjdk7
-  - openjdk6
