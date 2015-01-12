@@ -51,6 +51,10 @@
   <target name="deps">
     <exec executable="sudo">
       <arg value="apt-get" />
+      <arg value="update" />
+    </exec>
+    <exec executable="sudo">
+      <arg value="apt-get" />
       <arg value="-y" />
       <arg value="install" />          
       <arg value="build-essential" />
