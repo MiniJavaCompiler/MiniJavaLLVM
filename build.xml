@@ -1,9 +1,7 @@
 <project name="MJC">
   <property name="junit.jar" value="/usr/share/java/junit4.jar" />
-  <!-- The stable 0.6.2 bridj seems to be responsible for strange crashes,
-       so use the newest 0.7 snapshot. -->
-  <property name="bridj.name" value="bridj-0.7-20140629.160052-71.jar" />
-  <property name="bridj.url" value="https://oss.sonatype.org/content/groups/public/com/nativelibs4java/bridj/0.7-SNAPSHOT/${bridj.name}" />
+  <property name="bridj.name" value="bridj-0.6.2.jar" />
+  <property name="bridj.url" value="https://oss.sonatype.org/content/groups/public/com/nativelibs4java/bridj/0.6.2/${bridj.name}" />
   <property name="bridj.jar" value="build/libs/${bridj.name}" />
   <property name="llvm-j.jar" value="build/libs/llvm-j.jar" />
   <property name="commons.jar.system" value="/usr/share/java/commons-cli-1.2.jar" />
@@ -63,9 +61,8 @@
       <arg value="junit4" />
       <arg value="libjna-java" />
       <arg value="astyle" />
-      <arg value="clang-3.5" />
-      <arg value="llvm-3.5-dev" />
-      <arg value="llvm-dev" />
+      <arg value="clang-3.4" />
+      <arg value="llvm-3.4-dev" />
       <arg value="libc6-dev-i386" />
       <arg value="python" />
       <arg value="wget" />
@@ -135,8 +132,9 @@
       <available file="${llvm-j.jar}"/>
       <else>
         <exec executable="make" dir="llvm-j" failonerror="true">
+          <arg value="LLVM_C=/usr/include/llvm-c-3.4/llvm-c" />
+          <arg value="LLVM_VERSION=3.4" />
           <arg value="llvm" />
-          <arg value="LLVM_VERSION=3.5" />
         </exec>
         <mkdir dir="build/llvm-j/"/>
         <javac includeantruntime="false" srcdir="llvm-j/src/" 

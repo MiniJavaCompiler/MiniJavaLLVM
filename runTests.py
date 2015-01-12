@@ -171,7 +171,7 @@ class Test:
             if os.path.exists(o):
                 os.remove(o)
 
-        compile_test = RunTest(mjc_file, ["java",
+        compile_test = RunTest(mjc_file, ["java", "-XX:-PrintWarnings",
                                           "-Xms512m", "-Xmx1024m",
                                           "-jar", "build/jar/mjc.jar",
                                            "-i", self.testfile,
