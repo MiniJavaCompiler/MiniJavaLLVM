@@ -125,7 +125,7 @@
       </else>
     </if>
     <if>
-      <available file="${commons.jar}" flatten="true"/>
+      <available file="${commons.jar}" />
       <else>
         <copy file="${commons.jar.system}" todir="${dir.libs}" />
       </else>
