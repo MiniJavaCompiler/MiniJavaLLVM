@@ -69,6 +69,7 @@
       <arg value="llvm-3.4-dev" />
       <arg value="libc6-dev-i386" />
       <arg value="python" />
+      <arg value="python3" />
       <arg value="wget" />
       <arg value="git" />
     </exec>
