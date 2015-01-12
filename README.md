@@ -1,5 +1,7 @@
 # MiniJavaLLVM
 
+[![Build Status](https://travis-ci.org/MiniJavaCompiler/MiniJavaLLVM.svg?branch=master)](https://travis-ci.org/MiniJavaCompiler/MiniJavaLLVM)
+
 ## MiniJava frontend for LLVM
 
 [Mark Smith](http://github.com/maspdx) and [Mitch Souders](http://github.com/crzysdrs)
