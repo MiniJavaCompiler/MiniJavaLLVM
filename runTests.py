@@ -93,8 +93,6 @@ class RunTest:
         tmp_file = open(self.__output, 'w');
         if verbose:
             print("Running Test: %s > %s" % (" ".join(self.__cmd), self.__output))
-        if not shutil.which(self.__cmd[0]):
-            return False
         
         test_result = subprocess.call(self.__cmd,
                                stdout=tmp_file,
