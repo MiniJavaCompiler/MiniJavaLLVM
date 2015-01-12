@@ -4,8 +4,8 @@
   <property name="bridj.url" value="https://oss.sonatype.org/content/groups/public/com/nativelibs4java/bridj/0.6.2/${bridj.name}" />
   <property name="bridj.jar" value="build/libs/${bridj.name}" />
   <property name="llvm-j.jar" value="build/libs/llvm-j.jar" />
-  <property name="commons.jar.system" value="/usr/share/java/commons-cli-1.2.jar" />
-  <property name="commons.jar" value="build/libs/commons-cli-1.2.jar" />
+  <property name="commons.jar.system" value="/usr/share/java/commons-cli.jar" />
+  <property name="commons.jar" value="build/libs/commons-cli.jar" />
   <property name="dir.build" value="build/" />
   <property name="dir.libs" value="build/libs" />
   <property name="dir.bin" value="build/bin" />
