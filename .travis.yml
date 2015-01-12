@@ -3,7 +3,7 @@ before_install:
   - sudo apt-get install -y ant-contrib
   - sudo ln -s /usr/share/java/ant-contrib.jar /usr/share/ant/lib/
   - ant deps
-install: "ant jar"
+install: "ant -v jar"
 script: "ant test"
 jdk:
   - oraclejdk8
