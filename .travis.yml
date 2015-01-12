@@ -1,0 +1,9 @@
+language: java
+before_install: "sudo apt-get install -y ant-contrib && ant deps"
+install: "ant jar"
+script: "ant test"
+jdk:
+  - oraclejdk8
+  - oraclejdk7
+  - openjdk7
+  - openjdk6

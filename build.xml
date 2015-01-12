@@ -50,22 +50,26 @@
       <arg value="--recursive" />
       </exec>
   </target>
-  <target name="ubuntu_depends">
+  <target name="deps">
     <exec executable="sudo">
       <arg value="apt-get" />
       <arg value="-y" />
       <arg value="install" />          
       <arg value="build-essential" />
-      <arg value="astyle" />
-      <arg value="libjna-java" />
-      <arg value="llvm-3.5-dev" />
-      <arg value="llvm-dev" />
-      <arg value="clang-3.5" />
-      <arg value="gcc-4.7-multilib" />
-      <arg value="g++-4.7-multilib" />
-      <arg value="junit4" />
+      <arg value="default-jdk" />
+      <arg value="default-jre" />
       <arg value="ant-contrib" />
       <arg value="libcommons-cli-java" />
+      <arg value="junit4" />
+      <arg value="libjna-java" />
+      <arg value="astyle" />
+      <arg value="clang-3.5" />
+      <arg value="llvm-3.5-dev" />
+      <arg value="llvm-dev" />
+      <arg value="libc6-dev-i386" />
+      <arg value="python" />
+      <arg value="wget" />
+      <arg value="git" />
     </exec>
   </target>
   <target name="clean">
