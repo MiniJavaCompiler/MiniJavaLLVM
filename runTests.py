@@ -40,13 +40,16 @@ class CompareFile:
         if self.fileCheck():
             result = True
             for o in self.__outFiles:
-                result = result and filecmp.cmp(self.__refFile, o, False)
+                if os.path.isfile(o):
+                    result = result and filecmp.cmp(self.__refFile, o, False)
+                else:
+                    result = False
             return result
         else:
             return False
     
     def showDiff(self):
-        if os.path.isfile(self.__refFile):
+        if self.fileCheck():
             for o in self.__outFiles:
                 cmd = ["diff", self.__refFile, o]
                 try:
@@ -102,7 +105,12 @@ class RunTest:
             print(" ".join(cmd))
             print(c.output.decode("utf-8"))
             test_result = -1
-
+        except OSError as e:
+            print(" ".join(cmd))
+            print(e.strerror)
+            test_result = -1
+        
+        tmp_file.close()
         if verbose:
             print("Process Pass? Code:%d Pass:%s" % (test_result, test_result == 0))
         return test_result == 0
@@ -241,7 +249,8 @@ if __name__ == '__main__':
     parser.add_argument("--create_ref", help="Creates References (if valid)", action='store_true');
     parser.add_argument("--show_diff", help="Shows the Diffs for failing tests", action='store_true');
     parser.add_argument("--verbose", help="verbose", action='store_true');
-    parser.add_argument("--single", help="sequentially run tests", action='store_true');
+    parser.add_argument("--single", help="sequentially run tests (overrides jobs)", action='store_true');
+    parser.add_argument("--jobs", help="specify number of jobs", type=int, default=8);
 
     parser.add_argument("--test", help="run only this test")
 
@@ -250,7 +259,7 @@ if __name__ == '__main__':
     if args.single:
         jobs = 1
     else:
-        jobs = 8
+        jobs = args.jobs;
 
     if not os.path.exists(os.path.dirname(BUILDDIR)):
         os.mkdir(os.path.dirname(BUILDDIR))
