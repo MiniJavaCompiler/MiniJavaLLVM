@@ -102,11 +102,11 @@ class RunTest:
                                           stdout=tmp_file,
                                           stderr=tmp_file)
         except subprocess.CalledProcessError as c:
-            print(" ".join(cmd))
+            print(" ".join(self.__cmd))
             print(c.output.decode("utf-8"))
             test_result = -1
         except OSError as e:
-            print(" ".join(cmd))
+            print(" ".join(self.__cmd))
             print(e.strerror)
             test_result = -1
         
