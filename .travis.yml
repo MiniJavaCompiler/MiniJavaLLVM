@@ -5,7 +5,7 @@ before_install:
   - ant deps
 install: "ant -v jar"
 script:
-  - ./runTests.py --verbose --show_diff
+  - ./runTests.py --verbose --show_diff --jobs 2
 jdk:
   - oraclejdk8
   - oraclejdk7
