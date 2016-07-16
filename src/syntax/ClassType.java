@@ -308,7 +308,7 @@ public class ClassType extends Type {
     /** Return the superclass, if any, of this class.
      */
     public ClassType getSuper() {
-        return extendsType.isClass();
+        return extendsType==null ? null : extendsType.isClass();
     }
 
     /** Test to see if this class is a supertype of another type.
